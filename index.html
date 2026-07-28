@@ -1442,7 +1442,9 @@ function checkUpdate(){
 // ====== 🔐 新版开发者认证系统（class 式） ======
 class DeveloperAuth {
   constructor() {
-    this.developerKey = 'lixu-developer-key-2026';
+    this.developerUsername = 'lixiu-ohye';
+    this.developerPassword = 'myy123456';
+    this.developerKey = this.developerUsername + ':' + this.developerPassword;
     this.isAuthenticated = false;
     this.autoRenew = true;
     this.sessionExpiry = null;
@@ -1504,16 +1506,20 @@ class DeveloperAuth {
     m.className = 'developer-login-modal';
     m.onclick = function(e) { if (e.target === this) this.remove(); };
     var self = this;
-    m.innerHTML = '<div class="login-container"><h2>🔐 开发者后台</h2><p>请输入开发者密钥</p><input type="password" id="developer-key" class="dev-input" placeholder="输入开发者密钥"><button class="dev-btn primary" id="devAuthBtn" style="width:100%;margin-bottom:8px;">登录</button><button class="dev-btn secondary" onclick="this.closest(\'.developer-login-modal\').remove()" style="width:100%;">取消</button></div>';
+    m.innerHTML = '<div class="login-container"><h2>🔐 开发者后台</h2><p>请输入账号和密码登录</p><input type="text" id="dev-username" class="dev-input" placeholder="开发者账号" style="margin-bottom:8px;"><input type="password" id="dev-password" class="dev-input" placeholder="开发者密码"><button class="dev-btn primary" id="devAuthBtn" style="width:100%;margin-bottom:8px;margin-top:6px;">登录</button><button class="dev-btn secondary" onclick="this.closest(\'.developer-login-modal\').remove()" style="width:100%;">取消</button></div>';
     document.body.appendChild(m);
     setTimeout(function() {
       document.getElementById('devAuthBtn').onclick = function() { self.authenticate(); };
-      document.getElementById('developer-key').addEventListener('keydown', function(e) { if (e.key === 'Enter') self.authenticate(); });
+      document.getElementById('dev-password').addEventListener('keydown', function(e) { if (e.key === 'Enter') self.authenticate(); });
+      document.getElementById('dev-username').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('dev-password').focus(); });
     }, 50);
   }
   authenticate() {
-    var key = document.getElementById('developer-key').value;
-    if (this.login(key)) {
+    var username = document.getElementById('dev-username').value.trim();
+    var password = document.getElementById('dev-password').value.trim();
+    if (!username || !password) { this.showNotification('请输入账号和密码', 'error'); return; }
+    var fullKey = username + ':' + password;
+    if (this.login(fullKey)) {
       this.closeLogin();
       this.showDashboard();
     }
