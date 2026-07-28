@@ -1,20 +1,21 @@
 {
-  "version": "2.1.1",
+  "version": "2.1.3",
   "lastUpdate": "2026-07-28",
-  "downloadUrl": "https://lixiu-ohye.github.io/lixiu/",
   "changelog": [
-    "🎨 全面温柔女性审美视觉重构（玫瑰金+香槟粉+奶油紫）",
-    "🔐 新版开发者认证系统（class DeveloperAuth，1年有效期）",
-    "🕷️ 新版自动爬虫系统（class AutoUpdateCrawler，24h定时更新，日志管理）",
-    "🤖 AI图像处理模块（人像增强、去背景、风格迁移、超分辨率、色彩校正）",
-    "🔄 自动更新检测系统",
-    "📋 历史记录、设置面板、反馈系统完整保留"
+    "🎨 AI 修图标签页完全独立：自带上传区 + 左右预览对比 + 处理管线",
+    "🎯 无需切换页面即可完成：上传→选模型→调参→处理→下载",
+    "🧠 AIImageProcessor 重写为独立管线（不依赖剪辑页）",
+    "🖼️ 处理结果实时在 AI 标签页内显示",
+    "🐛 修复 duplicate var selectedAI 冲突",
+    "🔗 独立下载按钮（AI 处理结果直接下载）"
   ],
-  "dependencies": {
-    "ai-processor": "^2.1.1",
-    "video-editor": "^2.1.1",
-    "tutorial-crawler": "^2.1.1",
-    "developer-auth": "^2.1.1",
-    "auto-update-crawler": "^2.1.1"
-  }
+  "features": [
+    "ai-processor",
+    "video-editor",
+    "tutorial-crawler",
+    "auto-updater",
+    "feedback-system",
+    "developer-auth"
+  ],
+  "note": "AI 修图（独立上传+预览）"
 }
