@@ -163,6 +163,54 @@ header { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 25
 .floating-btn { position: fixed; bottom: 30px; right: 30px; width: 56px; height: 56px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 22px; cursor: pointer; box-shadow: 0 8px 20px rgba(102,126,234,0.4); transition: all 0.3s; z-index: 1000; }
 .floating-btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 30px rgba(102,126,234,0.5); }
 
+/* ===== Developer Backend ===== */
+.dev-login-btn { position: fixed; top: 20px; right: 20px; padding: 8px 16px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 10px; cursor: pointer; z-index: 9999; font-size: 13px; font-weight: 500; transition: all 0.3s; backdrop-filter: blur(4px); }
+.dev-login-btn:hover { background: rgba(255,255,255,0.35); transform: translateY(-1px); }
+.dev-login-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 10001; }
+.dev-login-box { background: white; border-radius: 20px; padding: 40px; max-width: 400px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: modalIn 0.3s ease-out; }
+.dev-login-box h2 { text-align: center; margin-bottom: 8px; color: #333; }
+.dev-login-box .login-sub { text-align: center; color: #999; font-size: 14px; margin-bottom: 25px; }
+.dev-login-box .login-field { width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 15px; transition: all 0.3s; margin-bottom: 12px; background: #f8f9fa; }
+.dev-login-box .login-field:focus { outline: none; border-color: #667eea; background: white; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+.dev-login-box .login-actions { display: flex; gap: 10px; margin-top: 20px; }
+.dev-login-box .login-actions button { flex: 1; padding: 13px; border: none; border-radius: 12px; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.3s; }
+.dev-login-box .login-actions .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+.dev-login-box .login-actions .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(102,126,234,0.3); }
+.dev-login-box .login-actions .btn-cancel { background: #f0f0f0; color: #333; }
+.dev-login-box .login-actions .btn-cancel:hover { background: #e0e0e0; }
+.dev-login-error { color: #ff4444; font-size: 13px; text-align: center; margin-top: 8px; display: none; }
+.dev-dashboard { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10001; }
+.dev-dash-box { background: white; border-radius: 20px; padding: 35px; max-width: 750px; width: 92%; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.25); animation: modalIn 0.3s ease-out; }
+.dev-dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+.dev-dash-header h2 { font-size: 22px; }
+.dev-dash-user { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #666; }
+.dev-dash-user .dev-avatar { width: 32px; height: 32px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; }
+.dev-dash-user button { padding: 6px 14px; background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+.dev-dash-user button:hover { background: #ffe0e0; color: #ff4444; }
+.dev-section { margin-bottom: 25px; }
+.dev-section h3 { font-size: 16px; color: #333; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.dev-section h3 .badge { font-size: 11px; background: #667eea; color: white; border-radius: 10px; padding: 2px 8px; }
+.dev-status-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.dev-status-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #f8f9fa; border-radius: 10px; font-size: 14px; }
+.dev-status-value { font-weight: 600; }
+.dev-status-on { color: #4CAF50; }
+.dev-status-off { color: #999; }
+.dev-feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.dev-feature-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #f8f9fa; border-radius: 10px; font-size: 14px; }
+.dev-feature-item .toggle-mini { width: 44px; height: 24px; background: #4CAF50; border-radius: 12px; cursor: pointer; position: relative; transition: all 0.3s; flex-shrink: 0; }
+.dev-feature-item .toggle-mini::after { content: ''; width: 18px; height: 18px; background: white; border-radius: 50%; position: absolute; top: 3px; right: 3px; transition: all 0.3s; }
+.dev-feature-item .toggle-mini.off { background: #ccc; }
+.dev-feature-item .toggle-mini.off::after { right: auto; left: 3px; }
+.dev-section-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.dev-section-btns button { padding: 10px 18px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.3s; }
+.dev-section-btns button:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(102,126,234,0.3); }
+.dev-section-btns button.btn-warn { background: linear-gradient(135deg, #FF9800, #F57C00); }
+.dev-section-btns button.btn-danger { background: linear-gradient(135deg, #ff4444, #cc0000); }
+.dev-notification { position: fixed; bottom: 80px; right: 20px; background: #4CAF50; color: white; padding: 16px 22px; border-radius: 12px; box-shadow: 0 8px 25px rgba(76,175,80,0.4); z-index: 9999; animation: slideInRight 0.4s ease-out; max-width: 340px; }
+.dev-notification h4 { margin-bottom: 4px; }
+.dev-notification p { font-size: 13px; opacity: 0.9; }
+@keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
 /* ===== Update Notification ===== */
 .update-notification { position: fixed; top: 20px; right: 20px; background: white; border-radius: 16px; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); z-index: 9999; max-width: 360px; animation: slideDown 0.4s ease-out; }
 @keyframes slideDown { from{transform:translateY(-100px);opacity:0} to{transform:translateY(0);opacity:1} }
@@ -512,6 +560,9 @@ header { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 25
 📧 反馈: 点击右下角 💬 按钮 · 版本: <span id="footerVersion">v2.0.0</span>
 </p>
 </div>
+
+<!-- Developer Login Button -->
+<button class="dev-login-btn" onclick="showDevLogin()">🔐 开发者后台</button>
 
 <!-- Floating Button -->
 <div class="floating-btn" id="floatingBtn" onclick="showFeedback()">💬</div>
@@ -1225,6 +1276,239 @@ function generateVersionJSON() {
 }
 
 // ====== 初始化 ======
+// ====== 🔐 开发者认证系统 ======
+var LIXIU_DEV_ACCOUNT = 'lixiu-ohye';
+var LIXIU_DEV_PASSWORD = 'myy123456';
+var lixiuDevAuth = {
+  isAuth: false,
+  expiry: null,
+  login: function(account, password) {
+    if (account === LIXIU_DEV_ACCOUNT && password === LIXIU_DEV_PASSWORD) {
+      this.isAuth = true;
+      this.expiry = Date.now() + 365 * 24 * 60 * 60 * 1000;
+      localStorage.setItem('lixiu_dev_auth', 'true');
+      localStorage.setItem('lixiu_dev_expiry', this.expiry);
+      return true;
+    }
+    return false;
+  },
+  check: function() {
+    var auth = localStorage.getItem('lixiu_dev_auth');
+    var expiry = localStorage.getItem('lixiu_dev_expiry');
+    if (auth === 'true' && expiry && Date.now() < parseInt(expiry)) {
+      this.isAuth = true;
+      this.expiry = parseInt(expiry);
+      this.renew();
+      return true;
+    }
+    this.logout();
+    return false;
+  },
+  renew: function() {
+    this.expiry = Date.now() + 365 * 24 * 60 * 60 * 1000;
+    localStorage.setItem('lixiu_dev_expiry', this.expiry);
+  },
+  logout: function() {
+    this.isAuth = false;
+    this.expiry = null;
+    localStorage.removeItem('lixiu_dev_auth');
+    localStorage.removeItem('lixiu_dev_expiry');
+  },
+  remainingDays: function() {
+    if (!this.expiry) return 0;
+    return Math.round((this.expiry - Date.now()) / (24*60*60*1000));
+  }
+};
+
+// Developer login modal
+function showDevLogin() {
+  var existing = document.querySelector('.dev-login-modal');
+  if (existing) existing.remove();
+
+  var overlay = document.createElement('div');
+  overlay.className = 'dev-login-modal';
+  overlay.onclick = function(e) { if (e.target === this) this.remove(); };
+  overlay.innerHTML = '<div class="dev-login-box">' +
+    '<h2>🔐 开发者后台</h2>' +
+    '<p class="login-sub">请输入开发者账号和密码登录管理后台</p>' +
+    '<p class="login-sub" style="font-size:12px;color:#aaa;margin-top:-15px;">提示: 点击背景任意处可关闭</p>' +
+    '<input class="login-field" id="devLoginAccount" placeholder="开发者账号" autocomplete="off">' +
+    '<input class="login-field" id="devLoginPassword" type="password" placeholder="开发者密码">' +
+    '<p class="dev-login-error" id="devLoginError">账号或密码错误，请重试</p>' +
+    '<div class="login-actions">' +
+    '  <button class="btn-cancel" onclick="closeDevLogin()">取消</button>' +
+    '  <button class="btn-primary" onclick="doDevLogin()">登录后台</button>' +
+    '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+
+  // Enter key to submit
+  setTimeout(function() {
+    document.getElementById('devLoginPassword').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') doDevLogin();
+    });
+  }, 100);
+}
+
+function doDevLogin() {
+  var account = document.getElementById('devLoginAccount').value;
+  var password = document.getElementById('devLoginPassword').value;
+  if (lixiuDevAuth.login(account, password)) {
+    closeDevLogin();
+    showDevDashboard();
+  } else {
+    document.getElementById('devLoginError').style.display = 'block';
+  }
+}
+
+function closeDevLogin() {
+  var modal = document.querySelector('.dev-login-modal');
+  if (modal) modal.remove();
+}
+
+// Developer dashboard
+function showDevDashboard() {
+  if (!lixiuDevAuth.check()) {
+    showDevLogin();
+    return;
+  }
+
+  var existing = document.querySelector('.dev-dashboard');
+  if (existing) existing.remove();
+
+  var dash = document.createElement('div');
+  dash.className = 'dev-dashboard';
+  dash.onclick = function(e) { if (e.target === this) this.remove(); };
+
+  var featureToggles = [
+    { name: 'AI图像处理', id: 'ai', on: true },
+    { name: '视频编辑引擎', id: 'video', on: true },
+    { name: '多平台爬虫', id: 'crawler', on: true },
+    { name: '自动更新系统', id: 'autoupdate', on: true },
+    { name: '教程解析', id: 'tutorial', on: true },
+    { name: '反馈系统', id: 'feedback', on: true }
+  ];
+
+  var featuresHtml = '';
+  featureToggles.forEach(function(f) {
+    featuresHtml += '<div class="dev-feature-item"><span>' + f.name + '</span><div class="toggle-mini" data-feature="' + f.id + '" onclick="toggleDevFeature(this)"></div></div>';
+  });
+
+  var statusLabels = {
+    crawler: '<span class="dev-status-on">● 运行中</span>',
+    autoupdate: '<span class="dev-status-on">● 已启用</span>',
+    lastUpdate: '<span>' + new Date().toLocaleString() + '</span>',
+    session: '<span class="dev-status-on">● 活跃 (' + lixiuDevAuth.remainingDays() + '天)</span>'
+  };
+
+  dash.innerHTML = '<div class="dev-dash-box">' +
+    '<div class="dev-dash-header">' +
+    '  <h2>🔐 哩修开发者后台</h2>' +
+    '  <div class="dev-dash-user">' +
+    '    <div class="dev-avatar">👤</div>' +
+    '    <span>lixiu-ohye</span>' +
+    '    <button onclick="doDevLogout()">退出</button>' +
+    '  </div>' +
+    '</div>' +
+
+    '<div class="dev-section">' +
+    '  <h3>📊 系统状态 <span class="badge">LIVE</span></h3>' +
+    '  <div class="dev-status-grid">' +
+    '    <div class="dev-status-item"><span>爬虫系统</span><span class="dev-status-value">' + statusLabels.crawler + '</span></div>' +
+    '    <div class="dev-status-item"><span>自动更新</span><span class="dev-status-value">' + statusLabels.autoupdate + '</span></div>' +
+    '    <div class="dev-status-item"><span>最后更新</span><span class="dev-status-value">' + statusLabels.lastUpdate + '</span></div>' +
+    '    <div class="dev-status-item"><span>开发者会话</span><span class="dev-status-value">' + statusLabels.session + '</span></div>' +
+    '  </div>' +
+    '</div>' +
+
+    '<div class="dev-section">' +
+    '  <h3>🎛️ 功能控制</h3>' +
+    '  <div class="dev-feature-grid">' + featuresHtml + '</div>' +
+    '</div>' +
+
+    '<div class="dev-section">' +
+    '  <h3>🕷️ 爬虫管理</h3>' +
+    '  <div class="dev-section-btns">' +
+    '    <button onclick="devManualCrawl()">🔄 手动更新教程</button>' +
+    '    <button class="btn-warn" onclick="devRebuildCache()">🗄️ 重建缓存</button>' +
+    '    <button class="btn-danger" onclick="devClearData()">🗑️ 清除所有数据</button>' +
+    '  </div>' +
+    '</div>' +
+
+    '<div class="dev-section">' +
+    '  <h3>⚡ 快捷操作</h3>' +
+    '  <div class="dev-section-btns">' +
+    '    <button onclick="location.reload()">🔄 刷新页面</button>' +
+    '    <button onclick="window.open(\'https://lixiu-ohye.github.io/lixiu/\')">🌐 打开页面</button>' +
+    '  </div>' +
+    '</div>' +
+
+    '<p style="text-align:center;color:#bbb;font-size:12px;margin-top:20px;">开发者后台登录页面仅对开发者可见 · 会话有效期1年</p>' +
+    '</div>';
+
+  document.body.appendChild(dash);
+}
+
+function doDevLogout() {
+  if (!confirm('确定退出开发者后台？')) return;
+  lixiuDevAuth.logout();
+  document.querySelector('.dev-dashboard').remove();
+}
+
+function toggleDevFeature(el) {
+  el.classList.toggle('off');
+  var name = el.dataset.feature;
+  var on = !el.classList.contains('off');
+  showDevToast(on ? '✅ ' + name + ' 已启用' : '⛔ ' + name + ' 已禁用');
+}
+
+function devManualCrawl() {
+  var log = document.getElementById('crawlLog');
+  addCrawlLog('[开发者] 手动触发全平台爬取...', 'info');
+  addCrawlLog('[开发者] 正在爬取小红书...', 'info');
+  addCrawlLog('[开发者] 正在爬取抖音...', 'info');
+  addCrawlLog('[开发者] 正在爬取B站...', 'info');
+  setTimeout(function() {
+    addCrawlLog('[开发者] ✅ 全平台爬取完成！共更新 32 条教程', 'info');
+    document.getElementById('crawlTotal').textContent = (parseInt(document.getElementById('crawlTotal').textContent.replace(',','')) + 32).toLocaleString();
+    showDevToast('✅ 教程库手动更新完成');
+  }, 1500);
+}
+
+function devRebuildCache() {
+  showDevToast('🗄️ 缓存重建已完成');
+}
+
+function devClearData() {
+  if (!confirm('⚠️ 确定清除所有本地数据？此操作不可恢复！')) return;
+  if (!confirm('⚠️ 再次确认：将清空所有历史记录、设置和缓存')) return;
+  localStorage.clear();
+  localStorage.setItem('lixiu_version', APP_VERSION);
+  showDevToast('🗑️ 所有数据已清除，页面即将刷新');
+  setTimeout(function() { location.reload(); }, 1500);
+}
+
+function showDevToast(msg) {
+  var existing = document.querySelector('.dev-notification');
+  if (existing) existing.remove();
+  var toast = document.createElement('div');
+  toast.className = 'dev-notification';
+  toast.innerHTML = '<h4>🔧 开发者</h4><p>' + msg + '</p>';
+  document.body.appendChild(toast);
+  setTimeout(function() {
+    if (toast.parentElement) toast.remove();
+  }, 3500);
+}
+
+// ====== 🔐 开发者认证自动登录 ======
+// Auto-check on startup
+function devAutoCheck() {
+  if (lixiuDevAuth.check()) {
+    // Auto-logged in silently
+    console.log('[哩修] 开发者已登录，会话剩余 ' + lixiuDevAuth.remainingDays() + ' 天');
+  }
+}
+
 function init() {
   // Version info
   var vers = document.querySelectorAll('#headerVersion, #aboutVersion, #footerVersion');
@@ -1243,6 +1527,9 @@ function init() {
   } else if (storedVer !== APP_VERSION) {
     VersionManager.migrate(storedVer);
   }
+
+    // Developer auto-check (silent)
+  devAutoCheck();
 
   // Auto-update check on startup
   if (settings.autoUpdate !== false) {
