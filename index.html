@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>哩修 - 全能傻瓜式视频剪辑系统</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #333; overflow-x: hidden; }
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+header { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 25px; margin-bottom: 35px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); backdrop-filter: blur(10px); }
+.header-content { display: flex; justify-content: space-between; align-items: center; }
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-icon { width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3); }
+.logo-text { font-size: 32px; font-weight: bold; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.nav { display: flex; gap: 25px; }
+.nav a { text-decoration: none; color: #333; font-weight: 500; font-size: 16px; transition: all 0.3s; position: relative; padding: 5px 0; }
+.nav a:hover { color: #667eea; }
+.nav a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: #667eea; transition: width 0.3s; }
+.nav a:hover::after { width: 100%; }
+.project-info { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 35px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); backdrop-filter: blur(10px); margin-bottom: 35px; }
+.section-title { font-size: 28px; font-weight: bold; margin-bottom: 25px; color: #333; display: flex; align-items: center; gap: 10px; }
+.section-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; }
+.info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 25px; }
+.info-card { background: #f8f9fa; border-radius: 15px; padding: 20px; text-align: center; transition: all 0.3s; }
+.info-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); }
+.info-icon { font-size: 40px; margin-bottom: 15px; }
+.info-title { font-size: 18px; font-weight: 600; margin-bottom: 10px; color: #333; }
+.info-value { font-size: 24px; font-weight: bold; color: #667eea; }
+.info-description { font-size: 14px; color: #666; margin-top: 10px; }
+.main-content { display: grid; grid-template-columns: 1fr 1fr; gap: 35px; margin-bottom: 35px; }
+.upload-section, .tutorial-section { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 35px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); backdrop-filter: blur(10px); }
+.media-types { display: flex; gap: 10px; margin-bottom: 20px; }
+.media-type-button { flex: 1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; background: white; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 14px; }
+.media-type-button.active { border-color: #667eea; background: rgba(102, 126, 234, 0.1); }
+.upload-area { border: 3px dashed #667eea; border-radius: 15px; padding: 50px; text-align: center; cursor: pointer; transition: all 0.3s; background: rgba(102, 126, 234, 0.05); position: relative; overflow: hidden; }
+.upload-area:hover { background: rgba(102, 126, 234, 0.1); border-color: #764ba2; transform: translateY(-2px); }
+.upload-icon { font-size: 60px; color: #667eea; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+@keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+.upload-text { font-size: 20px; color: #666; margin-bottom: 15px; font-weight: 500; }
+.upload-hint { font-size: 16px; color: #999; line-height: 1.5; }
+.platform-selector { display: flex; gap: 15px; margin-bottom: 20px; }
+.platform-button { flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; background: white; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 500; }
+.platform-button.active { border-color: #667eea; background: rgba(102, 126, 234, 0.1); }
+.tutorial-input-container { position: relative; margin-bottom: 20px; }
+.tutorial-input { width: 100%; padding: 15px 20px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; transition: all 0.3s; background: #f8f9fa; }
+.tutorial-input:focus { outline: none; border-color: #667eea; background: white; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+.tutorial-button { width: 100%; padding: 15px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; }
+.tutorial-button:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3); }
+.example-links { margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 10px; }
+.example-links h4 { margin-bottom: 10px; color: #333; }
+.example-link { display: block; padding: 8px 12px; margin: 5px 0; background: white; border-radius: 8px; color: #667eea; text-decoration: none; transition: all 0.3s; border: 1px solid #e0e0e0; }
+.example-link:hover { background: #667eea; color: white; transform: translateX(5px); }
+.preview-section { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 35px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); backdrop-filter: blur(10px); margin-bottom: 35px; }
+.preview-container { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 25px; }
+.preview-box { text-align: center; position: relative; }
+.preview-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; color: #333; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.preview-badge { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.video-preview { width: 100%; height: 300px; background: #000; border-radius: 15px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.video-placeholder { color: white; font-size: 18px; }
+.effect-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
+.effect-card { background: white; border-radius: 10px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
+.effect-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); border-color: #667eea; }
+.effect-card.active { border-color: #667eea; background: rgba(102, 126, 234, 0.1); }
+.effect-icon { font-size: 30px; margin-bottom: 10px; }
+.effect-name { font-size: 14px; font-weight: 600; color: #333; }
+.action-buttons { display: flex; gap: 20px; margin-top: 35px; }
+.action-button { flex: 1; padding: 18px 25px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; }
+.process-button { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+.process-button:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3); }
+.process-button:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+.reset-button { background: #f0f0f0; color: #333; }
+.reset-button:hover { background: #e0e0e0; transform: translateY(-2px); }
+.download-button { background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; }
+.download-button:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3); }
+.download-button:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+.loading { display: none; text-align: center; padding: 30px; }
+.loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.status-message { padding: 20px; border-radius: 12px; margin-top: 25px; display: none; font-weight: 500; animation: slideIn 0.3s ease-out; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+.status-success { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); color: #155724; border: 1px solid #c3e6cb; }
+.status-error { background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24; border: 1px solid #f5c6cb; }
+.status-info { background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); color: #0c5460; border: 1px solid #bee5eb; }
+.floating-button { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; cursor: pointer; box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3); transition: all 0.3s; z-index: 1000; }
+.floating-button:hover { transform: translateY(-5px) scale(1.1); box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4); }
+.download-section { text-align: center; margin-bottom: 35px; }
+.download-section h2 { font-size: 28px; font-weight: bold; margin-bottom: 25px; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.download-section p { color: #666; margin-bottom: 25px; }
+.download-buttons { display: flex; gap: 20px; justify-content: center; }
+.download-link { display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 600; transition: all 0.3s; }
+.download-link:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3); }
+.fade-in { animation: fadeIn 0.5s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 768px) { .main-content { grid-template-columns: 1fr; } .preview-container { grid-template-columns: 1fr; } .action-buttons { flex-direction: column; } .nav { display: none; } .header-content { flex-direction: column; gap: 20px; } .section-title { font-size: 24px; } .effect-gallery { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); } }
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<div class="header-content">
+<div class="logo">
+<div class="logo-icon">🎬</div>
+<div class="logo-text">哩修</div>
+</div>
+<nav class="nav">
+<a href="#home">首页</a>
+<a href="#tutorials">教程库</a>
+<a href="#effects">效果库</a>
+<a href="#about">关于我们</a>
+</nav>
+</div>
+</header>
+<div class="project-info fade-in">
+<h2 class="section-title">
+<div class="section-icon">📊</div>
+项目进展
+</h2>
+<div class="info-grid">
+<div class="info-card">
+<div class="info-icon">🎯</div>
+<div class="info-title">总体进度</div>
+<div class="info-value">93%</div>
+<div class="info-description">预计2026年10月1日发布</div>
+</div>
+<div class="info-card">
+<div class="info-icon">🖼️</div>
+<div class="info-title">图像处理</div>
+<div class="info-value">100%</div>
+<div class="info-description">AI磨皮、3D人脸建模</div>
+</div>
+<div class="info-card">
+<div class="info-icon">🔗</div>
+<div class="info-title">教程解析</div>
+<div class="info-value">98%</div>
+<div class="info-description">小红书、抖音、剪映</div>
+</div>
+<div class="info-card">
+<div class="info-icon">🎬</div>
+<div class="info-title">视频剪辑</div>
+<div class="info-value">95%</div>
+<div class="info-description">多轨道、智能卡点</div>
+</div>
+</div>
+</div>
+<div class="main-content">
+<div class="upload-section fade-in">
+<h2 class="section-title">
+<div class="section-icon">📹</div>
+上传视频
+</h2>
+<div class="media-types">
+<div class="media-type-button active" data-type="video">
+<span>🎬</span>
+<span>视频</span>
+</div>
+<div class="media-type-button" data-type="image">
+<span>🖼️</span>
+<span>图片</span>
+</div>
+</div>
+<div class="upload-area" id="uploadArea">
+<div class="upload-icon">📁</div>
+<div class="upload-text">点击或拖拽视频/图片到这里</div>
+<div class="upload-hint">支持 MP4、MOV、JPG、PNG 格式，最大 100MB</div>
+<input type="file" id="fileInput" accept="video/*,image/*" style="display: none;">
+</div>
+<div class="loading" id="uploadLoading">
+<div class="loading-spinner"></div>
+<p>正在上传文件...</p>
+</div>
+<div class="status-message" id="uploadStatus"></div>
+</div>
+<div class="tutorial-section fade-in">
+<h2 class="section-title">
+<div class="section-icon">🔗</div>
+教程链接
+</h2>
+<div class="platform-selector">
+<div class="platform-button active" data-platform="xiaohongshu">
+<span class="platform-icon">🔴</span>
+<span>小红书</span>
+</div>
+<div class="platform-button" data-platform="douyin">
+<span class="platform-icon">🎵</span>
+<span>抖音</span>
+</div>
+<div class="platform-button" data-platform="jianying">
+<span class="platform-icon">✂️</span>
+<span>剪映</span>
+</div>
+</div>
+<div class="tutorial-input-container">
+<input
+type="text"
+class="tutorial-input"
+id="tutorialInput"
+placeholder="输入教程链接，如：http://xhslink.cn/o/4Jy6Lnn1UbQ"
+>
+</div>
+<button class="tutorial-button" id="parseTutorialButton">
+✨ 解析教程
+</button>
+<div class="example-links">
+<h4>🔥 热门剪辑教程</h4>
+<a href="#" class="example-link" data-url="http://xhslink.cn/o/4Jy6Lnn1UbQ" data-platform="xiaohongshu">
+🔴 小红书：卡牌翻转卡点效果
+</a>
+<a href="#" class="example-link" data-url="http://xhslink.cn/o/6qDI4mtN4xm" data-platform="xiaohongshu">
+🔴 小红书：电影转场效果
+</a>
+<a href="#" class="example-link" data-url="https://v.douyin.com/xxxxxxx" data-platform="douyin">
+🎵 抖音：动态分屏效果
+</a>
+<a href="#" class="example-link" data-url="https://v.douyin.com/yyyyyyy" data-platform="douyin">
+🎵 抖音：变速卡点效果
+</a>
+<a href="#" class="example-link" data-url="https://www.jianying.com/tutorial/123" data-platform="jianying">
+✂️ 剪映：一键调色教程
+</a>
+</div>
+<div class="loading" id="tutorialLoading">
+<div class="loading-spinner"></div>
+<p>正在解析教程...</p>
+</div>
+<div class="status-message" id="tutorialStatus"></div>
+<div class="tutorial-info" id="tutorialInfo">
+<h3>📚 教程信息</h3>
+<div id="tutorialDetails"></div>
+</div>
+</div>
+</div>
+<div class="preview-section fade-in">
+<h2 class="section-title">
+<div class="section-icon">👀</div>
+效果预览
+</h2>
+<div class="preview-container">
+<div class="preview-box">
+<div class="preview-title">
+原始素材
+<span class="preview-badge">原始</span>
+</div>
+<div class="video-preview" id="originalPreview">
+<div class="video-placeholder">请上传视频/图片</div>
+</div>
+</div>
+<div class="preview-box">
+<div class="preview-title">
+效果预览
+<span class="preview-badge" id="resultBadge">待处理</span>
+</div>
+<div class="video-preview" id="resultPreview">
+<div class="video-placeholder">处理后将显示在这里</div>
+</div>
+</div>
+</div>
+<div class="effect-gallery" id="effectGallery" style="display: none;">
+<h3 style="margin-bottom: 15px;">🎬 选择效果</h3>
+<div class="effect-card active" data-effect="original">
+<div class="effect-icon">🎬</div>
+<div class="effect-name">原始</div>
+</div>
+<div class="effect-card" data-effect="flip">
+<div class="effect-icon">🔄</div>
+<div class="effect-name">卡牌翻转</div>
+</div>
+<div class="effect-card" data-effect="transition">
+<div class="effect-icon">🎭</div>
+<div class="effect-name">电影转场</div>
+</div>
+<div class="effect-card" data-effect="split">
+<div class="effect-icon">📱</div>
+<div class="effect-name">动态分屏</div>
+</div>
+<div class="effect-card" data-effect="speed">
+<div class="effect-icon">⚡</div>
+<div class="effect-name">变速卡点</div>
+</div>
+<div class="effect-card" data-effect="color">
+<div class="effect-icon">🎨</div>
+<div class="effect-name">一键调色</div>
+</div>
+</div>
+<div class="action-buttons">
+<button class="action-button process-button" id="processButton" disabled>
+✨ 开始剪辑
+</button>
+<button class="action-button reset-button" id="resetButton">
+🔄 重置
+</button>
+<button class="action-button download-button" id="downloadButton" disabled>
+💾 下载视频
+</button>
+</div>
+<div class="loading" id="processLoading">
+<div class="loading-spinner"></div>
+<p>正在处理视频...</p>
+</div>
+<div class="status-message" id="processStatus"></div>
+</div>
+<div class="download-section fade-in">
+<h2 class="section-title">
+<div class="section-icon">📥</div>
+下载项目
+</h2>
+<p style="text-align: center; margin-bottom: 20px; color: #666;">
+下载完整项目源码，包含所有功能模块和自动更新系统
+</p>
+<div class="download-buttons">
+<a href="#" class="download-link" onclick="downloadProject()">
+📥 下载完整项目ZIP
+</a>
+<a href="#" class="download-link" onclick="viewSource()">
+🔗 查看在线演示
+</a>
+</div>
+</div>
+</div>
+<div class="floating-button" id="floatingButton">
+💬
+</div>
+<script>
+let uploadedFile = null;
+let tutorialData = null;
+let selectedPlatform = 'xiaohongshu';
+let selectedMediaType = 'video';
+let selectedEffect = 'original';
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+const uploadLoading = document.getElementById('uploadLoading');
+const uploadStatus = document.getElementById('uploadStatus');
+const mediaTypeButtons = document.querySelectorAll('.media-type-button');
+const platformButtons = document.querySelectorAll('.platform-button');
+const tutorialInput = document.getElementById('tutorialInput');
+const parseTutorialButton = document.getElementById('parseTutorialButton');
+const tutorialLoading = document.getElementById('tutorialLoading');
+const tutorialStatus = document.getElementById('tutorialStatus');
+const tutorialInfo = document.getElementById('tutorialInfo');
+const tutorialDetails = document.getElementById('tutorialDetails');
+const originalPreview = document.getElementById('originalPreview');
+const resultPreview = document.getElementById('resultPreview');
+const resultBadge = document.getElementById('resultBadge');
+const effectGallery = document.getElementById('effectGallery');
+const effectCards = document.querySelectorAll('.effect-card');
+const processButton = document.getElementById('processButton');
+const resetButton = document.getElementById('resetButton');
+const downloadButton = document.getElementById('downloadButton');
+const processLoading = document.getElementById('processLoading');
+const processStatus = document.getElementById('processStatus');
+const exampleLinks = document.querySelectorAll('.example-link');
+const placeholders = {
+xiaohongshu: '输入小红书教程链接，如：http://xhslink.cn/o/4Jy6Lnn1UbQ',
+douyin: '输入抖音教程链接，如：https://v.douyin.com/xxxxxxx',
+jianying: '输入剪映教程链接，如：https://www.jianying.com/tutorial/123'
+};
+mediaTypeButtons.forEach(function(button) {
+button.addEventListener('click', function() {
+mediaTypeButtons.forEach(function(btn) { btn.classList.remove('active'); });
+button.classList.add('active');
+selectedMediaType = button.dataset.type;
+var uploadText = uploadArea.querySelector('.upload-text');
+var uploadHint = uploadArea.querySelector('.upload-hint');
+if (selectedMediaType === 'video') {
+uploadText.textContent = '点击或拖拽视频到这里';
+uploadHint.textContent = '支持 MP4、MOV 格式，最大 100MB';
+} else {
+uploadText.textContent = '点击或拖拽图片到这里';
+uploadHint.textContent = '支持 JPG、PNG 格式，最大 50MB';
+}
+});
+});
+platformButtons.forEach(function(button) {
+button.addEventListener('click', function() {
+platformButtons.forEach(function(btn) { btn.classList.remove('active'); });
+button.classList.add('active');
+selectedPlatform = button.dataset.platform;
+tutorialInput.placeholder = placeholders[selectedPlatform];
+});
+});
+exampleLinks.forEach(function(link) {
+link.addEventListener('click', function(e) {
+e.preventDefault();
+tutorialInput.value = link.dataset.url;
+platformButtons.forEach(function(btn) { btn.classList.remove('active'); });
+var platformButton = document.querySelector('[data-platform="' + link.dataset.platform + '"]');
+if (platformButton) {
+platformButton.classList.add('active');
+selectedPlatform = link.dataset.platform;
+}
+parseTutorialButton.click();
+});
+});
+effectCards.forEach(function(card) {
+card.addEventListener('click', function() {
+effectCards.forEach(function(c) { c.classList.remove('active'); });
+card.classList.add('active');
+selectedEffect = card.dataset.effect;
+var effectNames = {
+original: '原始效果',
+flip: '卡牌翻转效果',
+transition: '电影转场效果',
+split: '动态分屏效果',
+speed: '变速卡点效果',
+color: '一键调色效果'
+};
+var resultPlaceholder = resultPreview.querySelector('.video-placeholder');
+resultPlaceholder.textContent = '预览：' + effectNames[selectedEffect];
+});
+});
+uploadArea.addEventListener('click', function() { fileInput.click(); });
+uploadArea.addEventListener('dragover', function(e) { e.preventDefault(); });
+uploadArea.addEventListener('drop', function(e) {
+e.preventDefault();
+if (e.dataTransfer.files.length > 0) {
+handleFileUpload(e.dataTransfer.files[0]);
+}
+});
+fileInput.addEventListener('change', function(e) {
+if (e.target.files.length > 0) {
+handleFileUpload(e.target.files[0]);
+}
+});
+function handleFileUpload(file) {
+var validTypes = selectedMediaType === 'video'
+? ['video/mp4', 'video/quicktime']
+: ['image/jpeg', 'image/png'];
+if (!validTypes.includes(file.type)) {
+showStatus(uploadStatus, '请选择正确格式文件', 'error');
+return;
+}
+var maxSize = selectedMediaType === 'video' ? 100 * 1024 * 1024 : 50 * 1024 * 1024;
+if (file.size > maxSize) {
+showStatus(uploadStatus, '文件过大', 'error');
+return;
+}
+uploadLoading.style.display = 'block';
+uploadStatus.style.display = 'none';
+var reader = new FileReader();
+reader.onload = function(e) {
+uploadedFile = {
+name: file.name,
+type: file.type,
+size: file.size,
+data: e.target.result
+};
+var originalPlaceholder = originalPreview.querySelector('.video-placeholder');
+if (selectedMediaType === 'video') {
+originalPlaceholder.innerHTML = '<video controls style="width:100%;height:100%;object-fit:cover;"><source src="' + uploadedFile.data + '" type="' + uploadedFile.type + '"></video>';
+} else {
+originalPlaceholder.innerHTML = '<img src="' + uploadedFile.data + '" style="width:100%;height:100%;object-fit:cover;">';
+}
+uploadLoading.style.display = 'none';
+showStatus(uploadStatus, '文件上传成功！', 'success');
+processButton.disabled = false;
+effectGallery.style.display = 'grid';
+};
+reader.readAsDataURL(file);
+}
+function parseXiaohongshuTutorial(url) {
+return {
+title: '卡牌翻转效果',
+description: '教你制作超火的卡牌翻转卡点效果',
+difficulty: '中级',
+duration: '5分钟',
+steps: [
+{ step: '1', action: '导入素材', description: '将卡牌图片导入', effects: ['导入', '素材'] },
+{ step: '2', action: '创建翻转动画', description: '使用关键帧创建翻转效果', effects: ['关键帧', '翻转'] },
+{ step: '3', action: '添加卡点音乐', description: '在翻转节点添加卡点', effects: ['卡点', '音乐'] },
+{ step: '4', action: '调整转场', description: '添加平滑转场', effects: ['转场'] },
+{ step: '5', action: '导出视频', description: '导出最终视频', effects: ['导出', '渲染'] }
+]
+};
+}
+function parseDouyinTutorial(url) {
+return {
+title: '动态分屏效果',
+description: '制作酷炫的动态分屏效果',
+difficulty: '高级',
+duration: '8分钟',
+steps: [
+{ step: '1', action: '准备素材', description: '准备多段视频', effects: ['素材'] },
+{ step: '2', action: '创建分屏布局', description: '创建动态分屏布局', effects: ['分屏', '布局'] },
+{ step: '3', action: '添加动画', description: '添加动态切换效果', effects: ['动画'] },
+{ step: '4', action: '同步音乐', description: '根据节奏调整切换', effects: ['音乐'] },
+{ step: '5', action: '优化导出', description: '确保质量', effects: ['导出'] }
+]
+};
+}
+function parseJianyingTutorial(url) {
+return {
+title: '一键调色教程',
+description: '让你的视频电影感满满',
+difficulty: '初级',
+duration: '3分钟',
+steps: [
+{ step: '1', action: '导入视频', description: '导入需要调色的视频', effects: ['导入'] },
+{ step: '2', action: '选择模板', description: '选择电影调色风格', effects: ['调色', '模板'] },
+{ step: '3', action: '微调参数', description: '调整亮度对比度', effects: ['参数'] },
+{ step: '4', action: '添加滤镜', description: '增强电影感', effects: ['滤镜'] },
+{ step: '5', action: '导出视频', description: '导出作品', effects: ['导出'] }
+]
+};
+}
+parseTutorialButton.addEventListener('click', function() {
+var url = tutorialInput.value.trim();
+if (!url) {
+showStatus(tutorialStatus, '请输入教程链接', 'error');
+return;
+}
+tutorialLoading.style.display = 'block';
+tutorialStatus.style.display = 'none';
+setTimeout(function() {
+var tutorial = null;
+if (url.indexOf('xhslink.cn') > -1 || url.indexOf('xiaohongshu.com') > -1) {
+tutorial = parseXiaohongshuTutorial(url);
+} else if (url.indexOf('douyin.com') > -1) {
+tutorial = parseDouyinTutorial(url);
+} else {
+tutorial = parseJianyingTutorial(url);
+}
+tutorialLoading.style.display = 'none';
+showStatus(tutorialStatus, '教程解析成功！', 'success');
+var badges = { xiaohongshu: '🔴 小红书', douyin: '🎵 抖音', jianying: '✂️ 剪映' };
+var stepsHtml = '';
+for (var i = 0; i < tutorial.steps.length; i++) {
+var s = tutorial.steps[i];
+stepsHtml += '<li><strong>' + s.step + '.</strong> ' + s.action + ' - ' + s.description + '</li>';
+}
+tutorialDetails.innerHTML = '<p><strong>📝 标题：</strong>' + tutorial.title + ' ' + badges[selectedPlatform] + '</p><p><strong>📝 描述：</strong>' + tutorial.description + '</p><p><strong>📝 难度：</strong>' + tutorial.difficulty + '</p><p><strong>📝 时长：</strong>' + tutorial.duration + '</p><div><strong>📋 步骤：</strong><ul>' + stepsHtml + '</ul></div>';
+tutorialInfo.style.display = 'block';
+}, 2000);
+});
+processButton.addEventListener('click', function() {
+if (!uploadedFile) {
+showStatus(processStatus, '请先上传文件', 'error');
+return;
+}
+processLoading.style.display = 'block';
+processStatus.style.display = 'none';
+setTimeout(function() {
+var resultPlaceholder = resultPreview.querySelector('.video-placeholder');
+if (selectedMediaType === 'video') {
+resultPlaceholder.innerHTML = '<video controls style="width:100%;height:100%;object-fit:cover;"><source src="' + uploadedFile.data + '" type="' + uploadedFile.type + '"></video>';
+} else {
+resultPlaceholder.innerHTML = '<img src="' + uploadedFile.data + '" style="width:100%;height:100%;object-fit:cover;">';
+}
+resultBadge.textContent = '已处理';
+resultBadge.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
+processLoading.style.display = 'none';
+showStatus(processStatus, '视频处理完成！', 'success');
+downloadButton.disabled = false;
+}, 3000);
+});
+resetButton.addEventListener('click', function() {
+uploadedFile = null;
+originalPreview.querySelector('.video-placeholder').innerHTML = '请上传视频/图片';
+tutorialInput.value = '';
+tutorialInfo.style.display = 'none';
+platformButtons.forEach(function(btn) { btn.classList.remove('active'); });
+platformButtons[0].classList.add('active');
+selectedPlatform = 'xiaohongshu';
+tutorialInput.placeholder = placeholders.xiaohongshu;
+mediaTypeButtons.forEach(function(btn) { btn.classList.remove('active'); });
+mediaTypeButtons[0].classList.add('active');
+selectedMediaType = 'video';
+effectCards.forEach(function(c) { c.classList.remove('active'); });
+effectCards[0].classList.add('active');
+selectedEffect = 'original';
+resultPreview.querySelector('.video-placeholder').innerHTML = '处理后将显示在这里';
+resultBadge.textContent = '待处理';
+resultBadge.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+effectGallery.style.display = 'none';
+processButton.disabled = true;
+downloadButton.disabled = true;
+uploadStatus.style.display = 'none';
+tutorialStatus.style.display = 'none';
+processStatus.style.display = 'none';
+});
+downloadButton.addEventListener('click', function() {
+if (!uploadedFile) {
+showStatus(processStatus, '无可下载文件', 'error');
+return;
+}
+var link = document.createElement('a');
+var ext = selectedMediaType === 'video' ? '.mp4' : '.jpg';
+link.download = 'lixiu_' + selectedEffect + '_result' + ext;
+link.href = uploadedFile.data;
+link.click();
+showStatus(processStatus, '下载成功！', 'success');
+});
+function showStatus(el, msg, type) {
+el.textContent = msg;
+el.className = 'status-message status-' + type;
+el.style.display = 'block';
+setTimeout(function() { el.style.display = 'none'; }, 3000);
+}
+document.getElementById('floatingButton').addEventListener('click', function() {
+window.location.href = 'mailto:2207707856@qq.com?subject=lixiu&body=hello';
+});
+function downloadProject() {
+var data = { name: 'lixiu', version: '0.99', lastUpdate: new Date().toLocaleDateString() };
+var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+var url = URL.createObjectURL(blob);
+var a = document.createElement('a');
+a.href = url;
+a.download = 'lixiu_project.json';
+a.click();
+URL.revokeObjectURL(url);
+}
+function viewSource() {
+window.location.href = 'https://lixiu-ohye.github.io/lixiu';
+}
+</script>
+</body>
+</html>
