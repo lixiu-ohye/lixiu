@@ -295,6 +295,21 @@ header:hover { box-shadow: var(--shadow-hover); }
 .ai-param-val { font-size: 12px; font-weight: 600; color: var(--rose-deep); min-width: 36px; text-align: right; }
 .ai-param-select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 12px; font-family: 'Inter','Noto Sans SC',sans-serif; font-size: 13px; background: var(--card-bg); color: var(--text-primary); flex: 1; min-width: 120px; }
 
+/* ===== AI 独立上传和预览 ===== */
+.ai-upload-zone { border: 2px dashed var(--blush); border-radius: 18px; padding: 35px 20px; text-align: center; cursor: pointer; transition: all 0.3s; background: rgba(250,248,245,0.3); margin-bottom: 20px; }
+.ai-upload-zone:hover { background: rgba(232,196,196,0.08); border-color: var(--rose); }
+.ai-upload-icon { font-size: 44px; margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
+.ai-upload-text { font-size: 15px; color: var(--text-secondary); margin-bottom: 6px; }
+.ai-upload-hint { font-size: 11px; color: var(--text-muted); }
+.ai-preview-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.ai-preview-box { text-align: center; }
+.ai-preview-label { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 1px; }
+.ai-preview-frame { width: 100%; height: 220px; background: #f5f0eb; border-radius: 14px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+.ai-preview-frame img { width: 100%; height: 100%; object-fit: contain; border-radius: 14px; }
+.ai-preview-frame video { width: 100%; height: 100%; object-fit: contain; border-radius: 14px; }
+.ai-preview-placeholder { color: var(--text-muted); font-size: 12px; padding: 10px; text-align: center; }
+@media (max-width: 600px) { .ai-preview-row { grid-template-columns: 1fr; } }
+
 /* ===== Crawler ===== */
 .crawler-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin: 18px 0; }
 .stat-card { background: rgba(250,248,245,0.5); border: 1px solid var(--border); border-radius: 16px; padding: 16px; text-align: center; }
@@ -614,8 +629,27 @@ header:hover { box-shadow: var(--shadow-hover); }
 <!-- ===== AI ===== -->
 <div class="panel" id="tab-ai">
 <div class="section-title"><span class="icon">🤖</span>AI 智能修图</div>
-<p style="color:var(--text-secondary);font-size:13px;margin-bottom:18px;">上传图片后，选择模型和参数，一键AI智能处理</p>
 
+<!-- AI 标签页内独立的上传区域 -->
+<div class="ai-upload-zone" id="aiUploadZone">
+  <div class="ai-upload-icon">📸</div>
+  <div class="ai-upload-text">点击或拖拽上传图片</div>
+  <div class="ai-upload-hint">支持 JPG / PNG / WebP，最大 50MB</div>
+  <input type="file" id="aiFileInput" accept="image/jpeg,image/png,image/webp" style="display:none">
+</div>
+
+<div class="ai-preview-row" id="aiPreviewRow" style="display:none;">
+  <div class="ai-preview-box">
+    <div class="ai-preview-label">⬅ 原始</div>
+    <div class="ai-preview-frame" id="aiOriginalPreview"></div>
+  </div>
+  <div class="ai-preview-box">
+    <div class="ai-preview-label">处理效果 ➡</div>
+    <div class="ai-preview-frame" id="aiResultPreview"></div>
+  </div>
+</div>
+
+<!-- 模型选择 -->
 <div class="ai-grid" id="aiModelGrid">
 <div class="ai-card active" data-ai="portrait"><div class="ai-icon">👤</div><div class="ai-name">人像增强</div><div class="ai-desc">磨皮、美白、五官优化</div></div>
 <div class="ai-card" data-ai="removebg"><div class="ai-icon">✂️</div><div class="ai-name">智能去背景</div><div class="ai-desc">一键移除背景</div></div>
@@ -667,8 +701,9 @@ header:hover { box-shadow: var(--shadow-hover); }
 </div>
 
 <div class="action-buttons" style="margin-top:18px;">
-<div class="action-button process-button" onclick="startAIProcess()">🤖 开始AI处理</div>
+<div class="action-button process-button" id="aiProcessBtn" disabled>🤖 开始AI处理</div>
 <div class="action-button reset-button" onclick="resetAI()">↻ 重置</div>
+<div class="action-button download-button" id="aiDownloadBtn" disabled>⬇ 下载结果</div>
 </div>
 <div class="loading" id="aiLoading"><div class="loading-spinner"></div><p>AI处理中...</p></div>
 <div class="status-message" id="aiStatus"></div>
@@ -760,13 +795,11 @@ header:hover { box-shadow: var(--shadow-hover); }
    - 保留全部原有功能
    ================================================================== */
 
-var APP_VERSION = '2.1.0';
+var APP_VERSION = '2.1.3';
 var uploadedFile = null;
 var selectedPlatform = 'xiaohongshu';
 var selectedMediaType = 'video';
 var selectedEffect = 'original';
-var selectedAI = 'portrait';
-var aiStrength = 0.7;
 var projectHistory = [];
 var settings = {};
 
@@ -967,41 +1000,60 @@ document.getElementById('saveProjectButton').addEventListener('click',function()
   showStatus('processStatus','项目已保存！','success');
 });
 
-// ====== 🧠 AIImageProcessor 类 + AI 参数控制 ======
-class AIImageProcessor {
-  constructor() {
-    this.currentImage = null;
-    this.processedImage = null;
-    this.isProcessing = false;
-    this.modelNames = {
-      portrait: '人像增强', removebg: '智能去背景',
-      style: '风格迁移', superres: '超分辨率', colorize: '色彩校正'
-    };
-  }
-  setImage(data) { this.currentImage = data; this.processedImage = null; }
-  simulateProcessing(label, time) {
-    this.isProcessing = true;
-    return new Promise(function(resolve) {
-      setTimeout(function() {
-        resolve({ status: 'done', model: label, processingTime: time+'秒' });
-        thisValue.isProcessing = false;
-      }.bind(this), time*1000);
-    });
-  }
+// ====== 🧠 AI 修图：完全独立的上传 + 预览 + 处理管线 ======
+var aiUploadedFile = null;       // AI 标签页独立文件
+var aiProcessedData = null;     // AI 处理后的结果
+
+// AI 上传
+(function() {
+  var zone = document.getElementById('aiUploadZone');
+  var input = document.getElementById('aiFileInput');
+  if (!zone) return;
+  zone.addEventListener('click', function() { input.click(); });
+  zone.addEventListener('dragover', function(e) { e.preventDefault(); });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    if (e.dataTransfer.files.length > 0) handleAIUpload(e.dataTransfer.files[0]);
+  });
+  input.addEventListener('change', function(e) {
+    if (e.target.files.length > 0) handleAIUpload(e.target.files[0]);
+  });
+})();
+
+function handleAIUpload(file) {
+  var valid = ['image/jpeg','image/png','image/webp'];
+  if (!valid.includes(file.type)) { showStatus('aiStatus', '仅支持 JPG/PNG/WebP 格式', 'error'); return; }
+  if (file.size > 50*1024*1024) { showStatus('aiStatus', '图片不能超过 50MB', 'error'); return; }
+  var r = new FileReader();
+  r.onload = function(e) {
+    aiUploadedFile = { name:file.name, type:file.type, size:file.size, data:e.target.result };
+    // 显示原始预览
+    var op = document.getElementById('aiOriginalPreview');
+    op.innerHTML = '<img src="'+e.target.result+'" alt="原始图片">';
+    document.getElementById('aiPreviewRow').style.display = 'grid';
+    // 清空结果
+    var rp = document.getElementById('aiResultPreview');
+    rp.innerHTML = '<div class="ai-preview-placeholder">处理后将显示在这里</div>';
+    aiProcessedData = null;
+    document.getElementById('aiProcessBtn').disabled = false;
+    document.getElementById('aiDownloadBtn').disabled = true;
+    showStatus('aiStatus', '✅ 图片上传成功：'+file.name, 'success');
+  };
+  r.readAsDataURL(file);
 }
 
-// AI 模型选择 → 显示/隐藏参数面板
+// AI 模型选择切换参数面板
 var aiParamContainers = {
   portrait: 'aiParamsPortrait', removebg: 'aiParamsRemovebg',
   style: 'aiParamsStyle', superres: 'aiParamsSuperres', colorize: 'aiParamsColor'
 };
+var selectedAI = 'portrait';
 
 document.querySelectorAll('.ai-card').forEach(function(c) {
   c.addEventListener('click', function() {
     document.querySelectorAll('.ai-card').forEach(function(x) { x.classList.remove('active'); });
     this.classList.add('active');
     selectedAI = this.dataset.ai;
-    // 切换参数面板
     for (var k in aiParamContainers) {
       var el = document.getElementById(aiParamContainers[k]);
       if (el) el.style.display = (k === selectedAI) ? 'block' : 'none';
@@ -1009,8 +1061,8 @@ document.querySelectorAll('.ai-card').forEach(function(c) {
   });
 });
 
-// 参数滑块联动
-var paramSliderWatchers = [
+// 参数滑块数值显示
+var aiParamSliderMappings = [
   {id:'pSkin',out:'pSkinVal',suffix:'%'},
   {id:'pEye',out:'pEyeVal',suffix:'%'},
   {id:'pTeeth',out:'pTeethVal',suffix:'%'},
@@ -1019,12 +1071,13 @@ var paramSliderWatchers = [
   {id:'pTint',out:'pTintVal',suffix:''},
   {id:'pSat',out:'pSatVal',suffix:'%'}
 ];
-paramSliderWatchers.forEach(function(w) {
+aiParamSliderMappings.forEach(function(w) {
   var s = document.getElementById(w.id);
-  if (!s) return;
-  s.addEventListener('input', function() {
-    document.getElementById(w.out).textContent = this.value + w.suffix;
-  });
+  if (s) {
+    s.addEventListener('input', function() {
+      document.getElementById(w.out).textContent = this.value + w.suffix;
+    });
+  }
 });
 
 function readAIParams() {
@@ -1046,36 +1099,33 @@ function readAIParams() {
   return p;
 }
 
-const aiProcessor = new AIImageProcessor();
-
-function startAIProcess() {
-  if (!uploadedFile || selectedMediaType !== 'image') {
-    showStatus('aiStatus', '请先上传一张图片', 'error');
-    return;
-  }
+// 开始AI处理
+document.getElementById('aiProcessBtn').addEventListener('click', function() {
+  if (!aiUploadedFile) { showStatus('aiStatus', '请先上传一张图片', 'error'); return; }
   
   var loading = document.getElementById('aiLoading');
   var statusEl = document.getElementById('aiStatus');
   loading.style.display = 'block';
   statusEl.style.display = 'none';
+  this.disabled = true;
   
-  aiProcessor.setImage(uploadedFile);
   var params = readAIParams();
   var simTime = { portrait:1.2, removebg:2.0, style:3.0, superres:4.0, colorize:0.8 };
   var delay = (simTime[selectedAI] || 2) * 1000;
   
+  var self = this;
   setTimeout(function() {
     loading.style.display = 'none';
+    self.disabled = false;
     
-    // 显示结果
-    var rp = document.querySelector('#resultPreview .video-placeholder');
-    if (rp) {
-      rp.innerHTML = '<img src="'+uploadedFile.data+'" style="width:100%;height:100%;object-fit:cover;border-radius:16px;">';
-    }
-    document.getElementById('resultBadge').textContent = 'AI处理完成';
-    document.getElementById('downloadButton').disabled = false;
+    // 在 AI 结果预览区显示图片
+    var rp = document.getElementById('aiResultPreview');
+    rp.innerHTML = '<img src="'+aiUploadedFile.data+'" alt="处理结果">';
+    aiProcessedData = aiUploadedFile.data;
+    document.getElementById('aiDownloadBtn').disabled = false;
     
-    var modelName = aiProcessor.modelNames[selectedAI] || selectedAI;
+    var modelNames = { portrait:'人像增强', removebg:'智能去背景', style:'风格迁移', superres:'超分辨率', colorize:'色彩校正' };
+    var modelName = modelNames[selectedAI] || selectedAI;
     var extraInfo = '';
     if (selectedAI === 'portrait') {
       extraInfo = ' | 皮肤:'+Math.round(params.skinSmoothing*100)+'% 眼睛:'+Math.round(params.eyeBrightening*100)+'% 牙齿:'+Math.round(params.teethWhitening*100)+'%';
@@ -1086,25 +1136,30 @@ function startAIProcess() {
     } else if (selectedAI === 'superres') {
       extraInfo = ' | 放大:'+params.scale+'x';
     }
-    
     showStatus('aiStatus', '✅ '+modelName+' 处理完成！'+extraInfo, 'success');
-    if (settings.saveHistory !== false) {
-      saveToHistory(uploadedFile.name, 'AI_'+selectedAI);
-    }
   }, delay);
-}
+});
+
+// AI 下载按钮
+document.getElementById('aiDownloadBtn').addEventListener('click', function() {
+  if (!aiProcessedData) return;
+  var a = document.createElement('a');
+  a.download = 'lixiu_ai_'+selectedAI+'_'+Date.now()+'.jpg';
+  a.href = aiProcessedData;
+  a.click();
+});
 
 function resetAI() {
-  // 重置参数滑块到默认值
+  // 重置参数
   var defaults = { pSkin:80, pEye:65, pTeeth:70, pStyleIntensity:80, pTemp:0, pTint:0, pSat:100 };
-  paramSliderWatchers.forEach(function(w) {
+  aiParamSliderMappings.forEach(function(w) {
     var s = document.getElementById(w.id);
     if (s && defaults[w.id] !== undefined) {
       s.value = defaults[w.id];
       document.getElementById(w.out).textContent = defaults[w.id] + w.suffix;
     }
   });
-  // 重置选中
+  // 重置模型选择
   selectedAI = 'portrait';
   document.querySelectorAll('.ai-card').forEach(function(c) { c.classList.remove('active'); });
   document.querySelector('.ai-card[data-ai="portrait"]').classList.add('active');
@@ -1112,6 +1167,13 @@ function resetAI() {
     var el = document.getElementById(aiParamContainers[k]);
     if (el) el.style.display = (k === 'portrait') ? 'block' : 'none';
   }
+  // 重置文件
+  aiUploadedFile = null;
+  aiProcessedData = null;
+  document.getElementById('aiUploadZone').style.display = 'block';
+  document.getElementById('aiPreviewRow').style.display = 'none';
+  document.getElementById('aiProcessBtn').disabled = true;
+  document.getElementById('aiDownloadBtn').disabled = true;
   document.getElementById('aiStatus').style.display = 'none';
 }
 
