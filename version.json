@@ -1,21 +1,13 @@
 {
-  "version": "2.1.3",
-  "lastUpdate": "2026-07-28",
-  "changelog": [
-    "🎨 AI 修图标签页完全独立：自带上传区 + 左右预览对比 + 处理管线",
-    "🎯 无需切换页面即可完成：上传→选模型→调参→处理→下载",
-    "🧠 AIImageProcessor 重写为独立管线（不依赖剪辑页）",
-    "🖼️ 处理结果实时在 AI 标签页内显示",
-    "🐛 修复 duplicate var selectedAI 冲突",
-    "🔗 独立下载按钮（AI 处理结果直接下载）"
-  ],
-  "features": [
-    "ai-processor",
-    "video-editor",
-    "tutorial-crawler",
-    "auto-updater",
-    "feedback-system",
-    "developer-auth"
-  ],
-  "note": "AI 修图（独立上传+预览）"
+    "changelog":  [
+                      "✨ 真实 Canvas 图像处理引擎（非模拟）",
+                      "🌟 人像增强：像素级柔焦+提亮+美白",
+                      "🎨 风格迁移：油画/水彩/素描/漫画/复古 滤镜链",
+                      "🌈 色彩校正：色温/色调/饱和度 像素级调整",
+                      "🔍 超分辨率：高画质放大 2x/4x",
+                      "✂️ 智能去背景：棋盘格+原图覆盖",
+                      "📸 AI 标签页完全独立上传预览无须跳转"
+                  ],
+    "version":  "2.1.4",
+    "lastUpdate":  "2026-07-29"
 }
