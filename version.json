@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "lastUpdate": "2026-07-28",
+  "downloadUrl": "https://lixiu-ohye.github.io/lixiu/",
+  "changelog": [
+    "新增：AI图像处理模块（人像增强、去背景、风格迁移、超分辨率、色彩校正）",
+    "新增：6大平台教程爬虫（小红书、抖音、B站、快手、剪映、微博）",
+    "新增：多轨道视频编辑与合成",
+    "新增：自动版本检测与更新通知",
+    "新增：历史记录与项目管理（localStorage持久化）",
+    "新增：用户反馈系统",
+    "新增：设置面板（自动更新、历史保存、通知开关）"
+  ],
+  "dependencies": {
+    "ai-processor": "^2.0.0",
+    "video-editor": "^2.0.0",
+    "tutorial-crawler": "^2.0.0"
+  }
+}
