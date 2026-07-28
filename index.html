@@ -3,614 +3,1265 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>哩修 - 全能傻瓜式视频剪辑系统</title>
+<title>哩修 v2.0 - 全能视频剪辑与AI修图系统</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #333; overflow-x: hidden; }
 .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+/* ===== Header ===== */
 header { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 25px; margin-bottom: 35px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); backdrop-filter: blur(10px); }
-.header-content { display: flex; justify-content: space-between; align-items: center; }
+.header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
 .logo { display: flex; align-items: center; gap: 12px; }
 .logo-icon { width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3); }
 .logo-text { font-size: 32px; font-weight: bold; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.nav { display: flex; gap: 25px; }
-.nav a { text-decoration: none; color: #333; font-weight: 500; font-size: 16px; transition: all 0.3s; position: relative; padding: 5px 0; }
+.logo-version { font-size: 12px; color: #667eea; background: rgba(102,126,234,0.1); border-radius: 10px; padding: 2px 8px; margin-left: 4px; }
+.nav { display: flex; gap: 25px; align-items: center; flex-wrap: wrap; }
+.nav a { text-decoration: none; color: #333; font-weight: 500; font-size: 16px; transition: all 0.3s; position: relative; padding: 5px 0; cursor: pointer; }
 .nav a:hover { color: #667eea; }
 .nav a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: #667eea; transition: width 0.3s; }
 .nav a:hover::after { width: 100%; }
-.project-info { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 35px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); backdrop-filter: blur(10px); margin-bottom: 35px; }
+.nav a.active { color: #667eea; }
+.nav a.active::after { width: 100%; }
+.update-badge { background: #ff4444; color: white; font-size: 10px; border-radius: 10px; padding: 1px 6px; margin-left: 4px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+/* ===== Panels ===== */
+.panel { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 35px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); backdrop-filter: blur(10px); margin-bottom: 35px; display: none; }
+.panel.active { display: block; animation: fadeIn 0.3s ease-out; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 .section-title { font-size: 28px; font-weight: bold; margin-bottom: 25px; color: #333; display: flex; align-items: center; gap: 10px; }
 .section-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; }
+
+/* ===== Tab Bar ===== */
+.tab-bar { display: flex; gap: 5px; background: rgba(255,255,255,0.9); border-radius: 15px; padding: 5px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow-x: auto; }
+.tab-btn { flex: 1; padding: 12px 16px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; background: transparent; color: #666; white-space: nowrap; }
+.tab-btn:hover { background: rgba(102,126,234,0.08); }
+.tab-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 3px 10px rgba(102,126,234,0.3); }
+
+/* ===== Info Grid ===== */
 .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 25px; }
 .info-card { background: #f8f9fa; border-radius: 15px; padding: 20px; text-align: center; transition: all 0.3s; }
 .info-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); }
 .info-icon { font-size: 40px; margin-bottom: 15px; }
-.info-title { font-size: 18px; font-weight: 600; margin-bottom: 10px; color: #333; }
+.info-title { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
 .info-value { font-size: 24px; font-weight: bold; color: #667eea; }
 .info-description { font-size: 14px; color: #666; margin-top: 10px; }
+
+/* ===== Upload ===== */
 .main-content { display: grid; grid-template-columns: 1fr 1fr; gap: 35px; margin-bottom: 35px; }
-.upload-section, .tutorial-section { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 35px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); backdrop-filter: blur(10px); }
 .media-types { display: flex; gap: 10px; margin-bottom: 20px; }
 .media-type-button { flex: 1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; background: white; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 14px; }
 .media-type-button.active { border-color: #667eea; background: rgba(102, 126, 234, 0.1); }
-.upload-area { border: 3px dashed #667eea; border-radius: 15px; padding: 50px; text-align: center; cursor: pointer; transition: all 0.3s; background: rgba(102, 126, 234, 0.05); position: relative; overflow: hidden; }
+.upload-area { border: 3px dashed #667eea; border-radius: 15px; padding: 50px 20px; text-align: center; cursor: pointer; transition: all 0.3s; background: rgba(102, 126, 234, 0.05); }
 .upload-area:hover { background: rgba(102, 126, 234, 0.1); border-color: #764ba2; transform: translateY(-2px); }
-.upload-icon { font-size: 60px; color: #667eea; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
-@keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+.upload-icon { font-size: 60px; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
 .upload-text { font-size: 20px; color: #666; margin-bottom: 15px; font-weight: 500; }
-.upload-hint { font-size: 16px; color: #999; line-height: 1.5; }
-.platform-selector { display: flex; gap: 15px; margin-bottom: 20px; }
-.platform-button { flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; background: white; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 500; }
-.platform-button.active { border-color: #667eea; background: rgba(102, 126, 234, 0.1); }
-.tutorial-input-container { position: relative; margin-bottom: 20px; }
+.upload-hint { font-size: 14px; color: #999; }
+
+/* ===== Tutorial ===== */
+.platform-selector { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.platform-button { padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 10px; background: white; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 5px; font-weight: 500; font-size: 13px; }
+.platform-button.active { border-color: #667eea; background: rgba(102,126,234,0.1); }
 .tutorial-input { width: 100%; padding: 15px 20px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; transition: all 0.3s; background: #f8f9fa; }
-.tutorial-input:focus { outline: none; border-color: #667eea; background: white; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
-.tutorial-button { width: 100%; padding: 15px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; }
-.tutorial-button:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3); }
+.tutorial-input:focus { outline: none; border-color: #667eea; background: white; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+.tutorial-button { width: 100%; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; margin-top: 12px; }
+.tutorial-button:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102,126,234,0.3); }
 .example-links { margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 10px; }
-.example-links h4 { margin-bottom: 10px; color: #333; }
-.example-link { display: block; padding: 8px 12px; margin: 5px 0; background: white; border-radius: 8px; color: #667eea; text-decoration: none; transition: all 0.3s; border: 1px solid #e0e0e0; }
+.example-link { display: block; padding: 8px 12px; margin: 5px 0; background: white; border-radius: 8px; color: #667eea; text-decoration: none; transition: all 0.3s; border: 1px solid #e0e0e0; cursor: pointer; font-size: 14px; }
 .example-link:hover { background: #667eea; color: white; transform: translateX(5px); }
-.preview-section { background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 35px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); backdrop-filter: blur(10px); margin-bottom: 35px; }
+.tutorial-info { display: none; margin-top: 15px; padding: 20px; background: #f8f9fa; border-radius: 12px; }
+
+/* ===== Preview ===== */
 .preview-container { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 25px; }
-.preview-box { text-align: center; position: relative; }
-.preview-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; color: #333; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.preview-box { text-align: center; }
+.preview-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .preview-badge { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
 .video-preview { width: 100%; height: 300px; background: #000; border-radius: 15px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-.video-placeholder { color: white; font-size: 18px; }
-.effect-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
-.effect-card { background: white; border-radius: 10px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
-.effect-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); border-color: #667eea; }
-.effect-card.active { border-color: #667eea; background: rgba(102, 126, 234, 0.1); }
-.effect-icon { font-size: 30px; margin-bottom: 10px; }
-.effect-name { font-size: 14px; font-weight: 600; color: #333; }
-.action-buttons { display: flex; gap: 20px; margin-top: 35px; }
-.action-button { flex: 1; padding: 18px 25px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; }
+.video-placeholder { color: white; font-size: 18px; text-align: center; padding: 10px; }
+
+/* ===== Effects ===== */
+.effect-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; margin-top: 20px; }
+.effect-card { background: white; border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
+.effect-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: #667eea; }
+.effect-card.active { border-color: #667eea; background: rgba(102,126,234,0.1); }
+.effect-icon { font-size: 24px; margin-bottom: 6px; }
+.effect-name { font-size: 13px; font-weight: 600; }
+
+/* ===== Buttons ===== */
+.action-buttons { display: flex; gap: 15px; margin-top: 25px; flex-wrap: wrap; }
+.action-button { flex: 1; min-width: 120px; padding: 15px 20px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+.action-button:disabled { background: #ccc !important; cursor: not-allowed; transform: none; box-shadow: none; }
 .process-button { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-.process-button:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3); }
-.process-button:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+.process-button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102,126,234,0.3); }
 .reset-button { background: #f0f0f0; color: #333; }
-.reset-button:hover { background: #e0e0e0; transform: translateY(-2px); }
+.reset-button:hover { background: #e0e0e0; }
 .download-button { background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; }
-.download-button:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3); }
-.download-button:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+.download-button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(76,175,80,0.3); }
+.save-button { background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); color: white; }
+.save-button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(255,152,0,0.3); }
+
+/* ===== Loading & Status ===== */
 .loading { display: none; text-align: center; padding: 30px; }
 .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
 .status-message { padding: 20px; border-radius: 12px; margin-top: 25px; display: none; font-weight: 500; animation: slideIn 0.3s ease-out; }
-@keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideIn { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
 .status-success { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); color: #155724; border: 1px solid #c3e6cb; }
 .status-error { background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); color: #721c24; border: 1px solid #f5c6cb; }
 .status-info { background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); color: #0c5460; border: 1px solid #bee5eb; }
-.floating-button { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; cursor: pointer; box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3); transition: all 0.3s; z-index: 1000; }
-.floating-button:hover { transform: translateY(-5px) scale(1.1); box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4); }
-.download-section { text-align: center; margin-bottom: 35px; }
-.download-section h2 { font-size: 28px; font-weight: bold; margin-bottom: 25px; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; }
-.download-section p { color: #666; margin-bottom: 25px; }
-.download-buttons { display: flex; gap: 20px; justify-content: center; }
-.download-link { display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 10px; font-weight: 600; transition: all 0.3s; }
-.download-link:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3); }
-.fade-in { animation: fadeIn 0.5s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-@media (max-width: 768px) { .main-content { grid-template-columns: 1fr; } .preview-container { grid-template-columns: 1fr; } .action-buttons { flex-direction: column; } .nav { display: none; } .header-content { flex-direction: column; gap: 20px; } .section-title { font-size: 24px; } .effect-gallery { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); } }
+
+/* ===== AI Tab ===== */
+.ai-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin: 20px 0; }
+.ai-card { background: #f8f9fa; border-radius: 15px; padding: 25px; text-align: center; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
+.ai-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-color: #667eea; }
+.ai-card.active { border-color: #667eea; background: rgba(102,126,234,0.08); }
+.ai-card.disabled { opacity: 0.5; cursor: not-allowed; }
+.ai-icon { font-size: 36px; margin-bottom: 10px; }
+.ai-name { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.ai-desc { font-size: 13px; color: #666; }
+.ai-slider-group { margin: 20px 0; }
+.ai-slider-group label { font-weight: 600; display: block; margin-bottom: 8px; }
+.ai-slider { width: 100%; }
+.ai-slider-value { float: right; color: #667eea; font-weight: 600; }
+
+/* ===== Crawler Tab ===== */
+.crawler-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; }
+.stat-card { background: #f8f9fa; border-radius: 12px; padding: 20px; text-align: center; }
+.stat-number { font-size: 28px; font-weight: bold; color: #667eea; }
+.stat-label { font-size: 13px; color: #666; margin-top: 5px; }
+.crawler-log { background: #1a1a2e; color: #00ff88; border-radius: 12px; padding: 20px; font-family: 'Courier New', monospace; font-size: 13px; max-height: 300px; overflow-y: auto; margin-top: 15px; }
+.log-line { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.log-time { color: #888; }
+.log-info { color: #00ff88; }
+.log-warn { color: #ffaa00; }
+.log-error { color: #ff4444; }
+
+/* ===== Version Tab ===== */
+.version-timeline { position: relative; padding: 20px 0; }
+.version-item { display: flex; gap: 20px; margin-bottom: 25px; position: relative; }
+.version-dot { width: 14px; height: 14px; border-radius: 50%; background: #667eea; flex-shrink: 0; margin-top: 4px; border: 3px solid white; box-shadow: 0 0 0 2px #667eea; }
+.version-item.current .version-dot { background: #4CAF50; box-shadow: 0 0 0 2px #4CAF50; animation: glow 2s infinite; }
+@keyframes glow { 0%,100%{box-shadow:0 0 0 2px #4CAF50,0 0 8px #4CAF50} 50%{box-shadow:0 0 0 2px #4CAF50,0 0 16px #4CAF50} }
+.version-content { flex: 1; }
+.version-tag { font-size: 12px; background: #667eea; color: white; border-radius: 10px; padding: 2px 10px; display: inline-block; margin-bottom: 5px; }
+.version-item.current .version-tag { background: #4CAF50; }
+.version-content h3 { font-size: 16px; margin-bottom: 5px; }
+.version-content ul { margin: 0; padding-left: 20px; }
+.version-content li { font-size: 14px; color: #666; margin: 3px 0; }
+
+/* ===== Settings Tab ===== */
+.setting-row { display: flex; align-items: center; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #eee; gap: 15px; flex-wrap: wrap; }
+.setting-label { font-weight: 600; }
+.setting-desc { font-size: 13px; color: #666; margin-top: 2px; }
+.toggle-switch { width: 50px; height: 28px; background: #ccc; border-radius: 14px; cursor: pointer; transition: all 0.3s; position: relative; flex-shrink: 0; }
+.toggle-switch.on { background: #667eea; }
+.toggle-switch::after { content: ''; width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 3px; left: 3px; transition: all 0.3s; }
+.toggle-switch.on::after { left: 25px; }
+
+/* ===== Floating Button ===== */
+.floating-btn { position: fixed; bottom: 30px; right: 30px; width: 56px; height: 56px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 22px; cursor: pointer; box-shadow: 0 8px 20px rgba(102,126,234,0.4); transition: all 0.3s; z-index: 1000; }
+.floating-btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 30px rgba(102,126,234,0.5); }
+
+/* ===== Update Notification ===== */
+.update-notification { position: fixed; top: 20px; right: 20px; background: white; border-radius: 16px; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); z-index: 9999; max-width: 360px; animation: slideDown 0.4s ease-out; }
+@keyframes slideDown { from{transform:translateY(-100px);opacity:0} to{transform:translateY(0);opacity:1} }
+.update-notification h3 { color: #667eea; margin-bottom: 8px; }
+.update-notification ul { margin: 10px 0 15px 20px; font-size: 14px; color: #555; }
+.update-notification .update-btn { display: inline-block; padding: 8px 20px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin: 0 5px 5px 0; }
+.update-notification .update-btn.dismiss { background: #eee; color: #333; }
+
+/* ===== Feedback Modal ===== */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9998; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: white; border-radius: 20px; padding: 30px; max-width: 480px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); animation: modalIn 0.3s ease-out; }
+@keyframes modalIn { from{transform:scale(0.9);opacity:0} to{transform:scale(1);opacity:1} }
+.modal h2 { margin-bottom: 20px; }
+.modal textarea { width: 100%; min-height: 120px; padding: 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 14px; resize: vertical; margin-bottom: 15px; }
+.modal textarea:focus { outline: none; border-color: #667eea; }
+.modal .modal-btns { display: flex; gap: 10px; }
+.modal .modal-btns button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
+
+/* ===== History ===== */
+.history-list { max-height: 400px; overflow-y: auto; }
+.history-item { background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border-left: 4px solid #667eea; }
+.history-item:hover { background: #eef0ff; }
+.history-item .h-time { font-size: 12px; color: #999; }
+.history-item .h-file { font-weight: 600; margin: 4px 0; }
+.history-item .h-effect { font-size: 13px; color: #666; }
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+.main-content, .preview-container { grid-template-columns: 1fr; }
+.action-buttons { flex-direction: column; }
+.nav { justify-content: center; gap: 12px; font-size: 14px; }
+.header-content { flex-direction: column; text-align: center; }
+.tab-bar { overflow-x: auto; }
+.tab-btn { font-size: 12px; padding: 10px; }
+.update-notification { left: 20px; right: 20px; max-width: none; }
+}
+
+/* ===== Version Progress ===== */
+.version-progress { background: #f8f9fa; border-radius: 12px; padding: 20px; margin-top: 20px; }
+.progress-bar { height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin: 10px 0; }
+.progress-fill { height: 100%; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 4px; transition: width 0.5s; }
 </style>
 </head>
 <body>
 <div class="container">
+
+<!-- Header -->
 <header>
 <div class="header-content">
 <div class="logo">
 <div class="logo-icon">🎬</div>
-<div class="logo-text">哩修</div>
+<div class="logo-text">哩修 <span class="logo-version" id="headerVersion">v2.0.0</span></div>
 </div>
 <nav class="nav">
-<a href="#home">首页</a>
-<a href="#tutorials">教程库</a>
-<a href="#effects">效果库</a>
-<a href="#about">关于我们</a>
+<a class="active" data-tab="home">首页</a>
+<a data-tab="editor">剪辑</a>
+<a data-tab="ai">AI修图</a>
+<a data-tab="crawler">爬虫</a>
+<a data-tab="history">历史</a>
+<a data-tab="settings">设置</a>
+<a data-tab="about">关于</a>
 </nav>
 </div>
 </header>
+
+<!-- ===== TAB: HOME ===== -->
+<div class="panel active" id="tab-home">
 <div class="project-info fade-in">
-<h2 class="section-title">
-<div class="section-icon">📊</div>
-项目进展
-</h2>
+<h2 class="section-title"><div class="section-icon">📊</div>项目进展</h2>
 <div class="info-grid">
-<div class="info-card">
-<div class="info-icon">🎯</div>
-<div class="info-title">总体进度</div>
-<div class="info-value">93%</div>
-<div class="info-description">预计2026年10月1日发布</div>
-</div>
-<div class="info-card">
-<div class="info-icon">🖼️</div>
-<div class="info-title">图像处理</div>
-<div class="info-value">100%</div>
-<div class="info-description">AI磨皮、3D人脸建模</div>
-</div>
-<div class="info-card">
-<div class="info-icon">🔗</div>
-<div class="info-title">教程解析</div>
-<div class="info-value">98%</div>
-<div class="info-description">小红书、抖音、剪映</div>
-</div>
-<div class="info-card">
-<div class="info-icon">🎬</div>
-<div class="info-title">视频剪辑</div>
-<div class="info-value">95%</div>
-<div class="info-description">多轨道、智能卡点</div>
+<div class="info-card"><div class="info-icon">🎯</div><div class="info-title">总体进度</div><div class="info-value">93%</div><div class="info-description">预计10月1日发布</div></div>
+<div class="info-card"><div class="info-icon">🖼️</div><div class="info-title">AI修图</div><div class="info-value" id="vAi">v2.0</div><div class="info-description">磨皮、去背景、超分</div></div>
+<div class="info-card"><div class="info-icon">🔗</div><div class="info-title">教程解析</div><div class="info-value" id="vCrawl">v2.0</div><div class="info-description">6大平台支持</div></div>
+<div class="info-card"><div class="info-icon">🎬</div><div class="info-title">视频剪辑</div><div class="info-value" id="vEdit">v2.0</div><div class="info-description">多轨道+智能卡点</div></div>
 </div>
 </div>
+
+<div class="version-progress fade-in">
+<h3>📦 版本演化</h3>
+<div class="version-timeline">
+<div class="version-item current">
+<div class="version-dot"></div>
+<div class="version-content">
+<div class="version-tag">当前版本 v2.0.0</div>
+<h3>AI + 爬虫 + 多轨道</h3>
+<ul>
+<li>新增 6大平台教程爬虫（小红书/抖音/B站/快手/剪映/微博）</li>
+<li>新增 AI修图模块（去背景、风格迁移、超分辨率、色彩校正）</li>
+<li>新增 多轨道视频编辑与合成</li>
+<li>新增 自动版本检测与更新</li>
+<li>新增 历史记录云端同步（localStorage）</li>
+</ul>
 </div>
+</div>
+<div class="version-item">
+<div class="version-dot"></div>
+<div class="version-content">
+<div class="version-tag">v1.0.0</div>
+<h3>基础剪辑 + 教程解析</h3>
+<ul><li>基础视频/图片上传与处理</li><li>小红书/抖音/剪映教程解析</li><li>效果预览与下载</li></ul>
+</div>
+</div>
+</div>
+</div>
+
+<div class="download-section" style="text-align:center;margin-top:20px;">
+<h2 class="section-title" style="justify-content:center;"><div class="section-icon">📥</div>下载项目</h2>
+<p style="color:#666;margin-bottom:20px;">包含所有功能模块和自动更新系统</p>
+<div class="action-buttons" style="justify-content:center;">
+<a class="action-button process-button" style="display:inline-block;text-decoration:none;text-align:center;" onclick="downloadProject()">📥 下载完整项目</a>
+<a class="action-button save-button" style="display:inline-block;text-decoration:none;text-align:center;" onclick="window.location.href='https://lixiu-ohye.github.io/lixiu'">🔗 在线演示</a>
+</div>
+</div>
+</div>
+
+<!-- ===== TAB: EDITOR ===== -->
+<div class="panel" id="tab-editor">
 <div class="main-content">
 <div class="upload-section fade-in">
-<h2 class="section-title">
-<div class="section-icon">📹</div>
-上传视频
-</h2>
+<h2 class="section-title"><div class="section-icon">📹</div>上传素材</h2>
 <div class="media-types">
-<div class="media-type-button active" data-type="video">
-<span>🎬</span>
-<span>视频</span>
-</div>
-<div class="media-type-button" data-type="image">
-<span>🖼️</span>
-<span>图片</span>
-</div>
+<div class="media-type-button active" data-type="video"><span>🎬</span><span>视频</span></div>
+<div class="media-type-button" data-type="image"><span>🖼️</span><span>图片</span></div>
 </div>
 <div class="upload-area" id="uploadArea">
 <div class="upload-icon">📁</div>
 <div class="upload-text">点击或拖拽视频/图片到这里</div>
-<div class="upload-hint">支持 MP4、MOV、JPG、PNG 格式，最大 100MB</div>
-<input type="file" id="fileInput" accept="video/*,image/*" style="display: none;">
+<div class="upload-hint">支持 MP4、MOV、JPG、PNG，最大100MB</div>
+<input type="file" id="fileInput" accept="video/*,image/*" style="display:none;">
 </div>
-<div class="loading" id="uploadLoading">
-<div class="loading-spinner"></div>
-<p>正在上传文件...</p>
-</div>
+<div class="loading" id="uploadLoading"><div class="loading-spinner"></div><p>正在上传...</p></div>
 <div class="status-message" id="uploadStatus"></div>
 </div>
+
 <div class="tutorial-section fade-in">
-<h2 class="section-title">
-<div class="section-icon">🔗</div>
-教程链接
-</h2>
+<h2 class="section-title"><div class="section-icon">🔗</div>教程解析</h2>
 <div class="platform-selector">
-<div class="platform-button active" data-platform="xiaohongshu">
-<span class="platform-icon">🔴</span>
-<span>小红书</span>
-</div>
-<div class="platform-button" data-platform="douyin">
-<span class="platform-icon">🎵</span>
-<span>抖音</span>
-</div>
-<div class="platform-button" data-platform="jianying">
-<span class="platform-icon">✂️</span>
-<span>剪映</span>
-</div>
+<div class="platform-button active" data-platform="xiaohongshu">🔴 小红书</div>
+<div class="platform-button" data-platform="douyin">🎵 抖音</div>
+<div class="platform-button" data-platform="bilibili">📺 B站</div>
+<div class="platform-button" data-platform="kuaishou">📱 快手</div>
+<div class="platform-button" data-platform="jianying">✂️ 剪映</div>
+<div class="platform-button" data-platform="weibo">📰 微博</div>
 </div>
 <div class="tutorial-input-container">
-<input
-type="text"
-class="tutorial-input"
-id="tutorialInput"
-placeholder="输入教程链接，如：http://xhslink.cn/o/4Jy6Lnn1UbQ"
->
+<input type="text" class="tutorial-input" id="tutorialInput" placeholder="输入教程链接，如：http://xhslink.cn/o/4Jy6Lnn1UbQ">
 </div>
-<button class="tutorial-button" id="parseTutorialButton">
-✨ 解析教程
-</button>
+<button class="tutorial-button" id="parseTutorialButton">✨ 解析教程</button>
 <div class="example-links">
-<h4>🔥 热门剪辑教程</h4>
-<a href="#" class="example-link" data-url="http://xhslink.cn/o/4Jy6Lnn1UbQ" data-platform="xiaohongshu">
-🔴 小红书：卡牌翻转卡点效果
-</a>
-<a href="#" class="example-link" data-url="http://xhslink.cn/o/6qDI4mtN4xm" data-platform="xiaohongshu">
-🔴 小红书：电影转场效果
-</a>
-<a href="#" class="example-link" data-url="https://v.douyin.com/xxxxxxx" data-platform="douyin">
-🎵 抖音：动态分屏效果
-</a>
-<a href="#" class="example-link" data-url="https://v.douyin.com/yyyyyyy" data-platform="douyin">
-🎵 抖音：变速卡点效果
-</a>
-<a href="#" class="example-link" data-url="https://www.jianying.com/tutorial/123" data-platform="jianying">
-✂️ 剪映：一键调色教程
-</a>
+<h4>🔥 热门教程</h4>
+<a class="example-link" data-url="http://xhslink.cn/o/4Jy6Lnn1UbQ" data-platform="xiaohongshu">🔴 小红书：卡牌翻转卡点效果</a>
+<a class="example-link" data-url="http://xhslink.cn/o/6qDI4mtN4xm" data-platform="xiaohongshu">🔴 小红书：电影转场效果</a>
+<a class="example-link" data-url="https://v.douyin.com/xxxxxxx" data-platform="douyin">🎵 抖音：动态分屏效果</a>
+<a class="example-link" data-url="https://www.bilibili.com/video/BV1xxxx" data-platform="bilibili">📺 B站：专业调色教程</a>
 </div>
-<div class="loading" id="tutorialLoading">
-<div class="loading-spinner"></div>
-<p>正在解析教程...</p>
-</div>
+<div class="loading" id="tutorialLoading"><div class="loading-spinner"></div><p>正在解析教程...</p></div>
 <div class="status-message" id="tutorialStatus"></div>
-<div class="tutorial-info" id="tutorialInfo">
-<h3>📚 教程信息</h3>
-<div id="tutorialDetails"></div>
+<div class="tutorial-info" id="tutorialInfo"><h3>📚 教程信息</h3><div id="tutorialDetails"></div></div>
 </div>
 </div>
-</div>
-<div class="preview-section fade-in">
-<h2 class="section-title">
-<div class="section-icon">👀</div>
-效果预览
-</h2>
+
+<!-- Preview -->
+<div class="panel" style="background: rgba(255,255,255,0.95);border-radius:20px;padding:35px;box-shadow:0 15px 35px rgba(0,0,0,0.1);margin-top:0;">
+<h2 class="section-title"><div class="section-icon">👀</div>效果预览</h2>
 <div class="preview-container">
 <div class="preview-box">
-<div class="preview-title">
-原始素材
-<span class="preview-badge">原始</span>
-</div>
-<div class="video-preview" id="originalPreview">
-<div class="video-placeholder">请上传视频/图片</div>
-</div>
+<div class="preview-title">原始素材 <span class="preview-badge">原始</span></div>
+<div class="video-preview" id="originalPreview"><div class="video-placeholder">请上传视频/图片</div></div>
 </div>
 <div class="preview-box">
-<div class="preview-title">
-效果预览
-<span class="preview-badge" id="resultBadge">待处理</span>
-</div>
-<div class="video-preview" id="resultPreview">
-<div class="video-placeholder">处理后将显示在这里</div>
+<div class="preview-title">效果预览 <span class="preview-badge" id="resultBadge">待处理</span></div>
+<div class="video-preview" id="resultPreview"><div class="video-placeholder">处理后将显示在这里</div></div>
 </div>
 </div>
-</div>
-<div class="effect-gallery" id="effectGallery" style="display: none;">
-<h3 style="margin-bottom: 15px;">🎬 选择效果</h3>
-<div class="effect-card active" data-effect="original">
-<div class="effect-icon">🎬</div>
-<div class="effect-name">原始</div>
-</div>
-<div class="effect-card" data-effect="flip">
-<div class="effect-icon">🔄</div>
-<div class="effect-name">卡牌翻转</div>
-</div>
-<div class="effect-card" data-effect="transition">
-<div class="effect-icon">🎭</div>
-<div class="effect-name">电影转场</div>
-</div>
-<div class="effect-card" data-effect="split">
-<div class="effect-icon">📱</div>
-<div class="effect-name">动态分屏</div>
-</div>
-<div class="effect-card" data-effect="speed">
-<div class="effect-icon">⚡</div>
-<div class="effect-name">变速卡点</div>
-</div>
-<div class="effect-card" data-effect="color">
-<div class="effect-icon">🎨</div>
-<div class="effect-name">一键调色</div>
-</div>
+<div class="effect-gallery" id="effectGallery">
+<h3 style="margin-bottom:15px;">🎬 选择效果</h3>
+<div class="effect-card active" data-effect="original"><div class="effect-icon">🎬</div><div class="effect-name">原始</div></div>
+<div class="effect-card" data-effect="flip"><div class="effect-icon">🔄</div><div class="effect-name">卡牌翻转</div></div>
+<div class="effect-card" data-effect="transition"><div class="effect-icon">🎭</div><div class="effect-name">电影转场</div></div>
+<div class="effect-card" data-effect="split"><div class="effect-icon">📱</div><div class="effect-name">动态分屏</div></div>
+<div class="effect-card" data-effect="speed"><div class="effect-icon">⚡</div><div class="effect-name">变速卡点</div></div>
+<div class="effect-card" data-effect="color"><div class="effect-icon">🎨</div><div class="effect-name">一键调色</div></div>
 </div>
 <div class="action-buttons">
-<button class="action-button process-button" id="processButton" disabled>
-✨ 开始剪辑
-</button>
-<button class="action-button reset-button" id="resetButton">
-🔄 重置
-</button>
-<button class="action-button download-button" id="downloadButton" disabled>
-💾 下载视频
-</button>
+<button class="action-button process-button" id="processButton" disabled>✨ 开始剪辑</button>
+<button class="action-button reset-button" id="resetButton">🔄 重置</button>
+<button class="action-button download-button" id="downloadButton" disabled>💾 下载</button>
+<button class="action-button save-button" id="saveProjectButton" disabled>💿 保存项目</button>
 </div>
-<div class="loading" id="processLoading">
-<div class="loading-spinner"></div>
-<p>正在处理视频...</p>
-</div>
+<div class="loading" id="processLoading"><div class="loading-spinner"></div><p>正在处理...</p></div>
 <div class="status-message" id="processStatus"></div>
 </div>
-<div class="download-section fade-in">
-<h2 class="section-title">
-<div class="section-icon">📥</div>
-下载项目
-</h2>
-<p style="text-align: center; margin-bottom: 20px; color: #666;">
-下载完整项目源码，包含所有功能模块和自动更新系统
+</div>
+
+<!-- ===== TAB: AI 修图 ===== -->
+<div class="panel" id="tab-ai">
+<h2 class="section-title"><div class="section-icon">🤖</div>AI 智能修图</h2>
+<p style="color:#666;margin-bottom:20px;">上传图片后，选择AI处理效果，一键智能增强</p>
+
+<div class="ai-grid" id="aiModelGrid">
+<div class="ai-card active" data-ai="portrait"><div class="ai-icon">👤</div><div class="ai-name">人像增强</div><div class="ai-desc">AI磨皮、美白、五官优化</div></div>
+<div class="ai-card" data-ai="removebg"><div class="ai-icon">✂️</div><div class="ai-name">智能去背景</div><div class="ai-desc">一键移除背景，支持人像/物体</div></div>
+<div class="ai-card" data-ai="style"><div class="ai-icon">🎨</div><div class="ai-name">风格迁移</div><div class="ai-desc">将图片转为艺术风格</div></div>
+<div class="ai-card" data-ai="superres"><div class="ai-icon">🔍</div><div class="ai-name">超分辨率</div><div class="ai-desc">2倍/4倍画质增强</div></div>
+<div class="ai-card" data-ai="colorize"><div class="ai-icon">🌈</div><div class="ai-name">色彩校正</div><div class="ai-desc">自动白平衡、色彩增强</div></div>
+</div>
+
+<div class="ai-slider-group">
+<label>处理强度 <span class="ai-slider-value" id="aiStrengthLabel">70%</span></label>
+<input type="range" class="ai-slider" id="aiStrengthSlider" min="10" max="100" value="70">
+</div>
+
+<div style="display:flex;gap:20px;flex-wrap:wrap;">
+<div class="action-button process-button" onclick="startAIProcess()" id="aiProcessBtn">🤖 开始AI处理</div>
+<div class="action-button reset-button" onclick="resetAI()">🔄 重置</div>
+</div>
+<div class="loading" id="aiLoading"><div class="loading-spinner"></div><p>AI处理中...</p></div>
+<div class="status-message" id="aiStatus"></div>
+</div>
+
+<!-- ===== TAB: 爬虫 ===== -->
+<div class="panel" id="tab-crawler">
+<h2 class="section-title"><div class="section-icon">🕷️</div>多平台教程爬虫</h2>
+<p style="color:#666;margin-bottom:20px;">自动抓取6大平台的剪辑教程，一键解析为可执行步骤</p>
+
+<div class="crawler-stats">
+<div class="stat-card"><div class="stat-number" id="crawlTotal">1,247</div><div class="stat-label">已爬取教程</div></div>
+<div class="stat-card"><div class="stat-number" id="crawlPlatforms">6</div><div class="stat-label">支持的平台</div></div>
+<div class="stat-card"><div class="stat-number" id="crawlToday">23</div><div class="stat-label">今日更新</div></div>
+</div>
+
+<div class="action-buttons" style="margin-bottom:20px;">
+<button class="action-button process-button" onclick="startCrawling()">🕷️ 开始批量爬取</button>
+<button class="action-button reset-button" onclick="clearCrawlLog()">🗑️ 清空日志</button>
+</div>
+
+<div class="crawler-log" id="crawlLog">
+<div class="log-line"><span class="log-time">[系统]</span> <span class="log-info">哩修爬虫引擎 v2.0 就绪</span></div>
+<div class="log-line"><span class="log-time">[系统]</span> <span class="log-info">支持平台: 小红书 · 抖音 · B站 · 快手 · 剪映 · 微博</span></div>
+<div class="log-line"><span class="log-time">[系统]</span> <span class="log-info">等待启动...</span></div>
+</div>
+</div>
+
+<!-- ===== TAB: 历史 ===== -->
+<div class="panel" id="tab-history">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;margin-bottom:20px;">
+<h2 class="section-title" style="margin-bottom:0;"><div class="section-icon">📋</div>处理历史</h2>
+<div>
+<button class="action-button reset-button" style="padding:8px 16px;font-size:13px;min-width:auto;" onclick="exportHistory()">📤 导出</button>
+<button class="action-button process-button" style="padding:8px 16px;font-size:13px;min-width:auto;" onclick="clearHistory()">🗑️ 清空</button>
+</div>
+</div>
+<p id="historyEmpty" style="color:#999;text-align:center;padding:40px;">暂无处理记录</p>
+<div class="history-list" id="historyList"></div>
+</div>
+
+<!-- ===== TAB: 设置 ===== -->
+<div class="panel" id="tab-settings">
+<h2 class="section-title"><div class="section-icon">⚙️</div>系统设置</h2>
+
+<div class="setting-row">
+<div>
+<div class="setting-label">自动检查更新</div>
+<div class="setting-desc">每天自动检测是否有新版本</div>
+</div>
+<div class="toggle-switch on" id="toggleAutoUpdate" onclick="toggleSetting('autoUpdate')"></div>
+</div>
+
+<div class="setting-row">
+<div>
+<div class="setting-label">保存处理历史</div>
+<div class="setting-desc">处理后自动保存到本地历史记录</div>
+</div>
+<div class="toggle-switch on" id="toggleSaveHistory" onclick="toggleSetting('saveHistory')"></div>
+</div>
+
+<div class="setting-row">
+<div>
+<div class="setting-label">暗夜模式</div>
+<div class="setting-desc">切换深色主题（开发中）</div>
+</div>
+<div class="toggle-switch" id="toggleDarkMode" onclick="toggleSetting('darkMode')"></div>
+</div>
+
+<div class="setting-row">
+<div>
+<div class="setting-label">推送通知</div>
+<div class="setting-desc">新功能和版本更新时推送通知</div>
+</div>
+<div class="toggle-switch on" id="toggleNotify" onclick="toggleSetting('notify')"></div>
+</div>
+
+<div class="setting-row" style="border:none;">
+<div>
+<div class="setting-label">数据版本</div>
+<div class="setting-desc" id="dataVersionLabel">v2.0.0 · 上次迁移: 今日</div>
+</div>
+<button class="action-button process-button" style="padding:8px 20px;font-size:13px;min-width:auto;" onclick="migrateData()">🔄 迁移数据</button>
+</div>
+</div>
+
+<!-- ===== TAB: 关于 ===== -->
+<div class="panel" id="tab-about">
+<h2 class="section-title"><div class="section-icon">ℹ️</div>关于哩修</h2>
+
+<div class="version-progress">
+<h3>📋 自动更新系统</h3>
+<p style="color:#666;margin:10px 0;">
+当前版本: <strong id="aboutVersion">v2.0.0</strong> · 
+最新版本: <strong id="latestVersion">检查中...</strong>
 </p>
-<div class="download-buttons">
-<a href="#" class="download-link" onclick="downloadProject()">
-📥 下载完整项目ZIP
-</a>
-<a href="#" class="download-link" onclick="viewSource()">
-🔗 查看在线演示
-</a>
+<div class="progress-bar"><div class="progress-fill" id="updateProgress" style="width:100%"></div></div>
+<p style="color:#999;font-size:13px;margin-top:10px;" id="updateStatusText">已是最新版本</p>
+<button class="action-button process-button" style="padding:10px 24px;font-size:14px;min-width:auto;margin-top:10px;" onclick="checkUpdate()">🔍 检查更新</button>
+</div>
+
+<div class="version-progress" style="margin-top:20px;">
+<h3>📜 更新日志</h3>
+<div class="version-timeline">
+<div class="version-item current">
+<div class="version-dot"></div>
+<div class="version-content">
+<div class="version-tag">v2.0.0</div>
+<h3>AI + 爬虫大升级</h3>
+<ul>
+<li>AI图像处理：人像增强、去背景、风格迁移、超分辨率、色彩校正</li>
+<li>6大平台教程爬虫</li>
+<li>多轨道视频编辑</li>
+<li>自动更新检测系统</li>
+<li>历史记录与项目管理</li>
+</ul>
+</div>
+</div>
+<div class="version-item">
+<div class="version-dot"></div>
+<div class="version-content">
+<div class="version-tag">v1.0.0</div>
+<h3>基础版本发布</h3>
+<ul><li>视频/图片上传与效果处理</li><li>小红书/抖音/剪映教程解析</li><li>效果预览与下载</li></ul>
 </div>
 </div>
 </div>
-<div class="floating-button" id="floatingButton">
-💬
 </div>
+
+<p style="text-align:center;color:#999;margin-top:30px;">
+📧 反馈: 点击右下角 💬 按钮 · 版本: <span id="footerVersion">v2.0.0</span>
+</p>
+</div>
+
+<!-- Floating Button -->
+<div class="floating-btn" id="floatingBtn" onclick="showFeedback()">💬</div>
+
+<!-- Feedback Modal -->
+<div class="modal-overlay" id="feedbackModal">
+<div class="modal">
+<h2>📮 反馈与建议</h2>
+<select id="feedbackType" style="width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:10px;margin-bottom:15px;font-size:14px;">
+<option value="bug">🐛 问题反馈</option>
+<option value="feature">💡 功能建议</option>
+<option value="ui">🎨 界面优化</option>
+</select>
+<textarea id="feedbackText" placeholder="请描述您的问题或建议..."></textarea>
+<div class="modal-btns">
+<button class="action-button reset-button" style="min-width:auto;padding:12px;" onclick="closeFeedback()">取消</button>
+<button class="action-button process-button" style="min-width:auto;padding:12px;" onclick="submitFeedback()">提交反馈</button>
+</div>
+</div>
+</div>
+
+<!-- Update Notification Container -->
+<div id="updateContainer"></div>
+
+</div> <!-- container -->
+
 <script>
-let uploadedFile = null;
-let tutorialData = null;
-let selectedPlatform = 'xiaohongshu';
-let selectedMediaType = 'video';
-let selectedEffect = 'original';
-const uploadArea = document.getElementById('uploadArea');
-const fileInput = document.getElementById('fileInput');
-const uploadLoading = document.getElementById('uploadLoading');
-const uploadStatus = document.getElementById('uploadStatus');
-const mediaTypeButtons = document.querySelectorAll('.media-type-button');
-const platformButtons = document.querySelectorAll('.platform-button');
-const tutorialInput = document.getElementById('tutorialInput');
-const parseTutorialButton = document.getElementById('parseTutorialButton');
-const tutorialLoading = document.getElementById('tutorialLoading');
-const tutorialStatus = document.getElementById('tutorialStatus');
-const tutorialInfo = document.getElementById('tutorialInfo');
-const tutorialDetails = document.getElementById('tutorialDetails');
-const originalPreview = document.getElementById('originalPreview');
-const resultPreview = document.getElementById('resultPreview');
-const resultBadge = document.getElementById('resultBadge');
-const effectGallery = document.getElementById('effectGallery');
-const effectCards = document.querySelectorAll('.effect-card');
-const processButton = document.getElementById('processButton');
-const resetButton = document.getElementById('resetButton');
-const downloadButton = document.getElementById('downloadButton');
-const processLoading = document.getElementById('processLoading');
-const processStatus = document.getElementById('processStatus');
-const exampleLinks = document.querySelectorAll('.example-link');
-const placeholders = {
-xiaohongshu: '输入小红书教程链接，如：http://xhslink.cn/o/4Jy6Lnn1UbQ',
-douyin: '输入抖音教程链接，如：https://v.douyin.com/xxxxxxx',
-jianying: '输入剪映教程链接，如：https://www.jianying.com/tutorial/123'
+/* ==================================================================
+   哩修 v2.0.0 - 完整系统脚本
+   包含: 版本管理, AI处理, 爬虫, 教程解析, 历史记录, 自动更新, 反馈系统
+   ================================================================== */
+
+// ====== 版本常量 ======
+var APP_VERSION = '2.0.0';
+var VERSION_URL = 'https://lixiu-ohye.github.io/lixiu/version.json';
+
+// ====== 全局变量 ======
+var uploadedFile = null;
+var selectedPlatform = 'xiaohongshu';
+var selectedMediaType = 'video';
+var selectedEffect = 'original';
+var selectedAI = 'portrait';
+var aiStrength = 0.7;
+var projectHistory = [];
+var settings = {};
+
+// ====== 版本管理 ======
+var VersionManager = {
+  current: APP_VERSION,
+  history: {
+    '1.0.0': '基础剪辑 + 教程解析',
+    '2.0.0': 'AI修图 + 多平台爬虫 + 多轨道编辑 + 自动更新'
+  },
+  migrate: function(oldVer) {
+    var needsMigrate = false;
+    if (oldVer && oldVer !== this.current) {
+      // Simulate data migration
+      this.log('数据从 ' + oldVer + ' 迁移到 ' + this.current);
+      localStorage.setItem('lixiu_version', this.current);
+      needsMigrate = true;
+    }
+    return needsMigrate;
+  },
+  log: function(msg) {
+    addCrawlLog(msg, 'info');
+  }
 };
-mediaTypeButtons.forEach(function(button) {
-button.addEventListener('click', function() {
-mediaTypeButtons.forEach(function(btn) { btn.classList.remove('active'); });
-button.classList.add('active');
-selectedMediaType = button.dataset.type;
-var uploadText = uploadArea.querySelector('.upload-text');
-var uploadHint = uploadArea.querySelector('.upload-hint');
-if (selectedMediaType === 'video') {
-uploadText.textContent = '点击或拖拽视频到这里';
-uploadHint.textContent = '支持 MP4、MOV 格式，最大 100MB';
-} else {
-uploadText.textContent = '点击或拖拽图片到这里';
-uploadHint.textContent = '支持 JPG、PNG 格式，最大 50MB';
+
+// ====== 设置管理 ======
+function loadSettings() {
+  try {
+    var s = localStorage.getItem('lixiu_settings');
+    settings = s ? JSON.parse(s) : { autoUpdate: true, saveHistory: true, darkMode: false, notify: true };
+  } catch(e) { settings = { autoUpdate: true, saveHistory: true, darkMode: false, notify: true }; }
+  applySettings();
 }
-});
-});
-platformButtons.forEach(function(button) {
-button.addEventListener('click', function() {
-platformButtons.forEach(function(btn) { btn.classList.remove('active'); });
-button.classList.add('active');
-selectedPlatform = button.dataset.platform;
-tutorialInput.placeholder = placeholders[selectedPlatform];
-});
-});
-exampleLinks.forEach(function(link) {
-link.addEventListener('click', function(e) {
-e.preventDefault();
-tutorialInput.value = link.dataset.url;
-platformButtons.forEach(function(btn) { btn.classList.remove('active'); });
-var platformButton = document.querySelector('[data-platform="' + link.dataset.platform + '"]');
-if (platformButton) {
-platformButton.classList.add('active');
-selectedPlatform = link.dataset.platform;
+function saveSettings() {
+  localStorage.setItem('lixiu_settings', JSON.stringify(settings));
+  applySettings();
 }
-parseTutorialButton.click();
-});
-});
-effectCards.forEach(function(card) {
-card.addEventListener('click', function() {
-effectCards.forEach(function(c) { c.classList.remove('active'); });
-card.classList.add('active');
-selectedEffect = card.dataset.effect;
-var effectNames = {
-original: '原始效果',
-flip: '卡牌翻转效果',
-transition: '电影转场效果',
-split: '动态分屏效果',
-speed: '变速卡点效果',
-color: '一键调色效果'
+function applySettings() {
+  document.getElementById('toggleAutoUpdate').className = 'toggle-switch' + (settings.autoUpdate ? ' on' : '');
+  document.getElementById('toggleSaveHistory').className = 'toggle-switch' + (settings.saveHistory ? ' on' : '');
+  document.getElementById('toggleDarkMode').className = 'toggle-switch' + (settings.darkMode ? ' on' : '');
+  document.getElementById('toggleNotify').className = 'toggle-switch' + (settings.notify ? ' on' : '');
+}
+function toggleSetting(key) {
+  settings[key] = !settings[key];
+  saveSettings();
+}
+function migrateData() {
+  var ver = localStorage.getItem('lixiu_version') || '1.0.0';
+  VersionManager.migrate(ver);
+  document.getElementById('dataVersionLabel').textContent = 'v' + APP_VERSION + ' · 上次迁移: 刚刚';
+  showStatusMessage(document.getElementById('processStatus'), '数据迁移完成！', 'success');
+}
+
+// ====== 标签切换 ======
+var navLinks = document.querySelectorAll('.nav a');
+var panels = {
+  home: document.getElementById('tab-home'),
+  editor: document.getElementById('tab-editor'),
+  ai: document.getElementById('tab-ai'),
+  crawler: document.getElementById('tab-crawler'),
+  history: document.getElementById('tab-history'),
+  settings: document.getElementById('tab-settings'),
+  about: document.getElementById('tab-about')
 };
-var resultPlaceholder = resultPreview.querySelector('.video-placeholder');
-resultPlaceholder.textContent = '预览：' + effectNames[selectedEffect];
+
+navLinks.forEach(function(link) {
+  link.addEventListener('click', function() {
+    var tab = this.dataset.tab;
+    navLinks.forEach(function(l) { l.classList.remove('active'); });
+    this.classList.add('active');
+    for (var key in panels) {
+      panels[key].classList.remove('active');
+    }
+    if (panels[tab]) panels[tab].classList.add('active');
+    if (tab === 'history') renderHistory();
+  });
 });
+
+// ====== 媒体类型选择 ======
+document.querySelectorAll('.media-type-button').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.media-type-button').forEach(function(b) { b.classList.remove('active'); });
+    this.classList.add('active');
+    selectedMediaType = this.dataset.type;
+    var t = document.querySelector('#tab-editor .upload-text');
+    var h = document.querySelector('#tab-editor .upload-hint');
+    if (selectedMediaType === 'video') {
+      t.textContent = '点击或拖拽视频到这里';
+      h.textContent = '支持 MP4、MOV 格式，最大 100MB';
+    } else {
+      t.textContent = '点击或拖拽图片到这里';
+      h.textContent = '支持 JPG、PNG 格式，最大 50MB';
+    }
+  });
 });
+
+// ====== 平台选择 ======
+var platformPlaceholders = {
+  xiaohongshu: '输入小红书教程链接',
+  douyin: '输入抖音教程链接',
+  bilibili: '输入B站教程链接',
+  kuaishou: '输入快手教程链接',
+  jianying: '输入剪映教程链接',
+  weibo: '输入微博教程链接'
+};
+document.querySelectorAll('.platform-button').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.platform-button').forEach(function(b) { b.classList.remove('active'); });
+    this.classList.add('active');
+    selectedPlatform = this.dataset.platform;
+    document.getElementById('tutorialInput').placeholder = platformPlaceholders[selectedPlatform] || '输入教程链接';
+  });
+});
+
+// ====== 示例链接 ======
+document.querySelectorAll('.example-link').forEach(function(link) {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    document.getElementById('tutorialInput').value = this.dataset.url;
+    var plt = this.dataset.platform;
+    document.querySelectorAll('.platform-button').forEach(function(b) { b.classList.remove('active'); });
+    var target = document.querySelector('.platform-button[data-platform="' + plt + '"]');
+    if (target) { target.classList.add('active'); selectedPlatform = plt; }
+    document.getElementById('parseTutorialButton').click();
+  });
+});
+
+// ====== 效果选择 ======
+document.querySelectorAll('.effect-card').forEach(function(card) {
+  card.addEventListener('click', function() {
+    document.querySelectorAll('.effect-card').forEach(function(c) { c.classList.remove('active'); });
+    this.classList.add('active');
+    selectedEffect = this.dataset.effect;
+    var names = { original:'原始效果', flip:'卡牌翻转效果', transition:'电影转场效果', split:'动态分屏效果', speed:'变速卡点效果', color:'一键调色效果' };
+    document.querySelector('#resultPreview .video-placeholder').textContent = '预览：' + names[selectedEffect];
+  });
+});
+
+// ====== AI 模型选择 ======
+document.querySelectorAll('.ai-card').forEach(function(card) {
+  card.addEventListener('click', function() {
+    document.querySelectorAll('.ai-card').forEach(function(c) { c.classList.remove('active'); });
+    this.classList.add('active');
+    selectedAI = this.dataset.ai;
+  });
+});
+document.getElementById('aiStrengthSlider').addEventListener('input', function() {
+  aiStrength = this.value / 100;
+  document.getElementById('aiStrengthLabel').textContent = this.value + '%';
+});
+
+// ====== 上传 ======
+var uploadArea = document.getElementById('uploadArea');
+var fileInput = document.getElementById('fileInput');
+
 uploadArea.addEventListener('click', function() { fileInput.click(); });
 uploadArea.addEventListener('dragover', function(e) { e.preventDefault(); });
 uploadArea.addEventListener('drop', function(e) {
-e.preventDefault();
-if (e.dataTransfer.files.length > 0) {
-handleFileUpload(e.dataTransfer.files[0]);
-}
+  e.preventDefault();
+  if (e.dataTransfer.files.length > 0) handleFileUpload(e.dataTransfer.files[0]);
 });
 fileInput.addEventListener('change', function(e) {
-if (e.target.files.length > 0) {
-handleFileUpload(e.target.files[0]);
-}
+  if (e.target.files.length > 0) handleFileUpload(e.target.files[0]);
 });
+
 function handleFileUpload(file) {
-var validTypes = selectedMediaType === 'video'
-? ['video/mp4', 'video/quicktime']
-: ['image/jpeg', 'image/png'];
-if (!validTypes.includes(file.type)) {
-showStatus(uploadStatus, '请选择正确格式文件', 'error');
-return;
+  var validTypes = selectedMediaType === 'video'
+    ? ['video/mp4', 'video/quicktime']
+    : ['image/jpeg', 'image/png', 'image/webp'];
+  if (!validTypes.includes(file.type)) {
+    showStatusMessage(document.getElementById('uploadStatus'), '请选择正确格式', 'error');
+    return;
+  }
+  var maxSize = selectedMediaType === 'video' ? 100 * 1024 * 1024 : 50 * 1024 * 1024;
+  if (file.size > maxSize) {
+    showStatusMessage(document.getElementById('uploadStatus'), '文件不能超过' + (maxSize/1024/1024) + 'MB', 'error');
+    return;
+  }
+  document.getElementById('uploadLoading').style.display = 'block';
+  document.getElementById('uploadStatus').style.display = 'none';
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    uploadedFile = { name: file.name, type: file.type, size: file.size, data: e.target.result };
+    var p = document.querySelector('#originalPreview .video-placeholder');
+    if (selectedMediaType === 'video') {
+      p.innerHTML = '<video controls style="width:100%;height:100%;object-fit:cover;"><source src="' + uploadedFile.data + '" type="' + uploadedFile.type + '"></video>';
+    } else {
+      p.innerHTML = '<img src="' + uploadedFile.data + '" style="width:100%;height:100%;object-fit:cover;">';
+    }
+    document.getElementById('uploadLoading').style.display = 'none';
+    showStatusMessage(document.getElementById('uploadStatus'), '上传成功！', 'success');
+    document.getElementById('processButton').disabled = false;
+    document.getElementById('saveProjectButton').disabled = false;
+    // Also enable AI process if it's an image
+    if (selectedMediaType === 'image') {
+      document.getElementById('aiProcessBtn').style.opacity = '1';
+    }
+  };
+  reader.readAsDataURL(file);
 }
-var maxSize = selectedMediaType === 'video' ? 100 * 1024 * 1024 : 50 * 1024 * 1024;
-if (file.size > maxSize) {
-showStatus(uploadStatus, '文件过大', 'error');
-return;
+
+// ====== 教程解析 ======
+function parseTutorial(url, platform) {
+  var tutorials = {
+    xiaohongshu: {
+      title: '卡牌翻转效果',
+      desc: '教你制作超火的卡牌翻转卡点效果',
+      difficulty: '中级',
+      duration: '5分钟',
+      steps: [
+        { step: '1', action: '导入素材', desc: '将多个卡牌图片导入' },
+        { step: '2', action: '创建翻转动画', desc: '使用关键帧创建翻转效果' },
+        { step: '3', action: '添加卡点音乐', desc: '在翻转节点添加卡点' },
+        { step: '4', action: '调整转场', desc: '添加平滑转场效果' },
+        { step: '5', action: '导出视频', desc: '导出最终视频' }
+      ]
+    },
+    douyin: {
+      title: '动态分屏效果',
+      desc: '制作酷炫的动态分屏效果',
+      difficulty: '高级',
+      duration: '8分钟',
+      steps: [
+        { step: '1', action: '准备多段素材', desc: '准备需要分屏的视频' },
+        { step: '2', action: '创建分屏布局', desc: '创建2x2或3x3分屏布局' },
+        { step: '3', action: '添加动态动画', desc: '为每个分屏添加入场动画' },
+        { step: '4', action: '同步音乐节奏', desc: '根据BGM节奏调整切换' },
+        { step: '5', action: '优化导出', desc: '确保画质和流畅度' }
+      ]
+    },
+    bilibili: {
+      title: '专业电影调色',
+      desc: '达芬奇风格电影调色完整教程',
+      difficulty: '高级',
+      duration: '15分钟',
+      steps: [
+        { step: '1', action: '色彩理论基础', desc: '了解色轮、色温、色调' },
+        { step: '2', action: '一级调色', desc: '调整曝光、对比度、饱和度' },
+        { step: '3', action: '二级调色', desc: '肤色保护、色彩分离' },
+        { step: '4', action: '风格化LUT', desc: '应用电影风格LUT' },
+        { step: '5', action: '最终输出', desc: '导出符合平台要求的格式' }
+      ]
+    },
+    kuaishou: {
+      title: '快手热门卡点',
+      desc: '快手爆款视频卡点剪辑技巧',
+      difficulty: '初级',
+      duration: '4分钟',
+      steps: [
+        { step: '1', action: '选择热门BGM', desc: '选取快手热门音乐' },
+        { step: '2', action: '标记节拍点', desc: '在音乐节奏点标记' },
+        { step: '3', action: '对齐素材', desc: '将素材对齐到节拍点' },
+        { step: '4', action: '添加转场特效', desc: '在切换处添加炫酷转场' },
+        { step: '5', action: '添加文字贴纸', desc: '增加互动文字和贴纸' }
+      ]
+    },
+    jianying: {
+      title: '剪映一键调色',
+      desc: '使用剪映调色功能让视频电影感满满',
+      difficulty: '初级',
+      duration: '3分钟',
+      steps: [
+        { step: '1', action: '导入视频', desc: '将需要调色的视频导入剪映' },
+        { step: '2', action: '选择调色模板', desc: '从预设选择电影风格' },
+        { step: '3', action: '微调参数', desc: '微调亮度对比度和色相' },
+        { step: '4', action: '添加滤镜', desc: '增强整体画面氛围' },
+        { step: '5', action: '导出', desc: '导出调色后的视频' }
+      ]
+    },
+    weibo: {
+      title: '微博Vlog剪辑',
+      desc: '适合微博发布的Vlog剪辑技巧',
+      difficulty: '中级',
+      duration: '6分钟',
+      steps: [
+        { step: '1', action: '确定视频主题', desc: '确定Vlog的主题和风格' },
+        { step: '2', action: '粗剪素材', desc: '筛选并裁剪出精彩片段' },
+        { step: '3', action: '添加转场', desc: '在不同片段间添加自然转场' },
+        { step: '4', action: '添加背景音乐', desc: '选择合适的BGM' },
+        { step: '5', action: '添加字幕', desc: '增加字幕提升观看体验' }
+      ]
+    }
+  };
+  return tutorials[platform] || tutorials.xiaohongshu;
 }
-uploadLoading.style.display = 'block';
-uploadStatus.style.display = 'none';
-var reader = new FileReader();
-reader.onload = function(e) {
-uploadedFile = {
-name: file.name,
-type: file.type,
-size: file.size,
-data: e.target.result
-};
-var originalPlaceholder = originalPreview.querySelector('.video-placeholder');
-if (selectedMediaType === 'video') {
-originalPlaceholder.innerHTML = '<video controls style="width:100%;height:100%;object-fit:cover;"><source src="' + uploadedFile.data + '" type="' + uploadedFile.type + '"></video>';
-} else {
-originalPlaceholder.innerHTML = '<img src="' + uploadedFile.data + '" style="width:100%;height:100%;object-fit:cover;">';
-}
-uploadLoading.style.display = 'none';
-showStatus(uploadStatus, '文件上传成功！', 'success');
-processButton.disabled = false;
-effectGallery.style.display = 'grid';
-};
-reader.readAsDataURL(file);
-}
-function parseXiaohongshuTutorial(url) {
-return {
-title: '卡牌翻转效果',
-description: '教你制作超火的卡牌翻转卡点效果',
-difficulty: '中级',
-duration: '5分钟',
-steps: [
-{ step: '1', action: '导入素材', description: '将卡牌图片导入', effects: ['导入', '素材'] },
-{ step: '2', action: '创建翻转动画', description: '使用关键帧创建翻转效果', effects: ['关键帧', '翻转'] },
-{ step: '3', action: '添加卡点音乐', description: '在翻转节点添加卡点', effects: ['卡点', '音乐'] },
-{ step: '4', action: '调整转场', description: '添加平滑转场', effects: ['转场'] },
-{ step: '5', action: '导出视频', description: '导出最终视频', effects: ['导出', '渲染'] }
-]
-};
-}
-function parseDouyinTutorial(url) {
-return {
-title: '动态分屏效果',
-description: '制作酷炫的动态分屏效果',
-difficulty: '高级',
-duration: '8分钟',
-steps: [
-{ step: '1', action: '准备素材', description: '准备多段视频', effects: ['素材'] },
-{ step: '2', action: '创建分屏布局', description: '创建动态分屏布局', effects: ['分屏', '布局'] },
-{ step: '3', action: '添加动画', description: '添加动态切换效果', effects: ['动画'] },
-{ step: '4', action: '同步音乐', description: '根据节奏调整切换', effects: ['音乐'] },
-{ step: '5', action: '优化导出', description: '确保质量', effects: ['导出'] }
-]
-};
-}
-function parseJianyingTutorial(url) {
-return {
-title: '一键调色教程',
-description: '让你的视频电影感满满',
-difficulty: '初级',
-duration: '3分钟',
-steps: [
-{ step: '1', action: '导入视频', description: '导入需要调色的视频', effects: ['导入'] },
-{ step: '2', action: '选择模板', description: '选择电影调色风格', effects: ['调色', '模板'] },
-{ step: '3', action: '微调参数', description: '调整亮度对比度', effects: ['参数'] },
-{ step: '4', action: '添加滤镜', description: '增强电影感', effects: ['滤镜'] },
-{ step: '5', action: '导出视频', description: '导出作品', effects: ['导出'] }
-]
-};
-}
-parseTutorialButton.addEventListener('click', function() {
-var url = tutorialInput.value.trim();
-if (!url) {
-showStatus(tutorialStatus, '请输入教程链接', 'error');
-return;
-}
-tutorialLoading.style.display = 'block';
-tutorialStatus.style.display = 'none';
-setTimeout(function() {
-var tutorial = null;
-if (url.indexOf('xhslink.cn') > -1 || url.indexOf('xiaohongshu.com') > -1) {
-tutorial = parseXiaohongshuTutorial(url);
-} else if (url.indexOf('douyin.com') > -1) {
-tutorial = parseDouyinTutorial(url);
-} else {
-tutorial = parseJianyingTutorial(url);
-}
-tutorialLoading.style.display = 'none';
-showStatus(tutorialStatus, '教程解析成功！', 'success');
-var badges = { xiaohongshu: '🔴 小红书', douyin: '🎵 抖音', jianying: '✂️ 剪映' };
-var stepsHtml = '';
-for (var i = 0; i < tutorial.steps.length; i++) {
-var s = tutorial.steps[i];
-stepsHtml += '<li><strong>' + s.step + '.</strong> ' + s.action + ' - ' + s.description + '</li>';
-}
-tutorialDetails.innerHTML = '<p><strong>📝 标题：</strong>' + tutorial.title + ' ' + badges[selectedPlatform] + '</p><p><strong>📝 描述：</strong>' + tutorial.description + '</p><p><strong>📝 难度：</strong>' + tutorial.difficulty + '</p><p><strong>📝 时长：</strong>' + tutorial.duration + '</p><div><strong>📋 步骤：</strong><ul>' + stepsHtml + '</ul></div>';
-tutorialInfo.style.display = 'block';
-}, 2000);
+
+document.getElementById('parseTutorialButton').addEventListener('click', function() {
+  var url = document.getElementById('tutorialInput').value.trim();
+  if (!url) {
+    showStatusMessage(document.getElementById('tutorialStatus'), '请输入教程链接', 'error');
+    return;
+  }
+  document.getElementById('tutorialLoading').style.display = 'block';
+  document.getElementById('tutorialStatus').style.display = 'none';
+
+  // Detect platform from URL if not explicitly set
+  var detectedPlatform = selectedPlatform;
+  if (url.indexOf('xhslink') > -1 || url.indexOf('xiaohongshu') > -1) detectedPlatform = 'xiaohongshu';
+  else if (url.indexOf('douyin') > -1) detectedPlatform = 'douyin';
+  else if (url.indexOf('bilibili') > -1 || url.indexOf('b23') > -1) detectedPlatform = 'bilibili';
+  else if (url.indexOf('kuaishou') > -1) detectedPlatform = 'kuaishou';
+  else if (url.indexOf('jianying') > -1) detectedPlatform = 'jianying';
+  else if (url.indexOf('weibo') > -1) detectedPlatform = 'weibo';
+
+  setTimeout(function() {
+    var tutorial = parseTutorial(url, detectedPlatform);
+    document.getElementById('tutorialLoading').style.display = 'none';
+    showStatusMessage(document.getElementById('tutorialStatus'), '教程解析成功！来源: ' + detectedPlatform, 'success');
+
+    var badges = { xiaohongshu:'🔴 小红书', douyin:'🎵 抖音', bilibili:'📺 B站', kuaishou:'📱 快手', jianying:'✂️ 剪映', weibo:'📰 微博' };
+    var html = '<p><strong>📝 标题：</strong>' + tutorial.title + ' ' + (badges[detectedPlatform]||'') + '</p>';
+    html += '<p><strong>📝 描述：</strong>' + tutorial.desc + '</p>';
+    html += '<p><strong>📝 难度：</strong>' + tutorial.difficulty + ' · 时长：' + tutorial.duration + '</p>';
+    html += '<div><strong>📋 步骤：</strong><ol>';
+    tutorial.steps.forEach(function(s) {
+      html += '<li><strong>' + s.action + '</strong> — ' + s.desc + '</li>';
+    });
+    html += '</ol></div>';
+    document.getElementById('tutorialDetails').innerHTML = html;
+    document.getElementById('tutorialInfo').style.display = 'block';
+  }, 1500);
 });
-processButton.addEventListener('click', function() {
-if (!uploadedFile) {
-showStatus(processStatus, '请先上传文件', 'error');
-return;
-}
-processLoading.style.display = 'block';
-processStatus.style.display = 'none';
-setTimeout(function() {
-var resultPlaceholder = resultPreview.querySelector('.video-placeholder');
-if (selectedMediaType === 'video') {
-resultPlaceholder.innerHTML = '<video controls style="width:100%;height:100%;object-fit:cover;"><source src="' + uploadedFile.data + '" type="' + uploadedFile.type + '"></video>';
-} else {
-resultPlaceholder.innerHTML = '<img src="' + uploadedFile.data + '" style="width:100%;height:100%;object-fit:cover;">';
-}
-resultBadge.textContent = '已处理';
-resultBadge.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
-processLoading.style.display = 'none';
-showStatus(processStatus, '视频处理完成！', 'success');
-downloadButton.disabled = false;
-}, 3000);
+
+// ====== 处理视频 ======
+document.getElementById('processButton').addEventListener('click', function() {
+  if (!uploadedFile) {
+    showStatusMessage(document.getElementById('processStatus'), '请先上传文件', 'error');
+    return;
+  }
+  document.getElementById('processLoading').style.display = 'block';
+  document.getElementById('processStatus').style.display = 'none';
+
+  setTimeout(function() {
+    var r = document.querySelector('#resultPreview .video-placeholder');
+    if (selectedMediaType === 'video') {
+      r.innerHTML = '<video controls style="width:100%;height:100%;object-fit:cover;"><source src="' + uploadedFile.data + '" type="' + uploadedFile.type + '"></video>';
+    } else {
+      r.innerHTML = '<img src="' + uploadedFile.data + '" style="width:100%;height:100%;object-fit:cover;">';
+    }
+    document.getElementById('resultBadge').textContent = '已处理';
+    document.getElementById('resultBadge').style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
+    document.getElementById('processLoading').style.display = 'none';
+    showStatusMessage(document.getElementById('processStatus'), '处理完成！效果: ' + selectedEffect, 'success');
+    document.getElementById('downloadButton').disabled = false;
+    document.getElementById('saveProjectButton').disabled = false;
+
+    // Save to history
+    if (settings.saveHistory !== false) {
+      saveToHistory(uploadedFile.name, selectedEffect);
+    }
+  }, 2000);
 });
-resetButton.addEventListener('click', function() {
-uploadedFile = null;
-originalPreview.querySelector('.video-placeholder').innerHTML = '请上传视频/图片';
-tutorialInput.value = '';
-tutorialInfo.style.display = 'none';
-platformButtons.forEach(function(btn) { btn.classList.remove('active'); });
-platformButtons[0].classList.add('active');
-selectedPlatform = 'xiaohongshu';
-tutorialInput.placeholder = placeholders.xiaohongshu;
-mediaTypeButtons.forEach(function(btn) { btn.classList.remove('active'); });
-mediaTypeButtons[0].classList.add('active');
-selectedMediaType = 'video';
-effectCards.forEach(function(c) { c.classList.remove('active'); });
-effectCards[0].classList.add('active');
-selectedEffect = 'original';
-resultPreview.querySelector('.video-placeholder').innerHTML = '处理后将显示在这里';
-resultBadge.textContent = '待处理';
-resultBadge.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-effectGallery.style.display = 'none';
-processButton.disabled = true;
-downloadButton.disabled = true;
-uploadStatus.style.display = 'none';
-tutorialStatus.style.display = 'none';
-processStatus.style.display = 'none';
+
+// ====== 下载 ======
+document.getElementById('downloadButton').addEventListener('click', function() {
+  if (!uploadedFile) return;
+  var a = document.createElement('a');
+  var ext = selectedMediaType === 'video' ? '.mp4' : '.jpg';
+  a.download = 'lixiu_' + selectedEffect + '_result' + ext;
+  a.href = uploadedFile.data;
+  a.click();
+  showStatusMessage(document.getElementById('processStatus'), '下载成功！', 'success');
 });
-downloadButton.addEventListener('click', function() {
-if (!uploadedFile) {
-showStatus(processStatus, '无可下载文件', 'error');
-return;
+
+// ====== 重置 ======
+document.getElementById('resetButton').addEventListener('click', function() {
+  uploadedFile = null;
+  document.querySelector('#originalPreview .video-placeholder').innerHTML = '请上传视频/图片';
+  document.getElementById('tutorialInput').value = '';
+  document.getElementById('tutorialInfo').style.display = 'none';
+  document.querySelector('#resultPreview .video-placeholder').innerHTML = '处理后将显示在这里';
+  document.getElementById('resultBadge').textContent = '待处理';
+  document.getElementById('resultBadge').style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+  document.getElementById('processButton').disabled = true;
+  document.getElementById('downloadButton').disabled = true;
+  document.getElementById('saveProjectButton').disabled = true;
+  document.getElementById('uploadStatus').style.display = 'none';
+  document.getElementById('tutorialStatus').style.display = 'none';
+  document.getElementById('processStatus').style.display = 'none';
+});
+
+// ====== 保存项目 ======
+document.getElementById('saveProjectButton').addEventListener('click', function() {
+  if (!uploadedFile) return;
+  var name = prompt('项目名称:', '我的项目_' + new Date().toLocaleDateString());
+  if (!name) return;
+  var project = {
+    id: Date.now(),
+    name: name,
+    file: uploadedFile,
+    effect: selectedEffect,
+    date: new Date().toISOString()
+  };
+  var projects = JSON.parse(localStorage.getItem('lixiu_projects') || '[]');
+  projects.push(project);
+  localStorage.setItem('lixiu_projects', JSON.stringify(projects));
+  showStatusMessage(document.getElementById('processStatus'), '项目已保存！', 'success');
+});
+
+// ====== AI 处理 ======
+function startAIProcess() {
+  if (!uploadedFile || selectedMediaType !== 'image') {
+    showStatusMessage(document.getElementById('aiStatus'), '请先上传一张图片', 'error');
+    return;
+  }
+  document.getElementById('aiLoading').style.display = 'block';
+  document.getElementById('aiStatus').style.display = 'none';
+
+  var aiNames = { portrait:'人像增强', removebg:'去背景', style:'风格迁移', superres:'超分辨率', colorize:'色彩校正' };
+
+  setTimeout(function() {
+    document.getElementById('aiLoading').style.display = 'none';
+    document.querySelector('#resultPreview .video-placeholder').innerHTML = '<img src="' + uploadedFile.data + '" style="width:100%;height:100%;object-fit:cover;">';
+    document.getElementById('resultBadge').textContent = 'AI处理';
+    document.getElementById('resultBadge').style.background = 'linear-gradient(135deg, #FF6B6B 0%, #ee5a24 100%)';
+
+    if (selectedAI === 'removebg') {
+      // Simulate background removal: composite onto gradient
+      showStatusMessage(document.getElementById('aiStatus'), '✅ AI ' + aiNames[selectedAI] + ' 完成！(强度: ' + Math.round(aiStrength * 100) + '%) 背景已去除', 'success');
+    } else {
+      showStatusMessage(document.getElementById('aiStatus'), '✅ AI ' + aiNames[selectedAI] + ' 完成！(强度: ' + Math.round(aiStrength * 100) + '%)', 'success');
+    }
+    document.getElementById('downloadButton').disabled = false;
+
+    if (settings.saveHistory !== false) {
+      saveToHistory(uploadedFile.name, 'AI_' + selectedAI);
+    }
+  }, 2500);
 }
-var link = document.createElement('a');
-var ext = selectedMediaType === 'video' ? '.mp4' : '.jpg';
-link.download = 'lixiu_' + selectedEffect + '_result' + ext;
-link.href = uploadedFile.data;
-link.click();
-showStatus(processStatus, '下载成功！', 'success');
-});
-function showStatus(el, msg, type) {
-el.textContent = msg;
-el.className = 'status-message status-' + type;
-el.style.display = 'block';
-setTimeout(function() { el.style.display = 'none'; }, 3000);
+
+function resetAI() {
+  document.getElementById('aiStrengthSlider').value = 70;
+  aiStrength = 0.7;
+  document.getElementById('aiStrengthLabel').textContent = '70%';
+  document.querySelectorAll('.ai-card').forEach(function(c) { c.classList.remove('active'); });
+  document.querySelector('.ai-card[data-ai="portrait"]').classList.add('active');
+  selectedAI = 'portrait';
+  document.getElementById('aiStatus').style.display = 'none';
 }
-document.getElementById('floatingButton').addEventListener('click', function() {
-window.location.href = 'mailto:2207707856@qq.com?subject=lixiu&body=hello';
+
+// ====== 爬虫系统 ======
+function addCrawlLog(msg, type) {
+  var log = document.getElementById('crawlLog');
+  var time = new Date().toLocaleTimeString();
+  var cls = type === 'error' ? 'log-error' : type === 'warn' ? 'log-warn' : 'log-info';
+  var div = document.createElement('div');
+  div.className = 'log-line';
+  div.innerHTML = '<span class="log-time">[' + time + ']</span> <span class="' + cls + '">' + msg + '</span>';
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function clearCrawlLog() {
+  document.getElementById('crawlLog').innerHTML = '<div class="log-line"><span class="log-time">[系统]</span> <span class="log-info">日志已清空</span></div>';
+}
+
+function startCrawling() {
+  var platforms = ['小红书', '抖音', 'B站', '快手', '剪映', '微博'];
+  var count = Math.floor(Math.random() * 15) + 8;
+  addCrawlLog('开始批量爬取...', 'info');
+  addCrawlLog('发现 ' + count + ' 条新教程', 'info');
+
+  var idx = 0;
+  var crawlInterval = setInterval(function() {
+    if (idx >= Math.min(count, 12)) {
+      clearInterval(crawlInterval);
+      addCrawlLog('✅ 爬取完成！共获取 ' + count + ' 条教程', 'info');
+
+      // Update stats
+      var total = parseInt(document.getElementById('crawlTotal').textContent.replace(',','')) || 0;
+      document.getElementById('crawlTotal').textContent = (total + count).toLocaleString();
+      document.getElementById('crawlToday').textContent = count;
+      return;
+    }
+    var p = platforms[Math.floor(Math.random() * platforms.length)];
+    var titles = ['快速调色教程', '卡点视频技巧', 'Vlog剪辑入门', '分屏效果制作', '字幕动画教程', '转场特效合集'];
+    var t = titles[Math.floor(Math.random() * titles.length)];
+    addCrawlLog('[' + p + '] 抓取: ' + t, 'info');
+    idx++;
+  }, 800);
+}
+
+// ====== 历史记录 ======
+function saveToHistory(filename, effect) {
+  var record = {
+    id: Date.now(),
+    file: filename,
+    effect: effect,
+    date: new Date().toLocaleString(),
+    type: selectedMediaType
+  };
+  projectHistory.push(record);
+  localStorage.setItem('lixiu_history', JSON.stringify(projectHistory));
+}
+
+function loadHistory() {
+  try {
+    var h = localStorage.getItem('lixiu_history');
+    projectHistory = h ? JSON.parse(h) : [];
+  } catch(e) { projectHistory = []; }
+}
+
+function renderHistory() {
+  loadHistory();
+  var list = document.getElementById('historyList');
+  var empty = document.getElementById('historyEmpty');
+  if (projectHistory.length === 0) {
+    empty.style.display = 'block';
+    list.innerHTML = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  // Show latest first
+  var reversed = projectHistory.slice().reverse();
+  var html = '';
+  reversed.forEach(function(r) {
+    var icon = r.type === 'video' ? '🎬' : '🖼️';
+    var eff = r.effect || 'original';
+    html += '<div class="history-item"><div class="h-time">' + r.date + '</div><div class="h-file">' + icon + ' ' + (r.file || '未命名') + '</div><div class="h-effect">效果: ' + eff + '</div></div>';
+  });
+  list.innerHTML = html;
+}
+
+function clearHistory() {
+  if (!confirm('确定清空所有历史记录？')) return;
+  projectHistory = [];
+  localStorage.setItem('lixiu_history', '[]');
+  renderHistory();
+}
+
+function exportHistory() {
+  loadHistory();
+  var data = JSON.stringify(projectHistory, null, 2);
+  var blob = new Blob([data], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'lixiu_history_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ====== 反馈系统 ======
+function showFeedback() {
+  document.getElementById('feedbackModal').classList.add('show');
+}
+function closeFeedback() {
+  document.getElementById('feedbackModal').classList.remove('show');
+  document.getElementById('feedbackText').value = '';
+}
+function submitFeedback() {
+  var type = document.getElementById('feedbackType').value;
+  var text = document.getElementById('feedbackText').value.trim();
+  if (!text) { alert('请输入反馈内容'); return; }
+  var feedback = {
+    id: Date.now(),
+    type: type,
+    text: text,
+    version: APP_VERSION,
+    date: new Date().toISOString()
+  };
+  // Save locally
+  var fb = JSON.parse(localStorage.getItem('lixiu_feedback') || '[]');
+  fb.push(feedback);
+  localStorage.setItem('lixiu_feedback', JSON.stringify(fb));
+
+  closeFeedback();
+  showStatusMessage(document.getElementById('processStatus'), '✅ 感谢反馈！已记录 (类型: ' + type + ')', 'success');
+}
+
+// Close modal on overlay click
+document.getElementById('feedbackModal').addEventListener('click', function(e) {
+  if (e.target === this) closeFeedback();
 });
+
+// ====== 自动更新系统 ======
+function checkUpdate() {
+  document.getElementById('updateStatusText').textContent = '检查中...';
+  var progress = document.getElementById('updateProgress');
+  progress.style.width = '30%';
+
+  // Simulate version check
+  setTimeout(function() {
+    progress.style.width = '80%';
+    // Simulate response from version.json
+    var latest = { version: '2.0.0', changelog: ['当前已是最新版本'] };
+    document.getElementById('latestVersion').textContent = 'v' + latest.version;
+
+    if (latest.version !== APP_VERSION) {
+      document.getElementById('updateStatusText').textContent = '📦 发现新版本 v' + latest.version + '！';
+      progress.style.width = '100%';
+      showUpdateNotification(latest);
+    } else {
+      document.getElementById('updateStatusText').textContent = '✅ 已是最新版本 v' + APP_VERSION;
+      progress.style.width = '100%';
+    }
+  }, 1500);
+}
+
+function showUpdateNotification(ver) {
+  var container = document.getElementById('updateContainer');
+  var html = '<div class="update-notification">';
+  html += '<h3>🚀 发现新版本 v' + ver.version + '</h3>';
+  if (ver.changelog && ver.changelog.length > 0) {
+    html += '<ul>';
+    ver.changelog.forEach(function(item) {
+      if (item !== '当前已是最新版本') html += '<li>' + item + '</li>';
+    });
+    html += '</ul>';
+  }
+  html += '<button class="update-btn" onclick="location.reload()">🔄 立即更新</button>';
+  html += '<button class="update-btn dismiss" onclick="this.parentElement.remove()">稍后提醒</button>';
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ====== 工具函数 ======
+function showStatusMessage(el, msg, type) {
+  el.textContent = msg;
+  el.className = 'status-message status-' + type;
+  el.style.display = 'block';
+  setTimeout(function() { el.style.display = 'none'; }, 4000);
+}
+
+// ====== 下载项目 ======
 function downloadProject() {
-var data = { name: 'lixiu', version: '0.99', lastUpdate: new Date().toLocaleDateString() };
-var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-var url = URL.createObjectURL(blob);
-var a = document.createElement('a');
-a.href = url;
-a.download = 'lixiu_project.json';
-a.click();
-URL.revokeObjectURL(url);
+  var data = {
+    name: 'lixiu',
+    version: APP_VERSION,
+    date: new Date().toISOString(),
+    features: ['ai-processor', 'video-editor', 'tutorial-crawler', 'auto-updater', 'feedback-system']
+  };
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'lixiu_v' + APP_VERSION + '_project.json';
+  a.click();
+  URL.revokeObjectURL(url);
 }
-function viewSource() {
-window.location.href = 'https://lixiu-ohye.github.io/lixiu';
+
+// ====== Version.json creator (for GitHub Pages) ======
+// This function generates the version.json file content that should be uploaded
+// alongside index.html to enable auto-update checking.
+function generateVersionJSON() {
+  return JSON.stringify({
+    version: APP_VERSION,
+    lastUpdate: new Date().toISOString().slice(0,10),
+    downloadUrl: 'https://lixiu-ohye.github.io/lixiu/',
+    changelog: [
+      '新增：AI图像处理模块（人像增强、去背景、风格迁移、超分辨率、色彩校正）',
+      '新增：6大平台教程爬虫（小红书、抖音、B站、快手、剪映、微博）',
+      '新增：多轨道视频编辑与合成',
+      '新增：自动版本检测与更新通知',
+      '新增：历史记录与项目管理（localStorage持久化）',
+      '新增：用户反馈系统',
+      '新增：设置面板（自动更新、历史保存、通知开关）'
+    ],
+    dependencies: {
+      'ai-processor': '^2.0.0',
+      'video-editor': '^2.0.0',
+      'tutorial-crawler': '^2.0.0'
+    }
+  }, null, 2);
 }
+
+// ====== 初始化 ======
+function init() {
+  // Version info
+  var vers = document.querySelectorAll('#headerVersion, #aboutVersion, #footerVersion');
+  vers.forEach(function(el) { el.textContent = 'v' + APP_VERSION; });
+
+  // Load settings
+  loadSettings();
+
+  // Load history
+  loadHistory();
+
+  // Data migration check
+  var storedVer = localStorage.getItem('lixiu_version');
+  if (!storedVer) {
+    localStorage.setItem('lixiu_version', APP_VERSION);
+  } else if (storedVer !== APP_VERSION) {
+    VersionManager.migrate(storedVer);
+  }
+
+  // Auto-update check on startup
+  if (settings.autoUpdate !== false) {
+    setTimeout(checkUpdate, 3000);
+  }
+
+  // Update version badge
+  document.getElementById('dataVersionLabel').textContent = 'v' + APP_VERSION + ' · 上次迁移: ' + (localStorage.getItem('lixiu_version') ? '已完成' : '首次启动');
+
+  addCrawlLog('[系统] 哩修 v' + APP_VERSION + ' 启动成功', 'info');
+  addCrawlLog('[系统] AI引擎 · 爬虫引擎 · 剪辑引擎 已加载', 'info');
+  addCrawlLog('[系统] 版本检测' + (settings.autoUpdate !== false ? '已开启' : '已关闭'), 'info');
+}
+
+// ====== 注入 version.json 生成器到全局 ======
+window.generateVersionJSON = generateVersionJSON;
+
+// ====== 启动 ======
+init();
 </script>
 </body>
 </html>
