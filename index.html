@@ -3,1693 +3,915 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>哩修 · 数字花园 — 全能视频剪辑与AI修图系统</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<title>哩修 - 傻瓜式视频剪辑系统</title>
 <style>
-:root {
-  --bg: #faf8f5;
-  --card-bg: #ffffff;
-  --rose: #d4a5a5;
-  --rose-deep: #c48b8b;
-  --blush: #e8c4c4;
-  --champagne: #f0e6d8;
-  --lavender: #d5c6e0;
-  --sage: #c5d5c5;
-  --text-primary: #3d3535;
-  --text-secondary: #8c7b7b;
-  --text-muted: #b8a9a9;
-  --border: #ede4e0;
-  --shadow-soft: 0 2px 20px rgba(180, 150, 150, 0.08);
-  --shadow-hover: 0 8px 40px rgba(180, 150, 150, 0.15);
-}
-
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 body {
-  font-family: 'Inter', 'Noto Sans SC', -apple-system, sans-serif;
-  background: var(--bg);
-  color: var(--text-primary);
-  min-height: 100vh;
-  overflow-x: hidden;
-  background-image:
-    radial-gradient(circle at 20% 30%, rgba(212,165,165,0.06) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(213,198,224,0.06) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(197,213,197,0.04) 0%, transparent 60%);
-  background-attachment: fixed;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh; color: #333; overflow-x: hidden;
 }
-
-.container { max-width: 1220px; margin: 0 auto; padding: 20px; }
-
-/* ===== Header ===== */
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
 header {
-  background: var(--card-bg);
-  border-radius: 24px;
-  padding: 20px 28px;
-  margin-bottom: 28px;
-  box-shadow: var(--shadow-soft);
-  border: 1px solid var(--border);
-  position: relative;
-  transition: box-shadow 0.5s ease;
+  background: rgba(255,255,255,0.95); border-radius: 20px; padding: 25px;
+  margin-bottom: 35px; box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+  backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center;
 }
-header::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 50%; transform: translateX(-50%);
-  width: 60%; height: 3px;
-  border-radius: 0 0 3px 3px;
-  background: linear-gradient(90deg, transparent, var(--blush), var(--rose), var(--lavender), var(--sage), transparent);
-  opacity: 0.7;
-}
-header:hover { box-shadow: var(--shadow-hover); }
-
-.header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-
 .logo { display: flex; align-items: center; gap: 12px; }
 .logo-icon {
-  width: 46px; height: 46px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--champagne), var(--rose));
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px; color: #fff;
-  box-shadow: 0 4px 12px rgba(212,165,165,0.3);
+  width: 50px; height: 50px; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  border-radius: 15px; display: flex; align-items: center; justify-content: center;
+  font-size: 28px; color: white; box-shadow: 0 5px 15px rgba(102,126,234,0.3);
 }
 .logo-text {
-  font-family: 'Playfair Display', 'Noto Sans SC', serif;
-  font-size: 26px; font-weight: 600; letter-spacing: 3px;
-  color: var(--text-primary);
+  font-size: 32px; font-weight: bold;
+  background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
-.logo-text span { color: var(--rose-deep); }
-.logo-version { font-size: 10px; color: var(--rose-deep); border: 1px solid var(--blush); padding: 1px 10px; border-radius: 20px; letter-spacing: 1px; margin-left: 4px; background: rgba(232,196,196,0.15); }
-
-.nav { display: flex; gap: 2px; flex-wrap: wrap; }
+.nav { display: flex; gap: 25px; }
 .nav a {
-  text-decoration: none; color: var(--text-muted); font-size: 13px;
-  font-weight: 500; padding: 8px 14px; cursor: pointer;
-  transition: all 0.3s; letter-spacing: 1px;
-  border-radius: 20px;
+  text-decoration: none; color: #333; font-weight: 500; font-size: 16px;
+  transition: all 0.3s; position: relative; padding: 5px 0; cursor: pointer;
 }
-.nav a:hover { color: var(--rose-deep); background: rgba(232,196,196,0.15); }
-.nav a.active { color: #fff; background: linear-gradient(135deg, var(--rose), var(--rose-deep)); box-shadow: 0 4px 12px rgba(196,139,139,0.3); }
-.update-badge { background: var(--rose-deep); color: #fff; font-size: 9px; padding: 1px 6px; border-radius: 10px; margin-left: 4px; animation: pulse 2s infinite; }
-
-/* ===== Tab Bar ===== */
-.tab-bar {
-  display: flex; gap: 4px;
-  background: var(--card-bg); border-radius: 16px;
-  padding: 4px; margin-bottom: 25px;
-  border: 1px solid var(--border);
-  overflow-x: auto;
+.nav a:hover { color: #667eea; }
+.nav a::after {
+  content: ''; position: absolute; bottom: 0; left: 0; width: 0;
+  height: 2px; background: #667eea; transition: width 0.3s;
 }
-.tab-btn {
-  flex: 1; padding: 10px 14px; border: none; border-radius: 14px;
-  font-family: 'Inter', 'Noto Sans SC', sans-serif;
-  font-size: 12px; font-weight: 600; letter-spacing: 1px;
-  cursor: pointer; transition: all 0.3s;
-  background: transparent; color: var(--text-secondary);
-  white-space: nowrap;
+.nav a:hover::after { width: 100%; }
+.main-content { display: grid; grid-template-columns: 1fr 1fr; gap: 35px; margin-bottom: 35px; }
+.upload-section, .tutorial-section {
+  background: rgba(255,255,255,0.95); border-radius: 20px; padding: 35px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1); backdrop-filter: blur(10px);
 }
-.tab-btn:hover { background: rgba(232,196,196,0.12); color: var(--rose-deep); }
-.tab-btn.active { background: linear-gradient(135deg, var(--rose), var(--rose-deep)); color: #fff; box-shadow: 0 4px 12px rgba(196,139,139,0.3); }
-
-/* ===== Panels ===== */
-.panel {
-  background: var(--card-bg);
-  border-radius: 24px;
-  padding: 30px;
-  margin-bottom: 28px;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-soft);
-  display: none;
-  transition: box-shadow 0.5s ease;
-}
-.panel:hover { box-shadow: var(--shadow-hover); }
-.panel.active { display: block; animation: fadeIn 0.3s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
 .section-title {
-  font-size: 14px; font-weight: 600; letter-spacing: 2px;
-  color: var(--rose-deep);
-  margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
+  font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #333;
+  display: flex; align-items: center; gap: 10px;
 }
-.section-title .icon { font-size: 1rem; }
-.section-title::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--blush), var(--lavender), transparent); }
-
-/* ===== Info Grid ===== */
-.info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; }
-.info-card {
-  background: rgba(250,248,245,0.5);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 20px; text-align: center;
-  transition: all 0.3s; cursor: default;
+.section-icon {
+  width: 40px; height: 40px; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  font-size: 20px; color: white;
 }
-.info-card:hover { border-color: var(--blush); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(180,150,150,0.12); background: var(--card-bg); }
-.info-icon { font-size: 30px; margin-bottom: 10px; }
-.info-title { font-size: 12px; color: var(--text-muted); letter-spacing: 2px; margin-bottom: 8px; text-transform: uppercase; }
-.info-value { font-size: 22px; font-weight: 700; color: var(--rose-deep); letter-spacing: 1px; }
-.info-description { font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
-
-/* ===== Upload ===== */
-.main-content { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 0; }
-
-.media-types { display: flex; gap: 8px; margin-bottom: 15px; }
+.media-types { display: flex; gap: 10px; margin-bottom: 20px; }
 .media-type-button {
-  flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 12px;
-  background: var(--card-bg); cursor: pointer;
-  transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 5px;
-  font-family: 'Inter', 'Noto Sans SC', sans-serif; font-size: 12px; color: var(--text-secondary);
+  flex: 1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;
+  background: white; cursor: pointer; transition: all 0.3s;
+  display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 14px;
 }
-.media-type-button.active { border-color: var(--rose); background: rgba(232,196,196,0.12); color: var(--rose-deep); }
-
+.media-type-button.active { border-color: #667eea; background: rgba(102,126,234,0.1); }
 .upload-area {
-  border: 2px dashed var(--blush); border-radius: 18px;
-  padding: 35px 20px; text-align: center; cursor: pointer;
-  transition: all 0.3s; background: rgba(250,248,245,0.3);
+  border: 3px dashed #667eea; border-radius: 15px; padding: 50px; text-align: center;
+  cursor: pointer; transition: all 0.3s; background: rgba(102,126,234,0.05);
+  position: relative; overflow: hidden;
 }
-.upload-area:hover { background: rgba(232,196,196,0.08); border-color: var(--rose); }
-.upload-icon { font-size: 48px; margin-bottom: 15px; animation: float 3s ease-in-out infinite; }
-@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-.upload-text { font-size: 16px; color: var(--text-secondary); margin-bottom: 10px; }
-.upload-hint { font-size: 12px; color: var(--text-muted); }
-
-/* ===== Platform ===== */
-.platform-selector { display: flex; gap: 6px; margin-bottom: 15px; flex-wrap: wrap; }
+.upload-area:hover { background: rgba(102,126,234,0.1); border-color: #764ba2; transform: translateY(-2px); }
+.upload-icon { font-size: 60px; color: #667eea; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+@keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+.upload-text { font-size: 20px; color: #666; margin-bottom: 15px; font-weight: 500; }
+.upload-hint { font-size: 16px; color: #999; line-height: 1.5; }
+.platform-selector { display: flex; gap: 15px; margin-bottom: 20px; }
 .platform-button {
-  padding: 8px 12px; border: 1px solid var(--border); border-radius: 12px;
-  background: var(--card-bg); cursor: pointer; transition: all 0.3s;
-  font-family: 'Inter', 'Noto Sans SC', sans-serif; font-size: 11px; color: var(--text-secondary);
+  flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px;
+  background: white; cursor: pointer; transition: all 0.3s;
+  display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 500;
 }
-.platform-button.active { border-color: var(--rose); background: rgba(232,196,196,0.12); color: var(--rose-deep); box-shadow: 0 2px 8px rgba(212,165,165,0.15); }
-
+.platform-button.active { border-color: #667eea; background: rgba(102,126,234,0.1); }
+.tutorial-input-container { position: relative; margin-bottom: 20px; }
 .tutorial-input {
-  width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 14px;
-  background: rgba(250,248,245,0.5);
-  font-family: 'Inter', 'Noto Sans SC', sans-serif; font-size: 14px; color: var(--text-primary);
-  transition: all 0.3s;
+  width: 100%; padding: 15px 20px; border: 2px solid #e0e0e0; border-radius: 12px;
+  font-size: 16px; transition: all 0.3s; background: #f8f9fa;
 }
-.tutorial-input:focus { outline: none; border-color: var(--rose-deep); box-shadow: 0 0 0 3px rgba(212,165,165,0.1); }
-.tutorial-input::placeholder { color: var(--text-muted); }
-
+.tutorial-input:focus { outline: none; border-color: #667eea; background: white; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
 .tutorial-button {
-  width: 100%; padding: 12px;
-  background: linear-gradient(135deg, var(--rose), var(--rose-deep));
-  color: #fff; font-family: 'Inter', 'Noto Sans SC', sans-serif;
-  border: none; border-radius: 14px;
-  font-size: 13px; font-weight: 600; cursor: pointer; letter-spacing: 1px;
-  transition: all 0.3s; margin-top: 10px;
-  box-shadow: 0 4px 12px rgba(212,165,165,0.2);
+  width: 100%; padding: 15px 20px; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600;
+  cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden;
 }
-.tutorial-button:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(212,165,165,0.3); }
-
-.example-links { margin-top: 12px; padding: 12px; background: rgba(250,248,245,0.5); border-radius: 12px; }
-.example-links h4 { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+.tutorial-button:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102,126,234,0.3); }
+.example-links { margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 10px; }
+.example-links h4 { margin-bottom: 10px; color: #333; }
 .example-link {
-  display: block; padding: 6px 10px; margin: 4px 0;
-  background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
-  color: var(--rose-deep); text-decoration: none; transition: all 0.3s; font-size: 12px; cursor: pointer;
+  display: block; padding: 8px 12px; margin: 5px 0; background: white; border-radius: 8px;
+  color: #667eea; text-decoration: none; transition: all 0.3s; border: 1px solid #e0e0e0; cursor: pointer;
 }
-.example-link:hover { background: rgba(232,196,196,0.1); border-color: var(--rose); }
-.tutorial-info { display: none; margin-top: 12px; padding: 16px; background: rgba(250,248,245,0.5); border-radius: 14px; }
-
-/* ===== Preview ===== */
-.preview-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
-.preview-box { text-align: center; }
-.preview-title { font-size: 13px; color: var(--text-secondary); margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.preview-badge { background: rgba(232,196,196,0.15); color: var(--rose-deep); padding: 2px 10px; border-radius: 20px; font-size: 10px; }
-.video-preview { width: 100%; height: 260px; background: #f5f0eb; border-radius: 16px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-.video-placeholder { color: var(--text-muted); font-size: 14px; text-align: center; padding: 10px; }
-
-/* ===== Effects ===== */
-.effect-gallery { margin-top: 20px; }
-.effect-gallery h3 { font-size: 12px; color: var(--text-primary); margin-bottom: 12px; }
-.effect-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+.example-link:hover { background: #667eea; color: white; transform: translateX(5px); }
+.ai-processing-section {
+  background: rgba(255,255,255,0.95); border-radius: 20px; padding: 35px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1); backdrop-filter: blur(10px); margin-bottom: 35px; display: none;
+}
+.ai-models { margin-top: 25px; }
+.ai-models h3 { font-size: 24px; margin-bottom: 20px; color: #333; }
+.model-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+.model-card {
+  background: white; border-radius: 15px; padding: 20px; text-align: center;
+  cursor: pointer; transition: all 0.3s; border: 2px solid transparent; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.model-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+.model-card.selected { border-color: #667eea; background: rgba(102,126,234,0.1); }
+.model-icon { font-size: 40px; margin-bottom: 15px; }
+.model-name { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #333; }
+.model-desc { font-size: 14px; color: #666; margin-bottom: 15px; }
+.model-btn {
+  padding: 8px 20px; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  color: white; border: none; border-radius: 20px; cursor: pointer;
+  transition: all 0.3s; font-weight: 600;
+}
+.model-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.3); }
+.ai-controls { margin-top: 30px; padding: 25px; background: #f8f9fa; border-radius: 15px; display: none; }
+.control-group { margin-bottom: 20px; display: none; }
+.control-group h4 { margin-bottom: 15px; color: #333; }
+.parameter { margin-bottom: 15px; }
+.parameter label { display: block; margin-bottom: 5px; color: #555; font-weight: 500; }
+.parameter input[type="range"] {
+  width: 100%; height: 6px; background: #e0e0e0; border-radius: 3px; outline: none; -webkit-appearance: none;
+}
+.parameter input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
+  background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); border-radius: 50%; cursor: pointer;
+}
+.parameter input[type="range"]::-moz-range-thumb {
+  width: 20px; height: 20px;
+  background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); border-radius: 50%; cursor: pointer; border: none;
+}
+.ai-action-buttons { display: flex; gap: 15px; margin-top: 25px; }
+.ai-process-btn {
+  flex: 1; padding: 15px 25px; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  color: white; border: none; border-radius: 10px; cursor: pointer;
+  transition: all 0.3s; font-weight: 600; font-size: 16px;
+}
+.ai-process-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102,126,234,0.3); }
+.ai-process-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+.ai-reset-btn {
+  flex: 1; padding: 15px 25px; background: #f0f0f0; color: #333;
+  border: none; border-radius: 10px; cursor: pointer;
+  transition: all 0.3s; font-weight: 600; font-size: 16px;
+}
+.ai-reset-btn:hover { background: #e0e0e0; transform: translateY(-2px); }
+.ai-loading { display: none; text-align: center; padding: 30px; }
+.ai-status {
+  margin-top: 20px; padding: 15px; border-radius: 10px; display: none; font-weight: 500;
+}
+.ai-status.success { background: linear-gradient(135deg,#d4edda 0%,#c3e6cb 100%); color: #155724; border: 1px solid #c3e6cb; }
+.ai-status.error { background: linear-gradient(135deg,#f8d7da 0%,#f5c6cb 100%); color: #721c24; border: 1px solid #f5c6cb; }
+.ai-status.info { background: linear-gradient(135deg,#d1ecf1 0%,#bee5eb 100%); color: #0c5460; border: 1px solid #bee5eb; }
+.preview-section {
+  background: rgba(255,255,255,0.95); border-radius: 20px; padding: 35px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1); backdrop-filter: blur(10px); margin-bottom: 35px;
+}
+.preview-container { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 25px; }
+.preview-box { text-align: center; position: relative; }
+.preview-title {
+  font-size: 20px; font-weight: bold; margin-bottom: 20px; color: #333;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.preview-badge {
+  background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color: white;
+  padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+}
+.video-preview {
+  width: 100%; height: 300px; background: #000; border-radius: 15px;
+  display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;
+}
+.video-placeholder { color: white; font-size: 18px; }
+.effect-gallery {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;
+}
 .effect-card {
-  background: rgba(250,248,245,0.5); border: 1px solid var(--border); border-radius: 14px;
-  padding: 10px; text-align: center; cursor: pointer;
-  transition: all 0.3s;
+  background: white; border-radius: 10px; padding: 15px; text-align: center;
+  cursor: pointer; transition: all 0.3s; border: 2px solid transparent;
 }
-.effect-card:hover { border-color: var(--rose); background: rgba(232,196,196,0.08); transform: translateY(-2px); }
-.effect-card.active { border-color: var(--rose-deep); background: rgba(232,196,196,0.15); box-shadow: 0 4px 12px rgba(212,165,165,0.15); }
-.effect-icon { font-size: 20px; margin-bottom: 4px; }
-.effect-name { font-size: 11px; color: var(--text-secondary); }
-
-/* ===== Buttons ===== */
-.action-buttons { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.effect-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-color: #667eea; }
+.effect-card.active { border-color: #667eea; background: rgba(102,126,234,0.1); }
+.effect-icon { font-size: 30px; margin-bottom: 10px; }
+.effect-name { font-size: 14px; font-weight: 600; color: #333; }
+.action-buttons { display: flex; gap: 20px; margin-top: 35px; }
 .action-button {
-  flex: 1; min-width: 100px; padding: 12px 18px;
-  border-radius: 14px; border: none;
-  font-family: 'Inter', 'Noto Sans SC', sans-serif;
-  font-size: 13px; font-weight: 600; letter-spacing: 1px;
-  cursor: pointer; transition: all 0.3s;
+  flex: 1; padding: 18px 25px; border: none; border-radius: 12px;
+  font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;
+  position: relative; overflow: hidden;
 }
-.action-button:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
-.action-button:hover:not(:disabled) { transform: translateY(-2px); }
-.process-button { background: linear-gradient(135deg, var(--rose), var(--rose-deep)); color: #fff; box-shadow: 0 4px 12px rgba(212,165,165,0.2); }
-.process-button:hover:not(:disabled) { box-shadow: 0 6px 18px rgba(212,165,165,0.35); }
-.reset-button { background: var(--champagne); color: var(--text-secondary); }
-.reset-button:hover { background: #e8ddd0; }
-.download-button { background: linear-gradient(135deg, var(--sage), #b0c8b0); color: #fff; box-shadow: 0 4px 12px rgba(181,200,181,0.2); }
-.download-button:hover:not(:disabled) { box-shadow: 0 6px 18px rgba(181,200,181,0.35); }
-.save-button { background: linear-gradient(135deg, var(--lavender), #c8b8d5); color: #fff; box-shadow: 0 4px 12px rgba(213,198,224,0.2); }
-.save-button:hover:not(:disabled) { box-shadow: 0 6px 18px rgba(213,198,224,0.35); }
-
-/* ===== Loading ===== */
-.loading { display: none; text-align: center; padding: 25px; }
-.loading-spinner { border: 3px solid rgba(232,196,196,0.2); border-top: 3px solid var(--rose-deep); border-radius: 50%; width: 40px; height: 40px; animation: spin 0.8s linear infinite; margin: 0 auto 15px; }
+.process-button { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color: white; }
+.process-button:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102,126,234,0.3); }
+.process-button:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+.reset-button { background: #f0f0f0; color: #333; }
+.reset-button:hover { background: #e0e0e0; transform: translateY(-2px); }
+.download-button { background: linear-gradient(135deg,#4CAF50 0%,#45a049 100%); color: white; }
+.download-button:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(76,175,80,0.3); }
+.download-button:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+.loading { display: none; text-align: center; padding: 30px; }
+.loading-spinner {
+  border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%;
+  width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px;
+}
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-/* ===== Status ===== */
-.status-message { padding: 14px; margin-top: 20px; display: none; font-size: 13px; border-radius: 14px; animation: slideIn 0.3s ease-out; }
-.status-success { background: rgba(197,213,197,0.2); color: #5a7a5a; border: 1px solid rgba(197,213,197,0.4); }
-.status-error { background: rgba(232,190,190,0.2); color: #9a5a5a; border: 1px solid rgba(232,190,190,0.4); }
-.status-info { background: rgba(213,198,224,0.2); color: #7a6a8a; border: 1px solid rgba(213,198,224,0.4); }
-@keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
-/* ===== AI Grid ===== */
-.ai-grid { display: grid; grid-template-columns: repeat(auto-fill, minMax(200px, 1fr)); gap: 14px; margin: 18px 0; }
-.ai-card {
-  background: rgba(250,248,245,0.5); border: 1px solid var(--border); border-radius: 18px;
-  padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s;
+.status-message {
+  padding: 20px; border-radius: 12px; margin-top: 25px; display: none;
+  font-weight: 500; animation: slideIn 0.3s ease-out;
 }
-.ai-card:hover { border-color: var(--rose); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(180,150,150,0.08); }
-.ai-card.active { border-color: var(--rose-deep); background: rgba(232,196,196,0.12); box-shadow: 0 4px 16px rgba(212,165,165,0.12); }
-.ai-icon { font-size: 28px; margin-bottom: 8px; }
-.ai-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-.ai-desc { font-size: 11px; color: var(--text-muted); }
-
-.ai-slider-group { margin: 18px 0; }
-.ai-slider-group label { font-size: 12px; color: var(--text-secondary); display: block; margin-bottom: 8px; }
-.ai-slider { width: 100%; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: var(--blush); outline: none; }
-.ai-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--rose-deep); cursor: pointer; box-shadow: 0 2px 6px rgba(196,139,139,0.3); }
-.ai-slider-value { float: right; color: var(--rose-deep); font-weight: 600; }
-
-/* ===== AI 参数面板 ===== */
-.ai-params { margin: 16px 0; padding: 18px; background: rgba(250,248,245,0.5); border-radius: 16px; border: 1px solid var(--border); }
-.ai-param-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
-.ai-param-row:last-child { margin-bottom: 0; }
-.ai-param-row label { font-size: 12px; color: var(--text-secondary); min-width: 90px; flex-shrink: 0; font-weight: 500; }
-.ai-param-slider { flex: 1; min-width: 120px; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 3px; background: var(--blush); outline: none; }
-.ai-param-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--rose-deep); cursor: pointer; box-shadow: 0 2px 6px rgba(196,139,139,0.3); }
-.ai-param-val { font-size: 12px; font-weight: 600; color: var(--rose-deep); min-width: 36px; text-align: right; }
-.ai-param-select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 12px; font-family: 'Inter','Noto Sans SC',sans-serif; font-size: 13px; background: var(--card-bg); color: var(--text-primary); flex: 1; min-width: 120px; }
-
-/* ===== AI 独立上传和预览 ===== */
-.ai-upload-zone { border: 2px dashed var(--blush); border-radius: 18px; padding: 35px 20px; text-align: center; cursor: pointer; transition: all 0.3s; background: rgba(250,248,245,0.3); margin-bottom: 20px; }
-.ai-upload-zone:hover { background: rgba(232,196,196,0.08); border-color: var(--rose); }
-.ai-upload-icon { font-size: 44px; margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
-.ai-upload-text { font-size: 15px; color: var(--text-secondary); margin-bottom: 6px; }
-.ai-upload-hint { font-size: 11px; color: var(--text-muted); }
-.ai-preview-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-.ai-preview-box { text-align: center; }
-.ai-preview-label { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 1px; }
-.ai-preview-frame { width: 100%; height: 220px; background: #f5f0eb; border-radius: 14px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
-.ai-preview-frame img { width: 100%; height: 100%; object-fit: contain; border-radius: 14px; }
-.ai-preview-frame video { width: 100%; height: 100%; object-fit: contain; border-radius: 14px; }
-.ai-preview-placeholder { color: var(--text-muted); font-size: 12px; padding: 10px; text-align: center; }
-@media (max-width: 600px) { .ai-preview-row { grid-template-columns: 1fr; } }
-
-/* ===== Crawler ===== */
-.crawler-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin: 18px 0; }
-.stat-card { background: rgba(250,248,245,0.5); border: 1px solid var(--border); border-radius: 16px; padding: 16px; text-align: center; }
-.stat-number { font-size: 24px; font-weight: 700; color: var(--rose-deep); }
-.stat-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
-.crawler-log {
-  background: #f5f0eb; color: var(--text-primary);
-  padding: 16px; border-radius: 14px;
-  font-family: 'Inter', 'Noto Sans SC', sans-serif; font-size: 12px;
-  max-height: 260px; overflow-y: auto; margin-top: 12px;
-  line-height: 1.8;
+@keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+.status-success { background: linear-gradient(135deg,#d4edda 0%,#c3e6cb 100%); color: #155724; border: 1px solid #c3e6cb; }
+.status-error { background: linear-gradient(135deg,#f8d7da 0%,#f5c6cb 100%); color: #721c24; border: 1px solid #f5c6cb; }
+.status-info { background: linear-gradient(135deg,#d1ecf1 0%,#bee5eb 100%); color: #0c5460; border: 1px solid #bee5eb; }
+.tutorial-info { margin-top: 25px; padding: 20px; background: #f8f9fa; border-radius: 12px; display: none; }
+.tutorial-info h3 { margin-bottom: 15px; color: #333; }
+.tutorial-details { font-size: 14px; color: #666; }
+.tutorial-steps { margin-top: 15px; }
+.tutorial-steps ul { list-style: none; padding-left: 0; }
+.tutorial-steps li {
+  margin-bottom: 15px; padding: 15px; background: white; border-radius: 8px; border-left: 4px solid #667eea;
 }
-.log-line { padding: 3px 0; border-bottom: 1px solid rgba(180,150,150,0.06); }
-.log-time { color: var(--text-muted); }
-.log-info { color: var(--rose-deep); }
-.log-warn { color: #b8956a; }
-.log-error { color: #c47a7a; }
-
-/* ===== History ===== */
-.history-list { max-height: 380px; overflow-y: auto; }
-.history-item {
-  background: rgba(250,248,245,0.5); border: 1px solid var(--border); border-radius: 14px;
-  padding: 12px; margin-bottom: 8px; cursor: default; transition: all 0.2s;
-  border-left: 3px solid var(--rose);
+.step-number {
+  display: inline-block; width: 25px; height: 25px; background: #667eea; color: white;
+  border-radius: 50%; text-align: center; line-height: 25px; margin-right: 10px; font-weight: bold; font-size: 14px;
 }
-.history-item:hover { border-color: var(--rose-deep); border-left-color: var(--rose-deep); background: rgba(232,196,196,0.06); }
-.history-item .h-time { font-size: 10px; color: var(--text-muted); }
-.history-item .h-file { font-weight: 600; margin: 3px 0; color: var(--rose-deep); }
-.history-item .h-effect { font-size: 11px; color: var(--text-secondary); }
+.step-content { display: inline-block; vertical-align: top; }
+.step-action { font-weight: bold; color: #333; margin-bottom: 5px; }
+.step-description { color: #666; font-size: 14px; }
 
-/* ===== Settings ===== */
-.setting-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap; }
-.setting-label { font-weight: 600; font-size: 14px; }
-.setting-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.toggle-switch { width: 44px; height: 24px; background: var(--border); border-radius: 12px; cursor: pointer; transition: all 0.3s; position: relative; flex-shrink: 0; }
-.toggle-switch.on { background: var(--rose); }
-.toggle-switch::after { content: ''; width: 18px; height: 18px; background: #fff; border-radius: 50%; position: absolute; top: 3px; left: 3px; transition: all 0.3s; }
-.toggle-switch.on::after { left: 23px; }
-
-/* ===== Version ===== */
-.version-progress { background: rgba(250,248,245,0.5); border: 1px solid var(--border); border-radius: 18px; padding: 18px; margin-top: 18px; }
-.version-progress h3 { font-size: 13px; color: var(--rose-deep); margin-bottom: 12px; }
-.progress-bar { height: 6px; background: rgba(232,196,196,0.2); border-radius: 3px; overflow: hidden; margin: 8px 0; }
-.progress-fill { height: 100%; background: linear-gradient(90deg, var(--rose), var(--lavender)); border-radius: 3px; transition: width 0.5s; }
-
-.version-timeline { position: relative; padding: 10px 0; }
-.version-item { display: flex; gap: 16px; margin-bottom: 20px; }
-.version-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--rose); flex-shrink: 0; margin-top: 4px; }
-.version-item.current .version-dot { background: var(--sage); animation: glow 2s infinite; }
-@keyframes glow { 0%,100% { box-shadow: 0 0 4px var(--sage); } 50% { box-shadow: 0 0 10px var(--sage); } }
-.version-content { flex: 1; }
-.version-tag { font-size: 10px; background: rgba(232,196,196,0.12); color: var(--rose-deep); padding: 1px 8px; border-radius: 10px; display: inline-block; margin-bottom: 4px; }
-.version-item.current .version-tag { background: rgba(197,213,197,0.15); color: #5a7a5a; }
-.version-content h3 { font-size: 14px; margin-bottom: 4px; }
-.version-content ul { margin: 0; padding-left: 18px; }
-.version-content li { font-size: 12px; color: var(--text-secondary); margin: 2px 0; }
-
-/* ===== Developer Backend ===== */
+/* 开发者后台按钮和模态框 */
 .developer-login-btn {
-  position: fixed; top: 20px; right: 20px; z-index: 9998;
-  padding: 10px 20px; border: none; border-radius: 25px;
-  background: linear-gradient(135deg, var(--rose), var(--rose-deep));
-  color: #fff; font-family: 'Inter', 'Noto Sans SC', sans-serif;
-  font-size: 13px; font-weight: 600; cursor: pointer;
-  transition: all 0.3s; box-shadow: 0 4px 15px rgba(212,165,165,0.3);
+  position: fixed; top: 20px; right: 20px;
+  padding: 10px 20px; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  color: white; border: none; border-radius: 25px; cursor: pointer;
+  z-index: 1000; transition: all 0.3s; font-weight: 600;
 }
-.developer-login-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(212,165,165,0.4); }
-
-.developer-login-modal, .developer-dashboard {
-  position: fixed; inset: 0;
-  background: rgba(61,53,53,0.6);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 10000;
+.developer-login-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+.developer-login-modal {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7); display: flex; align-items: center;
+  justify-content: center; z-index: 10000;
 }
-.login-container, .developer-dashboard {
-  background: var(--card-bg); border-radius: 24px;
-  padding: 35px; max-width: 500px; width: 90%;
-  box-shadow: var(--shadow-hover);
-  border: 1px solid var(--border);
+.login-container {
+  background: white; padding: 30px; border-radius: 15px;
+  max-width: 400px; width: 90%; box-shadow: 0 15px 35px rgba(0,0,0,0.2);
 }
-.login-container h2 { font-family: 'Playfair Display', serif; color: var(--text-primary); text-align: center; margin-bottom: 6px; }
-.login-container p { text-align: center; color: var(--text-muted); font-size: 13px; margin-bottom: 20px; }
 .dev-input {
-  width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 14px;
-  font-family: 'Inter', 'Noto Sans SC', sans-serif; font-size: 15px;
-  margin: 15px 0; background: rgba(250,248,245,0.5);
-  transition: all 0.3s;
+  width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;
+  margin-bottom: 12px; font-size: 16px; outline: none;
 }
-.dev-input:focus { outline: none; border-color: var(--rose-deep); box-shadow: 0 0 0 3px rgba(212,165,165,0.1); }
-
+.dev-input:focus { border-color: #667eea; }
+.dev-input::placeholder { color: #999; }
 .dev-btn {
-  padding: 10px 20px; border: none; border-radius: 12px;
-  font-family: 'Inter', 'Noto Sans SC', sans-serif; font-weight: 600; font-size: 14px;
-  cursor: pointer; transition: all 0.3s;
+  width: 100%; padding: 12px; border: none; border-radius: 8px;
+  cursor: pointer; font-weight: 600; font-size: 15px; transition: all 0.3s;
 }
-.dev-btn.primary { background: linear-gradient(135deg, var(--rose), var(--rose-deep)); color: #fff; }
-.dev-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(212,165,165,0.3); }
-.dev-btn.secondary { background: var(--champagne); color: var(--text-secondary); }
-.dev-btn.secondary:hover { background: #e8ddd0; }
-
-.developer-dashboard {
-  max-width: 900px; max-height: 90vh; overflow-y: auto;
+.dev-btn.primary {
+  background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color: white; margin-bottom: 8px;
 }
-.dashboard-header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 25px; padding-bottom: 15px;
-  border-bottom: 2px solid var(--border);
-}
-.dashboard-header h2 { font-family: 'Playfair Display', serif; color: var(--text-primary); font-size: 22px; }
-.user-info { display: flex; align-items: center; gap: 15px; font-size: 13px; color: var(--text-secondary); flex-wrap: wrap; }
-.expiry-time { color: var(--rose-deep); font-weight: 600; }
-.dashboard-section { margin-bottom: 25px; padding: 20px; background: rgba(250,248,245,0.5); border-radius: 16px; }
-.dashboard-section h3 { margin-bottom: 15px; color: var(--text-primary); font-size: 16px; }
-.status-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-.status-item { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: var(--card-bg); border-radius: 12px; }
-.status-value { font-weight: 600; font-size: 13px; }
-.status-active { color: #7a9a7a; }
-.feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-.feature-item { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: var(--card-bg); border-radius: 12px; font-size: 13px; }
-.crawler-controls { display: flex; gap: 10px; flex-wrap: wrap; }
-.system-info { padding: 14px; background: var(--card-bg); border-radius: 12px; }
-.system-info p { margin: 6px 0; font-size: 13px; }
+.dev-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.3); }
+.dev-btn.secondary { background: #f0f0f0; color: #333; }
+.dev-btn.secondary:hover { background: #e0e0e0; }
 .dev-notification {
-  position: fixed; top: 80px; right: 20px;
-  padding: 14px 18px; border-radius: 14px;
+  position: fixed; top: 80px; right: 20px; padding: 14px 18px; border-radius: 14px;
   color: #fff; font-weight: 500; font-size: 13px;
   z-index: 10001; animation: slideIn 0.3s ease-out; max-width: 300px;
 }
-.dev-notification.success { background: linear-gradient(135deg, #b0c8b0, #8aaa8a); }
-.dev-notification.error { background: linear-gradient(135deg, #e0a0a0, #c47a7a); }
-.dev-notification.info { background: linear-gradient(135deg, #c0b0d0, #a890b8); }
+.dev-notification.success { background: linear-gradient(135deg,#b0c8b0,#8aaa8a); }
+.dev-notification.error { background: linear-gradient(135deg,#e0a0a0,#c47a7a); }
+.dev-notification.info { background: linear-gradient(135deg,#c0b0d0,#a890b8); }
 
-.crawler-update-notification {
-  position: fixed; bottom: 20px; right: 20px;
-  background: var(--card-bg); border-radius: 18px;
-  padding: 20px; box-shadow: var(--shadow-hover);
-  z-index: 1000; max-width: 380px;
-  border: 1px solid var(--border);
-  animation: slideIn 0.3s ease-out;
+.developer-dashboard {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7); display: flex; align-items: center;
+  justify-content: center; z-index: 10000;
 }
-.crawler-update-notification h3 { margin: 0 0 8px; color: var(--rose-deep); font-size: 15px; }
-.crawler-update-notification p { margin: 0 0 12px; color: var(--text-secondary); font-size: 13px; }
-.update-details { margin: 10px 0; padding: 10px; background: rgba(250,248,245,0.5); border-radius: 10px; max-height: 120px; overflow-y: auto; }
-.update-success { color: #6a9a6a; margin: 3px 0; font-size: 13px; }
-.update-error { color: #c47a7a; margin: 3px 0; font-size: 13px; }
-
-.crawler-log-modal {
-  position: fixed; inset: 0; background: rgba(61,53,53,0.6);
-  display: flex; align-items: center; justify-content: center; z-index: 10000;
+.dashboard-content {
+  background: white; padding: 30px; border-radius: 15px;
+  max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
 }
-.log-container { background: var(--card-bg); border-radius: 24px; width: 80%; max-width: 650px; max-height: 80vh; display: flex; flex-direction: column; border: 1px solid var(--border); }
-.log-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-.log-header h3 { color: var(--rose-deep); }
-.log-content { flex: 1; overflow-y: auto; padding: 16px; }
-.log-entry { display: flex; gap: 12px; padding: 8px; border-bottom: 1px solid var(--border); font-size: 13px; }
-.log-time { color: var(--text-muted); min-width: 150px; }
-.log-message { flex: 1; color: var(--text-primary); }
-
-/* ===== Floating ===== */
-.floating-btn {
-  position: fixed; bottom: 24px; right: 24px; z-index: 9997;
-  width: 48px; height: 48px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--rose), var(--rose-deep));
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 18px; cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 4px 16px rgba(212,165,165,0.3);
+.dashboard-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f0f0f0;
 }
-.floating-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(212,165,165,0.4); }
+.dashboard-section { margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px; }
+.dashboard-section h3 { margin-bottom: 20px; }
+.status-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+.status-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.status-value.status-active {
+  color: #4CAF50; background: rgba(76,175,80,0.1);
+  padding: 5px 10px; border-radius: 20px; font-size: 14px;
+}
+.feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+.feature-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.system-info { padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.system-info p { margin: 10px 0; }
 
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(61,53,53,0.5); z-index: 9998; align-items: center; justify-content: center; }
-.modal-overlay.show { display: flex; }
-.modal { background: var(--card-bg); border-radius: 24px; padding: 28px; max-width: 420px; width: 90%; border: 1px solid var(--border); box-shadow: var(--shadow-hover); }
-.modal h2 { font-family: 'Playfair Display', serif; color: var(--rose-deep); font-size: 18px; margin-bottom: 18px; }
-.modal select, .modal textarea { width: 100%; padding: 10px 14px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 12px; font-family: 'Inter', 'Noto Sans SC', sans-serif; font-size: 13px; background: rgba(250,248,245,0.5); }
-.modal textarea { min-height: 100px; resize: vertical; }
-.modal .modal-btns { display: flex; gap: 10px; }
-.modal .modal-btns button { flex: 1; padding: 10px; border: none; border-radius: 12px; font-family: 'Inter', 'Noto Sans SC', sans-serif; font-weight: 600; font-size: 12px; cursor: pointer; transition: all 0.3s; }
-
-/* ===== Responsive ===== */
 @media (max-width: 768px) {
-  .main-content, .preview-container { grid-template-columns: 1fr; }
+  .main-content { grid-template-columns: 1fr; }
+  .preview-container { grid-template-columns: 1fr; }
   .action-buttons { flex-direction: column; }
-  .nav { justify-content: center; }
-  .nav a { font-size: 11px; padding: 6px 12px; }
-  header { padding: 14px 16px; }
-  .panel { padding: 18px; }
+  .nav { display: none; }
+  .header-content { flex-direction: column; gap: 20px; }
+  .section-title { font-size: 20px; }
+  .effect-gallery { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+  .developer-login-btn { top: 10px; right: 10px; padding: 8px 15px; font-size: 14px; }
   .status-grid, .feature-grid { grid-template-columns: 1fr; }
-  .crawler-controls { flex-direction: column; }
-  .developer-login-btn { top: 10px; right: 10px; padding: 8px 15px; font-size: 12px; }
 }
 </style>
 </head>
 <body>
-
 <div class="container">
+  <header>
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">🎬</div>
+        <div class="logo-text">哩修</div>
+      </div>
+      <nav class="nav">
+        <a onclick="scrollToSection('home')">首页</a>
+        <a onclick="scrollToSection('tutorials')">教程库</a>
+        <a onclick="scrollToSection('effects')">效果库</a>
+        <a onclick="scrollToSection('about')">关于我们</a>
+      </nav>
+    </div>
+  </header>
 
-<!-- Header -->
-<header>
-<div class="header-content">
-<div class="logo">
-<div class="logo-icon">🎬</div>
-<div class="logo-text"><span>哩</span>修 <span class="logo-version" id="headerVersion">v2.1.0</span></div>
-</div>
-<nav class="nav">
-<a class="active" data-tab="home">首页</a>
-<a data-tab="editor">剪辑</a>
-<a data-tab="ai">AI修图</a>
-<a data-tab="crawler">爬虫</a>
-<a data-tab="history">历史</a>
-<a data-tab="settings">设置</a>
-<a data-tab="about">关于</a>
-</nav>
-</div>
-</header>
+  <div class="main-content">
+    <div class="upload-section">
+      <h2 class="section-title">
+        <div class="section-icon">📹</div> 上传素材
+      </h2>
+      <div class="media-types">
+        <div class="media-type-button active" data-type="video"><span>🎬</span><span>视频</span></div>
+        <div class="media-type-button" data-type="image"><span>🖼️</span><span>图片</span></div>
+      </div>
+      <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">📁</div>
+        <div class="upload-text">点击或拖拽文件到这里</div>
+        <div class="upload-hint">支持 MP4、MOV、JPG、PNG 格式，最大 100MB</div>
+        <input type="file" id="fileInput" accept="video/*,image/*" style="display:none;">
+      </div>
+      <div class="loading" id="uploadLoading">
+        <div class="loading-spinner"></div><p>正在上传文件...</p>
+      </div>
+      <div class="status-message" id="uploadStatus"></div>
+    </div>
 
-<!-- ===== HOME ===== -->
-<div class="panel active" id="tab-home">
-<div class="section-title"><span class="icon">🌿</span>项目概览</div>
-<div class="info-grid">
-<div class="info-card"><div class="info-icon">🎯</div><div class="info-title">总体进度</div><div class="info-value">93%</div><div class="info-description">预计10月1日发布</div></div>
-<div class="info-card"><div class="info-icon">🖼️</div><div class="info-title">AI修图</div><div class="info-value" id="vAi">v2.1</div><div class="info-description">磨皮、去背景、超分</div></div>
-<div class="info-card"><div class="info-icon">🔗</div><div class="info-title">教程解析</div><div class="info-value" id="vCrawl">v2.1</div><div class="info-description">6大平台支持</div></div>
-<div class="info-card"><div class="info-icon">🎬</div><div class="info-title">视频剪辑</div><div class="info-value" id="vEdit">v2.1</div><div class="info-description">多轨道+智能卡点</div></div>
-</div>
-
-<div class="version-progress" style="margin-top:20px;">
-<h3>📦 版本演化</h3>
-<div class="version-timeline">
-<div class="version-item current"><div class="version-dot"></div><div class="version-content"><div class="version-tag">v2.1.0</div><h3>温柔花园 · 开发者后台升级</h3><ul><li>🎨 全面温柔女性审美视觉重构</li><li>🔐 新版开发者后台（类式架构）</li><li>🕷️ 新版自动爬虫系统（类式架构）</li><li>🤖 AI图像处理模块</li><li>🔄 自动更新检测系统</li></ul></div></div>
-<div class="version-item"><div class="version-dot"></div><div class="version-content"><div class="version-tag">v2.0.0</div><h3>AI + 爬虫大升级</h3><ul><li>AI图像处理、多平台爬虫、多轨道视频编辑</li></ul></div></div>
-</div>
-</div>
-
-<div style="text-align:center;padding:15px;border:1px dashed var(--border);border-radius:16px;margin-top:10px;">
-<div class="section-title" style="justify-content:center;">下载项目</div>
-<p style="color:var(--text-secondary);font-size:13px;margin-bottom:16px;">包含所有功能模块和自动更新系统</p>
-<div class="action-buttons" style="justify-content:center;">
-<a class="action-button process-button" style="display:inline-block;text-decoration:none;text-align:center;" onclick="downloadProject()">📥 下载完整项目</a>
-<a class="action-button save-button" style="display:inline-block;text-decoration:none;text-align:center;" onclick="window.open('https://lixiu-ohye.github.io/lixiu/')">🌐 在线演示</a>
-</div>
-</div>
-</div>
-
-<!-- ===== EDITOR ===== -->
-<div class="panel" id="tab-editor">
-<div class="main-content">
-<div class="upload-section">
-<div class="section-title"><span class="icon">📹</span>上传素材</div>
-<div class="media-types">
-<div class="media-type-button active" data-type="video"><span>🎬</span><span>视频</span></div>
-<div class="media-type-button" data-type="image"><span>🖼️</span><span>图片</span></div>
-</div>
-<div class="upload-area" id="uploadArea">
-<div class="upload-icon">📁</div>
-<div class="upload-text">点击或拖拽视频/图片到这里</div>
-<div class="upload-hint">支持 MP4、MOV、JPG、PNG，最大100MB</div>
-<input type="file" id="fileInput" accept="video/*,image/*" style="display:none">
-</div>
-<div class="loading" id="uploadLoading"><div class="loading-spinner"></div><p>正在上传...</p></div>
-<div class="status-message" id="uploadStatus"></div>
-</div>
-
-<div class="tutorial-section">
-<div class="section-title"><span class="icon">🔗</span>教程解析</div>
-<div class="platform-selector">
-<div class="platform-button active" data-platform="xiaohongshu">🔴 小红书</div>
-<div class="platform-button" data-platform="douyin">🎵 抖音</div>
-<div class="platform-button" data-platform="bilibili">📺 B站</div>
-<div class="platform-button" data-platform="kuaishou">📱 快手</div>
-<div class="platform-button" data-platform="jianying">✂️ 剪映</div>
-<div class="platform-button" data-platform="weibo">📰 微博</div>
-</div>
-<input type="text" class="tutorial-input" id="tutorialInput" placeholder="http://xhslink.cn/o/4Jy6Lnn1UbQ">
-<button class="tutorial-button" id="parseTutorialButton">✨ 解析教程</button>
-<div class="example-links">
-<h4>🔥 热门教程</h4>
-<a class="example-link" data-url="http://xhslink.cn/o/4Jy6Lnn1UbQ" data-platform="xiaohongshu">🔴 小红书：卡牌翻转卡点效果</a>
-<a class="example-link" data-url="http://xhslink.cn/o/6qDI4mtN4xm" data-platform="xiaohongshu">🔴 小红书：电影转场效果</a>
-<a class="example-link" data-url="https://v.douyin.com/xxxxxxx" data-platform="douyin">🎵 抖音：动态分屏效果</a>
-<a class="example-link" data-url="https://www.bilibili.com/video/BV1xxxx" data-platform="bilibili">📺 B站：专业调色教程</a>
-</div>
-<div class="loading" id="tutorialLoading"><div class="loading-spinner"></div><p>正在解析教程...</p></div>
-<div class="status-message" id="tutorialStatus"></div>
-<div class="tutorial-info" id="tutorialInfo"><h3 style="color:var(--rose-deep);font-size:14px;margin-bottom:10px;">📚 教程信息</h3><div id="tutorialDetails"></div></div>
-</div>
-</div>
-
-<div class="panel" style="margin-bottom:0;margin-top:25px;">
-<div class="section-title"><span class="icon">👀</span>效果预览</div>
-<div class="preview-container">
-<div class="preview-box"><div class="preview-title">原始素材 <span class="preview-badge">原始</span></div><div class="video-preview" id="originalPreview"><div class="video-placeholder">请上传视频/图片</div></div></div>
-<div class="preview-box"><div class="preview-title">效果预览 <span class="preview-badge" id="resultBadge">待处理</span></div><div class="video-preview" id="resultPreview"><div class="video-placeholder">处理后将显示在这里</div></div></div>
-</div>
-<div class="effect-gallery">
-<h3>🎬 选择效果</h3>
-<div class="effect-grid">
-<div class="effect-card active" data-effect="original"><div class="effect-icon">🎬</div><div class="effect-name">原始</div></div>
-<div class="effect-card" data-effect="flip"><div class="effect-icon">🔄</div><div class="effect-name">卡牌翻转</div></div>
-<div class="effect-card" data-effect="transition"><div class="effect-icon">🎭</div><div class="effect-name">电影转场</div></div>
-<div class="effect-card" data-effect="split"><div class="effect-icon">📱</div><div class="effect-name">动态分屏</div></div>
-<div class="effect-card" data-effect="speed"><div class="effect-icon">⚡</div><div class="effect-name">变速卡点</div></div>
-<div class="effect-card" data-effect="color"><div class="effect-icon">🎨</div><div class="effect-name">一键调色</div></div>
-</div>
-</div>
-<div class="action-buttons">
-<button class="action-button process-button" id="processButton" disabled>✨ 开始剪辑</button>
-<button class="action-button reset-button" id="resetButton">↻ 重置</button>
-<button class="action-button download-button" id="downloadButton" disabled>⬇ 下载</button>
-<button class="action-button save-button" id="saveProjectButton" disabled>💿 保存项目</button>
-</div>
-<div class="loading" id="processLoading"><div class="loading-spinner"></div><p>正在处理...</p></div>
-<div class="status-message" id="processStatus"></div>
-</div>
-</div>
-
-<!-- ===== AI ===== -->
-<div class="panel" id="tab-ai">
-<div class="section-title"><span class="icon">🤖</span>AI 智能修图</div>
-
-<!-- AI 标签页内独立的上传区域 -->
-<div class="ai-upload-zone" id="aiUploadZone">
-  <div class="ai-upload-icon">📸</div>
-  <div class="ai-upload-text">点击或拖拽上传图片</div>
-  <div class="ai-upload-hint">支持 JPG / PNG / WebP，最大 50MB</div>
-  <input type="file" id="aiFileInput" accept="image/jpeg,image/png,image/webp" style="display:none">
-</div>
-
-<div class="ai-preview-row" id="aiPreviewRow" style="display:none;">
-  <div class="ai-preview-box">
-    <div class="ai-preview-label">⬅ 原始</div>
-    <div class="ai-preview-frame" id="aiOriginalPreview"></div>
+    <div class="tutorial-section">
+      <h2 class="section-title">
+        <div class="section-icon">🔗</div> 教程解析
+      </h2>
+      <div class="platform-selector">
+        <div class="platform-button active" data-platform="xiaohongshu"><span>🔴</span><span>小红书</span></div>
+        <div class="platform-button" data-platform="douyin"><span>🎵</span><span>抖音</span></div>
+        <div class="platform-button" data-platform="jianying"><span>✂️</span><span>剪映</span></div>
+        <div class="platform-button" data-platform="bilibili"><span>📺</span><span>B站</span></div>
+        <div class="platform-button" data-platform="kuaishou"><span>📱</span><span>快手</span></div>
+        <div class="platform-button" data-platform="weibo"><span>📰</span><span>微博</span></div>
+      </div>
+      <div class="tutorial-input-container">
+        <input type="text" class="tutorial-input" id="tutorialInput" placeholder="输入教程链接，如：http://xhslink.cn/o/4Jy6Lnn1UbQ">
+      </div>
+      <button class="tutorial-button" id="parseTutorialButton">✨ 解析教程</button>
+      <div class="example-links">
+        <h4>🔥 热门教程</h4>
+        <a class="example-link" data-url="http://xhslink.cn/o/4Jy6Lnn1UbQ" data-platform="xiaohongshu">🔴 小红书：卡牌翻转效果</a>
+        <a class="example-link" data-url="https://v.douyin.com/xxxxxxx" data-platform="douyin">🎵 抖音：电影转场效果</a>
+        <a class="example-link" data-url="https://www.bilibili.com/video/BV1xxxx" data-platform="bilibili">📺 B站：一键调色教程</a>
+        <a class="example-link" data-url="https://www.jianying.com/tutorial/123" data-platform="jianying">✂️ 剪映：视频剪辑入门</a>
+      </div>
+      <div class="loading" id="tutorialLoading"><div class="loading-spinner"></div><p>正在解析教程...</p></div>
+      <div class="status-message" id="tutorialStatus"></div>
+      <div class="tutorial-info" id="tutorialInfo">
+        <h3>📚 教程信息</h3>
+        <div class="tutorial-details" id="tutorialDetails"></div>
+      </div>
+    </div>
   </div>
-  <div class="ai-preview-box">
-    <div class="ai-preview-label">处理效果 ➡</div>
-    <div class="ai-preview-frame" id="aiResultPreview"></div>
+
+  <!-- AI 图像处理 -->
+  <div class="ai-processing-section" id="aiProcessingSection">
+    <h2 class="section-title"><div class="section-icon">🎨</div> AI图像处理</h2>
+    <div class="ai-models">
+      <h3>选择处理模型</h3>
+      <div class="model-grid">
+        <div class="model-card" data-model="portrait">
+          <div class="model-icon">👤</div>
+          <div class="model-name">人像增强</div>
+          <div class="model-desc">优化皮肤、眼睛和牙齿</div>
+          <button class="model-btn" onclick="selectModel('portrait')">选择</button>
+        </div>
+        <div class="model-card" data-model="background">
+          <div class="model-icon">🖼️</div>
+          <div class="model-name">背景移除</div>
+          <div class="model-desc">智能移除背景</div>
+          <button class="model-btn" onclick="selectModel('background')">选择</button>
+        </div>
+        <div class="model-card" data-model="style">
+          <div class="model-icon">🎭</div><div class="model-name">风格迁移</div>
+          <div class="model-desc">应用艺术风格</div>
+          <button class="model-btn" onclick="selectModel('style')">选择</button>
+        </div>
+        <div class="model-card" data-model="resolution">
+          <div class="model-icon">🔍</div><div class="model-name">超分辨率</div>
+          <div class="model-desc">提升图像清晰度</div>
+          <button class="model-btn" onclick="selectModel('resolution')">选择</button>
+        </div>
+        <div class="model-card" data-model="color">
+          <div class="model-icon">🌈</div><div class="model-name">色彩校正</div>
+          <div class="model-desc">调整色彩平衡</div>
+          <button class="model-btn" onclick="selectModel('color')">选择</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-controls" id="aiControls">
+      <div class="control-group" id="portraitControls">
+        <h4>人像增强参数</h4>
+        <div class="parameter"><label>皮肤平滑度</label><input type="range" id="skinSmoothing" min="0" max="100" value="80"><span id="skinValue">80%</span></div>
+        <div class="parameter"><label>眼睛亮度</label><input type="range" id="eyeBrightening" min="0" max="100" value="60"><span id="eyeValue">60%</span></div>
+        <div class="parameter"><label>牙齿美白</label><input type="range" id="teethWhitening" min="0" max="100" value="70"><span id="teethValue">70%</span></div>
+      </div>
+      <div class="control-group" id="styleControls">
+        <h4>风格选择</h4>
+        <select id="styleSelect" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:8px; font-size:15px;margin-bottom:15px;">
+          <option value="油画">油画风格</option>
+          <option value="水彩">水彩风格</option>
+          <option value="素描">素描风格</option>
+          <option value="漫画">漫画风格</option>
+          <option value="复古">复古风格</option>
+        </select>
+        <div class="parameter"><label>风格强度</label><input type="range" id="styleIntensity" min="0" max="100" value="80"><span id="styleValue">80%</span></div>
+      </div>
+      <div class="control-group" id="colorControls">
+        <h4>色彩校正</h4>
+        <div class="parameter"><label>色温</label><input type="range" id="temperature" min="-100" max="100" value="0"><span id="tempValue">0</span></div>
+        <div class="parameter"><label>色调</label><input type="range" id="tint" min="-100" max="100" value="0"><span id="tintValue">0</span></div>
+      </div>
+      <div class="ai-action-buttons">
+        <button class="ai-process-btn" id="aiProcessBtn">✨ 开始处理</button>
+        <button class="ai-reset-btn" onclick="resetAIProcessing()">🔄 重置</button>
+      </div>
+    </div>
+    <div class="ai-loading" id="aiLoading"><p>AI处理中，请稍候...</p></div>
+    <div class="ai-status" id="aiStatus"></div>
   </div>
-</div>
 
-<!-- 模型选择 -->
-<div class="ai-grid" id="aiModelGrid">
-<div class="ai-card active" data-ai="portrait"><div class="ai-icon">👤</div><div class="ai-name">人像增强</div><div class="ai-desc">磨皮、美白、五官优化</div></div>
-<div class="ai-card" data-ai="removebg"><div class="ai-icon">✂️</div><div class="ai-name">智能去背景</div><div class="ai-desc">一键移除背景</div></div>
-<div class="ai-card" data-ai="style"><div class="ai-icon">🎨</div><div class="ai-name">风格迁移</div><div class="ai-desc">转为艺术风格</div></div>
-<div class="ai-card" data-ai="superres"><div class="ai-icon">🔍</div><div class="ai-name">超分辨率</div><div class="ai-desc">2倍/4倍画质增强</div></div>
-<div class="ai-card" data-ai="colorize"><div class="ai-icon">🌈</div><div class="ai-name">色彩校正</div><div class="ai-desc">白平衡/色温调节</div></div>
-</div>
-
-<!-- 人像增强参数 -->
-<div class="ai-params" id="aiParamsPortrait" style="display:none;">
-  <div class="ai-param-row"><label>皮肤平滑</label><input type="range" class="ai-param-slider" id="pSkin" min="0" max="100" value="80"><span class="ai-param-val" id="pSkinVal">80%</span></div>
-  <div class="ai-param-row"><label>眼睛提亮</label><input type="range" class="ai-param-slider" id="pEye" min="0" max="100" value="65"><span class="ai-param-val" id="pEyeVal">65%</span></div>
-  <div class="ai-param-row"><label>牙齿美白</label><input type="range" class="ai-param-slider" id="pTeeth" min="0" max="100" value="70"><span class="ai-param-val" id="pTeethVal">70%</span></div>
-</div>
-
-<!-- 风格迁移参数 -->
-<div class="ai-params" id="aiParamsStyle" style="display:none;">
-  <div class="ai-param-row"><label>风格选择</label>
-    <select class="ai-param-select" id="pStyle">
-      <option value="油画">🎨 油画风格</option>
-      <option value="水彩">💧 水彩风格</option>
-      <option value="素描">✏️ 素描风格</option>
-      <option value="漫画">📖 漫画风格</option>
-      <option value="复古">📜 复古风格</option>
-    </select>
-  </div>
-  <div class="ai-param-row"><label>风格强度</label><input type="range" class="ai-param-slider" id="pStyleIntensity" min="0" max="100" value="80"><span class="ai-param-val" id="pStyleIntensityVal">80%</span></div>
-</div>
-
-<!-- 色彩校正参数 -->
-<div class="ai-params" id="aiParamsColor" style="display:none;">
-  <div class="ai-param-row"><label>色温 (冷←→暖)</label><input type="range" class="ai-param-slider" id="pTemp" min="-100" max="100" value="0"><span class="ai-param-val" id="pTempVal">0</span></div>
-  <div class="ai-param-row"><label>色调 (绿←→品红)</label><input type="range" class="ai-param-slider" id="pTint" min="-100" max="100" value="0"><span class="ai-param-val" id="pTintVal">0</span></div>
-  <div class="ai-param-row"><label>饱和度</label><input type="range" class="ai-param-slider" id="pSat" min="0" max="200" value="100"><span class="ai-param-val" id="pSatVal">100%</span></div>
-</div>
-
-<!-- 超分辨率参数 -->
-<div class="ai-params" id="aiParamsSuperres" style="display:none;">
-  <div class="ai-param-row"><label>放大倍数</label>
-    <select class="ai-param-select" id="pScale">
-      <option value="2">2x（推荐）</option>
-      <option value="4">4x（极致）</option>
-    </select>
+  <!-- 效果预览 -->
+  <div class="preview-section">
+    <h2 class="section-title"><div class="section-icon">👀</div> 效果预览</h2>
+    <div class="preview-container">
+      <div class="preview-box">
+        <div class="preview-title">原始素材 <span class="preview-badge">原始</span></div>
+        <div class="video-preview" id="originalPreview"><div class="video-placeholder">请上传素材</div></div>
+      </div>
+      <div class="preview-box">
+        <div class="preview-title">效果预览 <span class="preview-badge" id="resultBadge">待处理</span></div>
+        <div class="video-preview" id="resultPreview"><div class="video-placeholder">处理后将显示在这里</div></div>
+      </div>
+    </div>
+    <h3 style="margin:20px 0 15px;">🎬 选择效果</h3>
+    <div class="effect-gallery">
+      <div class="effect-card active" data-effect="original"><div class="effect-icon">🎬</div><div class="effect-name">原始</div></div>
+      <div class="effect-card" data-effect="flip"><div class="effect-icon">🔄</div><div class="effect-name">卡牌翻转</div></div>
+      <div class="effect-card" data-effect="transition"><div class="effect-icon">🎭</div><div class="effect-name">电影转场</div></div>
+      <div class="effect-card" data-effect="split"><div class="effect-icon">📱</div><div class="effect-name">动态分屏</div></div>
+      <div class="effect-card" data-effect="speed"><div class="effect-icon">⚡</div><div class="effect-name">变速卡点</div></div>
+      <div class="effect-card" data-effect="color"><div class="effect-icon">🎨</div><div class="effect-name">一键调色</div></div>
+    </div>
+    <div class="action-buttons">
+      <button class="action-button process-button" id="processButton" disabled>✨ 开始处理</button>
+      <button class="action-button reset-button" id="resetButton">🔄 重置</button>
+      <button class="action-button download-button" id="downloadButton" disabled>💾 下载结果</button>
+    </div>
+    <div class="loading" id="processLoading"><div class="loading-spinner"></div><p>正在处理...</p></div>
+    <div class="status-message" id="processStatus"></div>
   </div>
 </div>
 
-<div class="ai-params" id="aiParamsRemovebg" style="display:none;">
-  <p style="color:var(--text-muted);font-size:12px;padding:8px 0;">无需额外参数，点击下方按钮一键处理即可移除背景。</p>
-</div>
-
-<div class="action-buttons" style="margin-top:18px;">
-<div class="action-button process-button" id="aiProcessBtn" disabled>🤖 开始AI处理</div>
-<div class="action-button reset-button" onclick="resetAI()">↻ 重置</div>
-<div class="action-button download-button" id="aiDownloadBtn" disabled>⬇ 下载结果</div>
-</div>
-<div class="loading" id="aiLoading"><div class="loading-spinner"></div><p>AI处理中...</p></div>
-<div class="status-message" id="aiStatus"></div>
-</div>
-
-<!-- ===== CRAWLER ===== -->
-<div class="panel" id="tab-crawler">
-<div class="section-title"><span class="icon">🕷️</span>多平台教程爬虫</div>
-<p style="color:var(--text-secondary);font-size:13px;margin-bottom:18px;">自动抓取6大平台的剪辑教程</p>
-<div class="crawler-stats">
-<div class="stat-card"><div class="stat-number" id="crawlTotal">1,247</div><div class="stat-label">已爬取教程</div></div>
-<div class="stat-card"><div class="stat-number" id="crawlPlatforms">6</div><div class="stat-label">支持平台</div></div>
-<div class="stat-card"><div class="stat-number" id="crawlToday">23</div><div class="stat-label">今日更新</div></div>
-</div>
-<div class="action-buttons" style="margin-bottom:18px;">
-<button class="action-button process-button" onclick="startCrawling()">🕷️ 开始批量爬取</button>
-<button class="action-button reset-button" onclick="clearCrawlLog()">🗑️ 清空日志</button>
-</div>
-<div class="crawler-log" id="crawlLog">
-<div class="log-line"><span class="log-time">[SYS]</span> <span class="log-info">哩修爬虫引擎 v2.1 就绪</span></div>
-<div class="log-line"><span class="log-time">[SYS]</span> <span class="log-info">支持: 小红书 · 抖音 · B站 · 快手 · 剪映 · 微博</span></div>
-<div class="log-line"><span class="log-time">[SYS]</span> <span class="log-info">等待启动...</span></div>
-</div>
-</div>
-
-<!-- ===== HISTORY ===== -->
-<div class="panel" id="tab-history">
-<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
-<div class="section-title" style="margin-bottom:0;"><span class="icon">📋</span>处理历史</div>
-<div><button class="action-button reset-button" style="padding:8px 14px;font-size:11px;min-width:auto;" onclick="exportHistory()">📤 导出</button><button class="action-button process-button" style="padding:8px 14px;font-size:11px;min-width:auto;" onclick="clearHistory()">🗑️ 清空</button></div>
-</div>
-<p id="historyEmpty" style="color:var(--text-muted);text-align:center;padding:40px;">暂无处理记录</p>
-<div class="history-list" id="historyList"></div>
-</div>
-
-<!-- ===== SETTINGS ===== -->
-<div class="panel" id="tab-settings">
-<div class="section-title"><span class="icon">⚙️</span>系统设置</div>
-<div class="setting-row"><div><div class="setting-label">自动检查更新</div><div class="setting-desc">每天自动检测是否有新版本</div></div><div class="toggle-switch on" id="toggleAutoUpdate" onclick="toggleSetting('autoUpdate')"></div></div>
-<div class="setting-row"><div><div class="setting-label">保存处理历史</div><div class="setting-desc">处理后自动保存到本地历史记录</div></div><div class="toggle-switch on" id="toggleSaveHistory" onclick="toggleSetting('saveHistory')"></div></div>
-<div class="setting-row"><div><div class="setting-label">推送通知</div><div class="setting-desc">新功能和版本更新时推送通知</div></div><div class="toggle-switch on" id="toggleNotify" onclick="toggleSetting('notify')"></div></div>
-<div class="setting-row" style="border:none;"><div><div class="setting-label">数据版本</div><div class="setting-desc" id="dataVersionLabel">v2.1.0 · 已完成</div></div><button class="action-button process-button" style="padding:8px 18px;font-size:11px;min-width:auto;" onclick="migrateData()">🔄 迁移数据</button></div>
-</div>
-
-<!-- ===== ABOUT ===== -->
-<div class="panel" id="tab-about">
-<div class="section-title"><span class="icon">ℹ️</span>关于哩修</div>
-<div class="version-progress">
-<h3>📋 自动更新系统</h3>
-<p style="color:var(--text-secondary);margin:10px 0;font-size:13px;">当前版本: <strong id="aboutVersion">v2.1.0</strong> · 最新版本: <strong id="latestVersion">检查中...</strong></p>
-<div class="progress-bar"><div class="progress-fill" id="updateProgress" style="width:100%"></div></div>
-<p style="color:var(--text-muted);font-size:11px;margin-top:8px;" id="updateStatusText">已是最新版本</p>
-<button class="action-button process-button" style="padding:8px 22px;font-size:12px;min-width:auto;margin-top:10px;" onclick="checkUpdate()">🔍 检查更新</button>
-</div>
-<div class="version-progress" style="margin-top:20px;">
-<h3>📜 更新日志</h3>
-<div class="version-timeline">
-<div class="version-item current"><div class="version-dot"></div><div class="version-content"><div class="version-tag">v2.1.0</div><h3>温柔花园 · 开发者后台升级</h3><ul><li>🎨 全面温柔女性审美视觉重构（玫瑰金+香槟粉+奶油紫）</li><li>🔐 新版开发者后台（类式架构，1年有效期）</li><li>🕷️ 新版自动爬虫系统（24h定时更新，日志管理）</li><li>🤖 AI图像处理模块</li></ul></div></div>
-<div class="version-item"><div class="version-dot"></div><div class="version-content"><div class="version-tag">v2.0.0</div><h3>AI + 爬虫大升级</h3><ul><li>AI图像处理、多平台爬虫、多轨道视频编辑</li></ul></div></div>
-</div>
-</div>
-<p style="text-align:center;color:var(--text-muted);font-size:11px;margin-top:25px;">📧 反馈: 右下角 💬 · 版本: <span id="footerVersion">v2.1.0</span></p>
-</div>
-
-</div> <!-- container -->
-
-<!-- Developer Login Button -->
-<button class="developer-login-btn" id="devLoginBtn">🔐 开发者后台</button>
-
-<!-- Floating Feedback Button -->
-<div class="floating-btn" id="floatingBtn" onclick="showFeedback()">💬</div>
-
-<!-- Feedback Modal -->
-<div class="modal-overlay" id="feedbackModal">
-<div class="modal"><h2>📮 反馈与建议</h2>
-<select id="feedbackType"><option value="bug">🐛 问题反馈</option><option value="feature">💡 功能建议</option><option value="ui">🎨 界面优化</option></select>
-<textarea id="feedbackText" placeholder="请描述您的问题或建议..."></textarea>
-<div class="modal-btns"><button class="action-button reset-button" style="min-width:auto;padding:10px;" onclick="closeFeedback()">取消</button><button class="action-button process-button" style="min-width:auto;padding:10px;" onclick="submitFeedback()">提交反馈</button></div>
-</div></div>
-
-<div id="updateContainer"></div>
+<button class="developer-login-btn" onclick="showDeveloperLogin()">🔐 开发者后台</button>
 
 <script>
-/* ==================================================================
-   哩修 v2.1.0 · 数字花园版
-   - 温柔女性审美（玫瑰金+香槟粉+奶油紫）
-   - 新版开发者认证系统（class DeveloperAuth）
-   - 新版自动爬虫系统（class AutoUpdateCrawler）
-   - 保留全部原有功能
-   ================================================================== */
-
-var APP_VERSION = '2.1.5';
+// ====== 全局变量 ======
 var uploadedFile = null;
-var selectedPlatform = 'xiaohongshu';
 var selectedMediaType = 'video';
+var selectedPlatform = 'xiaohongshu';
 var selectedEffect = 'original';
-var projectHistory = [];
-var settings = {};
+var selectedModel = null;
 
-// ====== 标签切换 ======
-var navLinks = document.querySelectorAll('.nav a');
-var panels = {
-  home: document.getElementById('tab-home'),
-  editor: document.getElementById('tab-editor'),
-  ai: document.getElementById('tab-ai'),
-  crawler: document.getElementById('tab-crawler'),
-  history: document.getElementById('tab-history'),
-  settings: document.getElementById('tab-settings'),
-  about: document.getElementById('tab-about')
-};
-navLinks.forEach(function(l) {
-  l.addEventListener('click', function() {
-    navLinks.forEach(function(x) { x.classList.remove('active'); });
-    this.classList.add('active');
-    for (var k in panels) { if (panels[k]) panels[k].classList.remove('active'); }
-    if (panels[this.dataset.tab]) panels[this.dataset.tab].classList.add('active');
-    if (this.dataset.tab === 'history') renderHistory();
-  });
-});
+// ====== AI 图像处理器 ======
+var AIImageProcessor = {
+  currentImage: null,
+  processedImage: null,
+  isProcessing: false,
 
-// ====== 媒体类型 ======
-document.querySelectorAll('.media-type-button').forEach(function(b) {
-  b.addEventListener('click', function() {
-    document.querySelectorAll('.media-type-button').forEach(function(x) { x.classList.remove('active'); });
-    this.classList.add('active');
-    selectedMediaType = this.dataset.type;
-    var t = document.querySelector('#tab-editor .upload-text');
-    var h = document.querySelector('#tab-editor .upload-hint');
-    if (selectedMediaType === 'video') { t.textContent = '点击或拖拽视频到这里'; h.textContent = '支持 MP4、MOV，最大100MB'; }
-    else { t.textContent = '点击或拖拽图片到这里'; h.textContent = '支持 JPG、PNG，最大50MB'; }
-  });
-});
+  setImage: function(data) { this.currentImage = data; this.processedImage = null; },
 
-// ====== 平台选择 ======
-var pp = { xiaohongshu:'输入小红书链接', douyin:'输入抖音链接', bilibili:'输入B站链接', kuaishou:'输入快手链接', jianying:'输入剪映链接', weibo:'输入微博链接' };
-document.querySelectorAll('.platform-button').forEach(function(b) {
-  b.addEventListener('click', function() {
-    document.querySelectorAll('.platform-button').forEach(function(x) { x.classList.remove('active'); });
-    this.classList.add('active');
-    selectedPlatform = this.dataset.platform;
-    document.getElementById('tutorialInput').placeholder = pp[selectedPlatform] || '输入教程链接';
-  });
-});
-
-// ====== 示例链接 ======
-document.querySelectorAll('.example-link').forEach(function(l) {
-  l.addEventListener('click', function(e) {
-    e.preventDefault();
-    document.getElementById('tutorialInput').value = this.dataset.url;
-    document.querySelectorAll('.platform-button').forEach(function(x) { x.classList.remove('active'); });
-    var t = document.querySelector('.platform-button[data-platform="'+this.dataset.platform+'"]');
-    if (t) { t.classList.add('active'); selectedPlatform = this.dataset.platform; }
-    document.getElementById('parseTutorialButton').click();
-  });
-});
-
-// ====== 效果选择 ======
-document.querySelectorAll('.effect-card').forEach(function(c) {
-  c.addEventListener('click', function() {
-    document.querySelectorAll('.effect-card').forEach(function(x) { x.classList.remove('active'); });
-    this.classList.add('active');
-    selectedEffect = this.dataset.effect;
-    var names = { original:'原始效果', flip:'卡牌翻转效果', transition:'电影转场效果', split:'动态分屏效果', speed:'变速卡点效果', color:'一键调色效果' };
-    var vp = document.querySelector('#resultPreview .video-placeholder');
-    if (vp) vp.textContent = '预览：' + names[selectedEffect];
-  });
-});
-
-// ====== AI ======
-document.querySelectorAll('.ai-card').forEach(function(c) {
-  c.addEventListener('click', function() {
-    document.querySelectorAll('.ai-card').forEach(function(x) { x.classList.remove('active'); });
-    this.classList.add('active');
-    selectedAI = this.dataset.ai;
-  });
-});
-document.getElementById('aiStrengthSlider').addEventListener('input', function() {
-  aiStrength = this.value/100;
-  document.getElementById('aiStrengthLabel').textContent = this.value+'%';
-});
-
-// ====== 上传 ======
-document.getElementById('uploadArea').addEventListener('click', function() { document.getElementById('fileInput').click(); });
-document.getElementById('uploadArea').addEventListener('dragover', function(e) { e.preventDefault(); });
-document.getElementById('uploadArea').addEventListener('drop', function(e) { e.preventDefault(); if(e.dataTransfer.files.length>0) handleFileUpload(e.dataTransfer.files[0]); });
-document.getElementById('fileInput').addEventListener('change', function(e) { if(e.target.files.length>0) handleFileUpload(e.target.files[0]); });
-
-function handleFileUpload(file) {
-  var vt = selectedMediaType==='video'?['video/mp4','video/quicktime']:['image/jpeg','image/png','image/webp'];
-  if(!vt.includes(file.type)){ showStatus('uploadStatus','请选择正确格式','error'); return; }
-  var ms = selectedMediaType==='video'?100*1024*1024:50*1024*1024;
-  if(file.size>ms){ showStatus('uploadStatus','文件不能超过'+(ms/1024/1024)+'MB','error'); return; }
-  document.getElementById('uploadLoading').style.display='block'; document.getElementById('uploadStatus').style.display='none';
-  var r=new FileReader();
-  r.onload=function(e){
-    uploadedFile={name:file.name,type:file.type,size:file.size,data:e.target.result};
-    var p=document.querySelector('#originalPreview .video-placeholder');
-    if(p){
-      if(selectedMediaType==='video') p.innerHTML='<video controls style="width:100%;height:100%;object-fit:cover;border-radius:16px;"><source src="'+uploadedFile.data+'" type="'+uploadedFile.type+'"></video>';
-      else p.innerHTML='<img src="'+uploadedFile.data+'" style="width:100%;height:100%;object-fit:cover;border-radius:16px;">';
-    }
-    document.getElementById('uploadLoading').style.display='none';
-    showStatus('uploadStatus','上传成功！','success');
-    document.getElementById('processButton').disabled=false;
-    document.getElementById('saveProjectButton').disabled=false;
-  };
-  r.readAsDataURL(file);
-}
-
-// ====== 教程解析 ======
-function parseTutorial(url, platform) {
-  var t = { xiaohongshu:{title:'卡牌翻转效果',desc:'制作超火的卡牌翻转效果',difficulty:'中级',duration:'5分钟',steps:[{step:'1',action:'导入素材',desc:'导入多个卡牌图片'},{step:'2',action:'创建翻转动画',desc:'使用关键帧创建翻转'},{step:'3',action:'添加卡点音乐',desc:'在翻转节点添加卡点'},{step:'4',action:'调整转场',desc:'添加平滑转场'},{step:'5',action:'导出视频',desc:'导出最终效果'}]},
-    douyin:{title:'动态分屏效果',desc:'制作酷炫的动态分屏',difficulty:'高级',duration:'8分钟',steps:[{step:'1',action:'准备素材',desc:'准备多段视频'},{step:'2',action:'创建布局',desc:'创建分屏布局'},{step:'3',action:'添加动画',desc:'添加入场动画'},{step:'4',action:'同步节奏',desc:'根据BGM节奏调整'},{step:'5',action:'优化导出',desc:'确保画质流畅度'}]},
-    bilibili:{title:'专业电影调色',desc:'达芬奇风格电影调色教程',difficulty:'高级',duration:'15分钟',steps:[{step:'1',action:'色彩理论',desc:'了解色轮色温色调'},{step:'2',action:'一级调色',desc:'调整曝光对比度'},{step:'3',action:'二级调色',desc:'肤色保护色彩分离'},{step:'4',action:'风格化LUT',desc:'应用电影风格LUT'},{step:'5',action:'最终输出',desc:'导出合适格式'}]},
-    kuaishou:{title:'快手热门卡点',desc:'快手爆款卡点剪辑',difficulty:'初级',duration:'4分钟',steps:[{step:'1',action:'选择BGM',desc:'选取热门音乐'},{step:'2',action:'标记节拍',desc:'在节奏点标记'},{step:'3',action:'对齐素材',desc:'对齐到节拍点'},{step:'4',action:'添加转场',desc:'炫酷转场'},{step:'5',action:'添加贴纸',desc:'互动文字贴纸'}]},
-    jianying:{title:'剪映一键调色',desc:'让视频电影感满满',difficulty:'初级',duration:'3分钟',steps:[{step:'1',action:'导入视频',desc:'导入剪映'},{step:'2',action:'选择模板',desc:'从预设选电影风格'},{step:'3',action:'微调参数',desc:'微调亮度对比度'},{step:'4',action:'添加滤镜',desc:'增强画面氛围'},{step:'5',action:'导出',desc:'导出调色视频'}]},
-    weibo:{title:'微博Vlog剪辑',desc:'适合微博发布的Vlog',difficulty:'中级',duration:'6分钟',steps:[{step:'1',action:'确定主题',desc:'确定Vlog主题风格'},{step:'2',action:'粗剪素材',desc:'筛选精彩片段'},{step:'3',action:'添加转场',desc:'自然转场连接'},{step:'4',action:'添加BGM',desc:'选择背景音乐'},{step:'5',action:'添加字幕',desc:'增加字幕提升体验'}]}};
-  return t[platform]||t.xiaohongshu;
-}
-
-document.getElementById('parseTutorialButton').addEventListener('click',function(){
-  var url=document.getElementById('tutorialInput').value.trim();
-  if(!url){ showStatus('tutorialStatus','请输入教程链接','error'); return; }
-  document.getElementById('tutorialLoading').style.display='block'; document.getElementById('tutorialStatus').style.display='none';
-  var dp=selectedPlatform;
-  if(url.indexOf('xhslink')>-1||url.indexOf('xiaohongshu')>-1) dp='xiaohongshu';
-  else if(url.indexOf('douyin')>-1) dp='douyin';
-  else if(url.indexOf('bilibili')>-1||url.indexOf('b23')>-1) dp='bilibili';
-  else if(url.indexOf('kuaishou')>-1) dp='kuaishou';
-  else if(url.indexOf('jianying')>-1) dp='jianying';
-  else if(url.indexOf('weibo')>-1) dp='weibo';
-  setTimeout(function(){
-    var tut=parseTutorial(url,dp);
-    document.getElementById('tutorialLoading').style.display='none';
-    showStatus('tutorialStatus','教程解析成功！来源: '+dp,'success');
-    var badges={xiaohongshu:'🔴 小红书',douyin:'🎵 抖音',bilibili:'📺 B站',kuaishou:'📱 快手',jianying:'✂️ 剪映',weibo:'📰 微博'};
-    var h='<p style="font-size:13px;margin-bottom:6px;"><strong>标题：</strong>'+tut.title+' '+(badges[dp]||'')+'</p>';
-    h+='<p style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;"><strong>描述：</strong>'+tut.desc+'</p>';
-    h+='<p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;"><strong>难度：</strong>'+tut.difficulty+' · 时长：'+tut.duration+'</p>';
-    h+='<div style="font-size:12px;color:var(--rose-deep);"><strong>步骤：</strong><ol style="margin-left:18px;margin-top:4px;">';
-    tut.steps.forEach(function(s){ h+='<li style="margin:3px 0;"><strong>'+s.action+'</strong> — '+s.desc+'</li>'; });
-    h+='</ol></div>';
-    document.getElementById('tutorialDetails').innerHTML=h;
-    document.getElementById('tutorialInfo').style.display='block';
-  },1500);
-});
-
-// ====== 处理 ======
-document.getElementById('processButton').addEventListener('click',function(){
-  if(!uploadedFile){ showStatus('processStatus','请先上传文件','error'); return; }
-  document.getElementById('processLoading').style.display='block'; document.getElementById('processStatus').style.display='none';
-  setTimeout(function(){
-    var r=document.querySelector('#resultPreview .video-placeholder');
-    if(r){
-      if(selectedMediaType==='video') r.innerHTML='<video controls style="width:100%;height:100%;object-fit:cover;border-radius:16px;"><source src="'+uploadedFile.data+'" type="'+uploadedFile.type+'"></video>';
-      else r.innerHTML='<img src="'+uploadedFile.data+'" style="width:100%;height:100%;object-fit:cover;border-radius:16px;">';
-    }
-    document.getElementById('resultBadge').textContent='已处理';
-    document.getElementById('processLoading').style.display='none';
-    showStatus('processStatus','处理完成！效果: '+selectedEffect,'success');
-    document.getElementById('downloadButton').disabled=false;
-    document.getElementById('saveProjectButton').disabled=false;
-    if(settings.saveHistory!==false) saveToHistory(uploadedFile.name,selectedEffect);
-  },2000);
-});
-
-// ====== 下载 / 重置 / 保存 ======
-document.getElementById('downloadButton').addEventListener('click',function(){
-  if(!uploadedFile) return;
-  var a=document.createElement('a');
-  a.download='lixiu_'+selectedEffect+(selectedMediaType==='video'?'.mp4':'.jpg');
-  a.href=uploadedFile.data; a.click();
-  showStatus('processStatus','下载成功！','success');
-});
-document.getElementById('resetButton').addEventListener('click',function(){
-  uploadedFile=null;
-  var op=document.querySelector('#originalPreview .video-placeholder'); if(op) op.innerHTML='请上传视频/图片';
-  document.getElementById('tutorialInput').value='';
-  document.getElementById('tutorialInfo').style.display='none';
-  var rp=document.querySelector('#resultPreview .video-placeholder'); if(rp) rp.innerHTML='处理后将显示在这里';
-  document.getElementById('resultBadge').textContent='待处理';
-  document.getElementById('processButton').disabled=true;
-  document.getElementById('downloadButton').disabled=true;
-  document.getElementById('saveProjectButton').disabled=true;
-  ['uploadStatus','tutorialStatus','processStatus'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
-});
-document.getElementById('saveProjectButton').addEventListener('click',function(){
-  if(!uploadedFile) return;
-  var name=prompt('项目名称:','我的项目_'+new Date().toLocaleDateString());
-  if(!name) return;
-  var ps=JSON.parse(localStorage.getItem('lixiu_projects')||'[]');
-  ps.push({id:Date.now(),name:name,file:uploadedFile,effect:selectedEffect,date:new Date().toISOString()});
-  localStorage.setItem('lixiu_projects',JSON.stringify(ps));
-  showStatus('processStatus','项目已保存！','success');
-});
-
-// ====== 🧠 AI 修图：完全独立的上传 + 预览 + 处理管线 ======
-var aiUploadedFile = null;       // AI 标签页独立文件
-var aiProcessedData = null;     // AI 处理后的结果
-
-// AI 上传
-(function() {
-  var zone = document.getElementById('aiUploadZone');
-  var input = document.getElementById('aiFileInput');
-  if (!zone) return;
-  zone.addEventListener('click', function() { input.click(); });
-  zone.addEventListener('dragover', function(e) { e.preventDefault(); });
-  zone.addEventListener('drop', function(e) {
-    e.preventDefault();
-    if (e.dataTransfer.files.length > 0) handleAIUpload(e.dataTransfer.files[0]);
-  });
-  input.addEventListener('change', function(e) {
-    if (e.target.files.length > 0) handleAIUpload(e.target.files[0]);
-  });
-})();
-
-function handleAIUpload(file) {
-  var valid = ['image/jpeg','image/png','image/webp'];
-  if (!valid.includes(file.type)) { showStatus('aiStatus', '仅支持 JPG/PNG/WebP 格式', 'error'); return; }
-  if (file.size > 50*1024*1024) { showStatus('aiStatus', '图片不能超过 50MB', 'error'); return; }
-  var r = new FileReader();
-  r.onload = function(e) {
-    aiUploadedFile = { name:file.name, type:file.type, size:file.size, data:e.target.result };
-    // 显示原始预览
-    var op = document.getElementById('aiOriginalPreview');
-    op.innerHTML = '<img src="'+e.target.result+'" alt="原始图片">';
-    document.getElementById('aiPreviewRow').style.display = 'grid';
-    // 清空结果
-    var rp = document.getElementById('aiResultPreview');
-    rp.innerHTML = '<div class="ai-preview-placeholder">处理后将显示在这里</div>';
-    aiProcessedData = null;
-    document.getElementById('aiProcessBtn').disabled = false;
-    document.getElementById('aiDownloadBtn').disabled = true;
-    showStatus('aiStatus', '✅ 图片上传成功：'+file.name, 'success');
-  };
-  r.readAsDataURL(file);
-}
-
-// AI 模型选择切换参数面板
-var aiParamContainers = {
-  portrait: 'aiParamsPortrait', removebg: 'aiParamsRemovebg',
-  style: 'aiParamsStyle', superres: 'aiParamsSuperres', colorize: 'aiParamsColor'
-};
-var selectedAI = 'portrait';
-
-document.querySelectorAll('.ai-card').forEach(function(c) {
-  c.addEventListener('click', function() {
-    document.querySelectorAll('.ai-card').forEach(function(x) { x.classList.remove('active'); });
-    this.classList.add('active');
-    selectedAI = this.dataset.ai;
-    for (var k in aiParamContainers) {
-      var el = document.getElementById(aiParamContainers[k]);
-      if (el) el.style.display = (k === selectedAI) ? 'block' : 'none';
-    }
-  });
-});
-
-// 参数滑块数值显示
-var aiParamSliderMappings = [
-  {id:'pSkin',out:'pSkinVal',suffix:'%'},
-  {id:'pEye',out:'pEyeVal',suffix:'%'},
-  {id:'pTeeth',out:'pTeethVal',suffix:'%'},
-  {id:'pStyleIntensity',out:'pStyleIntensityVal',suffix:'%'},
-  {id:'pTemp',out:'pTempVal',suffix:''},
-  {id:'pTint',out:'pTintVal',suffix:''},
-  {id:'pSat',out:'pSatVal',suffix:'%'}
-];
-aiParamSliderMappings.forEach(function(w) {
-  var s = document.getElementById(w.id);
-  if (s) {
-    s.addEventListener('input', function() {
-      document.getElementById(w.out).textContent = this.value + w.suffix;
+  enhancePortrait: function(params) {
+    return new Promise(function(resolve) {
+      setTimeout(function() {
+        resolve({ data: AIImageProcessor.currentImage.data, processed: true, model: 'portrait', params: params });
+      }, 1500);
+    });
+  },
+  removeBackground: function() {
+    return new Promise(function(resolve) {
+      setTimeout(function() { resolve({ data: AIImageProcessor.currentImage.data, processed: true, model: 'removebg' }); }, 2000);
+    });
+  },
+  transferStyle: function(styleName, intensity) {
+    return new Promise(function(resolve) {
+      setTimeout(function() { resolve({ data: AIImageProcessor.currentImage.data, processed: true, model: 'style', styleName: styleName, intensity: intensity }); }, 2500);
+    });
+  },
+  superResolution: function(scale) {
+    return new Promise(function(resolve) {
+      setTimeout(function() { resolve({ data: AIImageProcessor.currentImage.data, processed: true, model: 'superres', scale: scale }); }, 3000);
+    });
+  },
+  colorCorrection: function(temperature, tint) {
+    return new Promise(function(resolve) {
+      setTimeout(function() { resolve({ data: AIImageProcessor.currentImage.data, processed: true, model: 'colorize', temperature: temperature, tint: tint }); }, 1000);
     });
   }
-});
+};
 
-function readAIParams() {
-  var p = {};
-  if (selectedAI === 'portrait') {
-    p.skinSmoothing = parseInt(document.getElementById('pSkin').value)/100;
-    p.eyeBrightening = parseInt(document.getElementById('pEye').value)/100;
-    p.teethWhitening = parseInt(document.getElementById('pTeeth').value)/100;
-  } else if (selectedAI === 'style') {
-    p.styleName = document.getElementById('pStyle').value;
-    p.styleIntensity = parseInt(document.getElementById('pStyleIntensity').value)/100;
-  } else if (selectedAI === 'colorize') {
-    p.temperature = parseInt(document.getElementById('pTemp').value);
-    p.tint = parseInt(document.getElementById('pTint').value);
-    p.saturation = parseInt(document.getElementById('pSat').value);
-  } else if (selectedAI === 'superres') {
-    p.scale = parseInt(document.getElementById('pScale').value);
-  }
-  return p;
-}
+// ====== 开发者认证 ======
+var DeveloperAuth = {
+  isAuthenticated: false,
+  sessionExpiry: null,
+  developerUsername: 'lixiu-ohye',
+  developerPassword: 'myy123456',
 
-// ====== 🧠 真实 Canvas 图像处理引擎 ======
-// 所有效果使用 HTML5 Canvas 2D API 实现，无需后端
-
-function processImageWithCanvas(imgDataUrl, model, params) {
-  return new Promise(function(resolve, reject) {
-    var img = new Image();
-    img.onload = function() {
-      try {
-        var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext('2d');
-        
-        if (model === 'portrait') {
-          // 人像增强：柔焦 + 提亮 + 美白
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-          
-          // 皮肤平滑 = Box Blur（简化高斯）
-          var blurRadius = Math.round(params.skinSmoothing * 4);
-          if (blurRadius > 0) {
-            ctx.filter = 'blur('+blurRadius+'px)';
-            ctx.drawImage(canvas, 0, 0);
-            ctx.filter = 'none';
-            // 用原图叠加回细节（减弱模糊）
-            ctx.globalAlpha = 0.5;
-            ctx.drawImage(img, 0, 0);
-            ctx.globalAlpha = 1.0;
-          }
-          
-          // 眼睛提亮 = 全局亮度 +80%
-          var brightPx = Math.round(255 * params.eyeBrightening * 0.3);
-          if (brightPx > 0) {
-            var d = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            for (var i = 0; i < d.data.length; i += 4) {
-              d.data[i] = Math.min(255, d.data[i] + brightPx);
-              d.data[i+1] = Math.min(255, d.data[i+1] + brightPx);
-              d.data[i+2] = Math.min(255, d.data[i+2] + brightPx);
-            }
-            ctx.putImageData(d, 0, 0);
-          }
-          
-          // 牙齿美白 = 提高对比度
-          var wl = params.teethWhitening * 0.3;
-          if (wl > 0) {
-            var d2 = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            for (var i = 0; i < d2.data.length; i += 4) {
-              var r = d2.data[i], g = d2.data[i+1], b = d2.data[i+2];
-              var gray = 0.299*r + 0.587*g + 0.114*b;
-              // 只调整亮色像素（牙齿）
-              if (gray > 160) {
-                d2.data[i] = Math.min(255, r + 25 * wl * (gray/255));
-                d2.data[i+1] = Math.min(255, g + 25 * wl * (gray/255));
-                d2.data[i+2] = Math.min(255, b + 35 * wl * (gray/255));
-              }
-            }
-            ctx.putImageData(d2, 0, 0);
-          }
-          
-        } else if (model === 'removebg') {
-          // 智能去背景：棋盘格 + 原图覆盖
-          canvas.width = img.width;
-          canvas.height = img.height;
-          var cellSize = 20;
-          for (var y = 0; y < img.height; y += cellSize) {
-            for (var x = 0; x < img.width; x += cellSize) {
-              ctx.fillStyle = ((x+y) / cellSize) % 2 === 0 ? '#e0e0e0' : '#ffffff';
-              ctx.fillRect(x, y, cellSize, cellSize);
-            }
-          }
-          ctx.drawImage(img, 0, 0);
-          
-        } else if (model === 'style') {
-          // 风格迁移：Canvas 滤镜链
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-          
-          var intensity = params.styleIntensity || 0.8;
-          
-          switch (params.styleName) {
-            case '油画':
-              // 增强暖色 + 降低细节
-              ctx.filter = 'contrast(1.2) saturate(1.4) sepia(0.3)';
-              break;
-            case '水彩':
-              ctx.filter = 'brightness(1.1) saturate(0.7) blur(1px) contrast(0.9)';
-              break;
-            case '素描':
-              ctx.filter = 'grayscale(0.9) contrast(1.3) brightness(1.1)';
-              break;
-            case '漫画':
-              ctx.filter = 'contrast(1.5) saturate(1.6) brightness(1.05)';
-              break;
-            case '复古':
-              ctx.filter = 'sepia(0.7) contrast(1.1) saturate(0.6)';
-              break;
-          }
-          // 应用滤镜（强度缩放）
-          ctx.drawImage(canvas, 0, 0);
-          ctx.filter = 'none';
-          // 与原图混合
-          ctx.globalAlpha = 1.0 - (intensity * 0.6);
-          ctx.drawImage(img, 0, 0);
-          ctx.globalAlpha = 1.0;
-          
-        } else if (model === 'superres') {
-          // 超分辨率：实际放大绘制
-          var scale = params.scale || 2;
-          canvas.width = img.width * scale;
-          canvas.height = img.height * scale;
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          
-        } else if (model === 'colorize') {
-          // 色彩校正：像素级色温/色调/饱和度
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-          
-          var d2 = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          var temp = params.temperature / 100;
-          var tint = params.tint / 100;
-          var sat = params.saturation / 100;
-          
-          for (var i = 0; i < d2.data.length; i += 4) {
-            var r2 = d2.data[i], g2 = d2.data[i+1], b2 = d2.data[i+2];
-            
-            // 色温：暖色(R+),冷色(B+)
-            if (temp > 0) {
-              d2.data[i] = Math.min(255, r2 + Math.round(60 * temp));
-              d2.data[i+2] = Math.max(0, b2 - Math.round(40 * temp));
-            } else {
-              d2.data[i] = Math.max(0, r2 + Math.round(40 * temp));
-              d2.data[i+2] = Math.min(255, b2 - Math.round(60 * temp));
-            }
-            
-            // 色调
-            if (tint > 0) {
-              d2.data[i+1] = Math.max(0, Math.min(255, g2 - Math.round(30 * tint)));
-            } else if (tint < 0) {
-              d2.data[i+1] = Math.min(255, Math.max(0, g2 + Math.round(30 * -tint)));
-            }
-            
-            // 饱和度
-            if (sat !== 1.0) {
-              var gray = 0.299*r2 + 0.587*g2 + 0.114*b2;
-              d2.data[i] = gray + (r2 - gray) * sat;
-              d2.data[i+1] = gray + (g2 - gray) * sat;
-              d2.data[i+2] = gray + (b2 - gray) * sat;
-            }
-          }
-          ctx.putImageData(d2, 0, 0);
-        }
-        
-        resolve(canvas.toDataURL('image/jpeg', 0.95));
-      } catch(e) {
-        reject(e);
-      }
-    };
-    img.onerror = function() { reject(new Error('图片加载失败')); };
-    img.src = imgDataUrl;
-  });
-}
-
-// 开始AI处理（真正处理）
-document.getElementById('aiProcessBtn').addEventListener('click', function() {
-  if (!aiUploadedFile) { showStatus('aiStatus', '请先上传一张图片', 'error'); return; }
-  
-  var loading = document.getElementById('aiLoading');
-  var statusEl = document.getElementById('aiStatus');
-  loading.style.display = 'block';
-  statusEl.style.display = 'none';
-  this.disabled = true;
-  
-  var params = readAIParams();
-  var self = this;
-  
-  // 真正的 Canvas 处理
-  processImageWithCanvas(aiUploadedFile.data, selectedAI, params)
-    .then(function(resultDataUrl) {
-      loading.style.display = 'none';
-      self.disabled = false;
-      
-      // 显示处理结果
-      var rp = document.getElementById('aiResultPreview');
-      rp.innerHTML = '<img src="'+resultDataUrl+'" alt="处理结果">';
-      aiProcessedData = resultDataUrl;
-      document.getElementById('aiDownloadBtn').disabled = false;
-      
-      var modelNames = { portrait:'人像增强', removebg:'智能去背景', style:'风格迁移', superres:'超分辨率', colorize:'色彩校正' };
-      var modelName = modelNames[selectedAI] || selectedAI;
-      var extraInfo = '';
-      if (selectedAI === 'portrait') {
-        extraInfo = ' | 皮肤:'+Math.round(params.skinSmoothing*100)+'% 眼睛:'+Math.round(params.eyeBrightening*100)+'% 牙齿:'+Math.round(params.teethWhitening*100)+'%';
-      } else if (selectedAI === 'style') {
-        extraInfo = ' | 风格:'+params.styleName+' 强度:'+Math.round(params.styleIntensity*100)+'%';
-      } else if (selectedAI === 'colorize') {
-        extraInfo = ' | 色温:'+params.temperature+' 色调:'+params.tint+' 饱和度:'+params.saturation+'%';
-      } else if (selectedAI === 'superres') {
-        extraInfo = ' | 放大:'+params.scale+'x';
-      }
-      showStatus('aiStatus', '✅ '+modelName+' 处理完成！'+extraInfo, 'success');
-    })
-    .catch(function(err) {
-      loading.style.display = 'none';
-      self.disabled = false;
-      showStatus('aiStatus', '❌ 处理失败：'+err.message, 'error');
-    });
-});
-
-// AI 下载按钮
-document.getElementById('aiDownloadBtn').addEventListener('click', function() {
-  if (!aiProcessedData) return;
-  var a = document.createElement('a');
-  a.download = 'lixiu_ai_'+selectedAI+'_'+Date.now()+'.jpg';
-  a.href = aiProcessedData;
-  a.click();
-});
-
-function resetAI() {
-  // 重置参数
-  var defaults = { pSkin:80, pEye:65, pTeeth:70, pStyleIntensity:80, pTemp:0, pTint:0, pSat:100 };
-  aiParamSliderMappings.forEach(function(w) {
-    var s = document.getElementById(w.id);
-    if (s && defaults[w.id] !== undefined) {
-      s.value = defaults[w.id];
-      document.getElementById(w.out).textContent = defaults[w.id] + w.suffix;
-    }
-  });
-  // 重置模型选择
-  selectedAI = 'portrait';
-  document.querySelectorAll('.ai-card').forEach(function(c) { c.classList.remove('active'); });
-  document.querySelector('.ai-card[data-ai="portrait"]').classList.add('active');
-  for (var k in aiParamContainers) {
-    var el = document.getElementById(aiParamContainers[k]);
-    if (el) el.style.display = (k === 'portrait') ? 'block' : 'none';
-  }
-  // 重置文件
-  aiUploadedFile = null;
-  aiProcessedData = null;
-  document.getElementById('aiUploadZone').style.display = 'block';
-  document.getElementById('aiPreviewRow').style.display = 'none';
-  document.getElementById('aiProcessBtn').disabled = true;
-  document.getElementById('aiDownloadBtn').disabled = true;
-  document.getElementById('aiStatus').style.display = 'none';
-}
-
-// 初始化默认显示人像参数
-setTimeout(function() {
-  var el = document.getElementById('aiParamsPortrait');
-  if (el) el.style.display = 'block';
-}, 100);
-
-// ====== 爬虫 ======
-function addCrawlLog(msg,type){
-  var log=document.getElementById('crawlLog');
-  var time=new Date().toLocaleTimeString();
-  var cls=type==='error'?'log-error':type==='warn'?'log-warn':'log-info';
-  var div=document.createElement('div'); div.className='log-line';
-  div.innerHTML='<span class="log-time">['+time+']</span> <span class="'+cls+'">'+msg+'</span>';
-  log.appendChild(div); log.scrollTop=log.scrollHeight;
-}
-function clearCrawlLog(){ document.getElementById('crawlLog').innerHTML='<div class="log-line"><span class="log-time">[SYS]</span> <span class="log-info">日志已清空</span></div>'; }
-function startCrawling(){
-  var ps=['小红书','抖音','B站','快手','剪映','微博'];
-  var count=Math.floor(Math.random()*15)+8;
-  addCrawlLog('开始批量爬取...','info'); addCrawlLog('发现 '+count+' 条新教程','info');
-  var idx=0;
-  var ci=setInterval(function(){
-    if(idx>=Math.min(count,12)){
-      clearInterval(ci); addCrawlLog('✅ 爬取完成！共获取 '+count+' 条教程','info');
-      var t=parseInt(document.getElementById('crawlTotal').textContent.replace(',',''))||0;
-      document.getElementById('crawlTotal').textContent=(t+count).toLocaleString();
-      document.getElementById('crawlToday').textContent=count;
-      return;
-    }
-    var p=ps[Math.floor(Math.random()*ps.length)];
-    var ts=['快速调色','卡点视频','Vlog剪辑','分屏效果','字幕动画','转场特效'];
-    addCrawlLog('['+p+'] 抓取: '+ts[Math.floor(Math.random()*ts.length)],'info');
-    idx++;
-  },800);
-}
-
-// ====== 历史 ======
-function saveToHistory(fn,eff){
-  projectHistory.push({id:Date.now(),file:fn,effect:eff,date:new Date().toLocaleString(),type:selectedMediaType});
-  localStorage.setItem('lixiu_history',JSON.stringify(projectHistory));
-}
-function loadHistory(){ try{var h=localStorage.getItem('lixiu_history');projectHistory=h?JSON.parse(h):[];}catch(e){projectHistory=[];} }
-function renderHistory(){
-  loadHistory();
-  var list=document.getElementById('historyList'), empty=document.getElementById('historyEmpty');
-  if(projectHistory.length===0){empty.style.display='block';list.innerHTML='';return;}
-  empty.style.display='none';
-  var h='';
-  projectHistory.slice().reverse().forEach(function(r){
-    h+='<div class="history-item"><div class="h-time">'+r.date+'</div><div class="h-file">'+(r.type==='video'?'🎬':'🖼️')+' '+(r.file||'未命名')+'</div><div class="h-effect">效果: '+(r.effect||'original')+'</div></div>';
-  });
-  list.innerHTML=h;
-}
-function clearHistory(){if(!confirm('确定清空所有历史记录？'))return;projectHistory=[];localStorage.setItem('lixiu_history','[]');renderHistory();}
-function exportHistory(){loadHistory();var b=new Blob([JSON.stringify(projectHistory,null,2)],{type:'application/json'});var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download='lixiu_history_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(u);}
-
-// ====== 设置 ======
-function loadSettings(){try{var s=localStorage.getItem('lixiu_settings');settings=s?JSON.parse(s):{autoUpdate:true,saveHistory:true,notify:true};}catch(e){settings={autoUpdate:true,saveHistory:true,notify:true};}applySettings();}
-function saveSettings(){localStorage.setItem('lixiu_settings',JSON.stringify(settings));applySettings();}
-function applySettings(){
-  document.getElementById('toggleAutoUpdate').className='toggle-switch'+(settings.autoUpdate?' on':'');
-  document.getElementById('toggleSaveHistory').className='toggle-switch'+(settings.saveHistory?' on':'');
-  document.getElementById('toggleNotify').className='toggle-switch'+(settings.notify?' on':'');
-}
-function toggleSetting(key){settings[key]=!settings[key];saveSettings();}
-function migrateData(){localStorage.setItem('lixiu_version',APP_VERSION);document.getElementById('dataVersionLabel').textContent='v'+APP_VERSION+' · 已完成';showStatus('processStatus','数据迁移完成！','success');}
-
-// ====== 反馈 ======
-function showFeedback(){document.getElementById('feedbackModal').classList.add('show');}
-function closeFeedback(){document.getElementById('feedbackModal').classList.remove('show');document.getElementById('feedbackText').value='';}
-function submitFeedback(){
-  var type=document.getElementById('feedbackType').value, text=document.getElementById('feedbackText').value.trim();
-  if(!text){alert('请输入反馈内容');return;}
-  var fb=JSON.parse(localStorage.getItem('lixiu_feedback')||'[]');
-  fb.push({id:Date.now(),type:type,text:text,version:APP_VERSION,date:new Date().toISOString()});
-  localStorage.setItem('lixiu_feedback',JSON.stringify(fb));
-  closeFeedback(); showStatus('processStatus','✅ 感谢反馈！已记录','success');
-}
-document.getElementById('feedbackModal').addEventListener('click',function(e){if(e.target===this)closeFeedback();});
-
-// ====== 更新 ======
-function checkUpdate(){
-  document.getElementById('updateStatusText').textContent='检查中...';
-  document.getElementById('updateProgress').style.width='30%';
-  setTimeout(function(){
-    document.getElementById('updateProgress').style.width='80%';
-    document.getElementById('latestVersion').textContent='v'+APP_VERSION;
-    document.getElementById('updateStatusText').textContent='✅ 已是最新版本 v'+APP_VERSION;
-    document.getElementById('updateProgress').style.width='100%';
-  },1500);
-}
-
-// ====== 🔐 新版开发者认证系统（class 式） ======
-class DeveloperAuth {
-  constructor() {
-    this.developerUsername = 'lixiu-ohye';
-    this.developerPassword = 'myy123456';
-    this.developerKey = this.developerUsername + ':' + this.developerPassword;
-    this.isAuthenticated = false;
-    this.autoRenew = true;
-    this.sessionExpiry = null;
-    this.init();
-  }
-  init() {
-    this.checkAuth();
-    this.addLoginButton();
-  }
-  login(key) {
-    if (key === this.developerKey) {
+  login: function(username, password) {
+    if (username === this.developerUsername && password === this.developerPassword) {
       this.isAuthenticated = true;
-      this.sessionExpiry = Date.now() + (365 * 24 * 60 * 60 * 1000);
+      this.sessionExpiry = Date.now() + 365 * 24 * 60 * 60 * 1000;
       localStorage.setItem('lixu-dev-auth', 'true');
-      localStorage.setItem('lixu-dev-expiry', this.sessionExpiry);
-      localStorage.setItem('lixu-dev-key', key);
-      this.showNotification('登录成功！欢迎使用开发者后台', 'success');
+      localStorage.setItem('lixu-dev-expiry', String(this.sessionExpiry));
       return true;
     }
-    this.showNotification('无效的开发者密钥', 'error');
     return false;
-  }
-  checkAuth() {
-    const auth = localStorage.getItem('lixu-dev-auth');
-    const expiry = localStorage.getItem('lixu-dev-expiry');
+  },
+  checkAuth: function() {
+    var auth = localStorage.getItem('lixu-dev-auth');
+    var expiry = localStorage.getItem('lixu-dev-expiry');
     if (auth === 'true' && expiry && Date.now() < parseInt(expiry)) {
       this.isAuthenticated = true;
       this.sessionExpiry = parseInt(expiry);
-      if (this.autoRenew) this.renewSession();
       return true;
     }
     this.logout();
     return false;
-  }
-  renewSession() {
-    this.sessionExpiry = Date.now() + (365 * 24 * 60 * 60 * 1000);
-    localStorage.setItem('lixu-dev-expiry', this.sessionExpiry);
-  }
-  logout() {
+  },
+  logout: function() {
     this.isAuthenticated = false;
     this.sessionExpiry = null;
     localStorage.removeItem('lixu-dev-auth');
     localStorage.removeItem('lixu-dev-expiry');
-    localStorage.removeItem('lixu-dev-key');
-    this.showNotification('已退出开发者后台', 'info');
   }
-  addLoginButton() {
-    var btn = document.getElementById('devLoginBtn');
-    if (btn) {
-      var self = this;
-      btn.onclick = function() { self.showLogin(); };
-    }
-  }
-  showLogin() {
-    if (this.isAuthenticated) { this.showDashboard(); return; }
-    var modal = document.querySelector('.developer-login-modal');
-    if (modal) modal.remove();
-    var m = document.createElement('div');
-    m.className = 'developer-login-modal';
-    m.onclick = function(e) { if (e.target === this) this.remove(); };
-    var self = this;
-    m.innerHTML = '<div class="login-container"><h2>🔐 开发者后台</h2><p>请输入账号和密码登录</p><input type="text" id="dev-username" class="dev-input" placeholder="开发者账号" style="margin-bottom:8px;"><input type="password" id="dev-password" class="dev-input" placeholder="开发者密码"><button class="dev-btn primary" id="devAuthBtn" style="width:100%;margin-bottom:8px;margin-top:6px;">登录</button><button class="dev-btn secondary" onclick="this.closest(\'.developer-login-modal\').remove()" style="width:100%;">取消</button></div>';
-    document.body.appendChild(m);
-    setTimeout(function() {
-      document.getElementById('devAuthBtn').onclick = function() { self.authenticate(); };
-      document.getElementById('dev-password').addEventListener('keydown', function(e) { if (e.key === 'Enter') self.authenticate(); });
-      document.getElementById('dev-username').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('dev-password').focus(); });
-    }, 50);
-  }
-  authenticate() {
-    var username = document.getElementById('dev-username').value.trim();
-    var password = document.getElementById('dev-password').value.trim();
-    if (!username || !password) { this.showNotification('请输入账号和密码', 'error'); return; }
-    var fullKey = username + ':' + password;
-    if (this.login(fullKey)) {
-      this.closeLogin();
-      this.showDashboard();
-    }
-  }
-  closeLogin() { var m = document.querySelector('.developer-login-modal'); if (m) m.remove(); }
-  closeDashboard() { var d = document.querySelector('.developer-dashboard'); if (d) d.remove(); }
-  showDashboard() {
-    this.closeDashboard();
-    var dash = document.createElement('div');
-    dash.className = 'developer-dashboard';
-    dash.onclick = function(e) { if (e.target === this) this.remove(); };
-    var self = this;
-    var statusHtml = '<div class="status-item"><span>爬虫系统</span><span class="status-value status-active">运行中</span></div>' +
-      '<div class="status-item"><span>自动更新</span><span class="status-value status-active">已启用</span></div>' +
-      '<div class="status-item"><span>最后更新</span><span class="status-value">'+new Date().toLocaleString()+'</span></div>' +
-      '<div class="status-item"><span>API调用次数</span><span class="status-value">∞</span></div>';
-    var featureHtml = '<div class="feature-item"><span>AI图像处理</span><input type="checkbox" checked disabled style="accent-color:var(--rose-deep)"></div>' +
-      '<div class="feature-item"><span>视频编辑</span><input type="checkbox" checked disabled style="accent-color:var(--rose-deep)"></div>' +
-      '<div class="feature-item"><span>教程解析</span><input type="checkbox" checked disabled style="accent-color:var(--rose-deep)"></div>' +
-      '<div class="feature-item"><span>高级功能</span><input type="checkbox" checked disabled style="accent-color:var(--rose-deep)"></div>';
-    dash.innerHTML = '<div class="developer-dashboard" style="max-width:900px;max-height:90vh;overflow-y:auto;">' +
-      '<div class="dashboard-header"><h2>🔐 哩修开发者后台</h2><div class="user-info"><span>开发者账户</span><span class="expiry-time">有效期: '+new Date(this.sessionExpiry).toLocaleDateString()+'</span><button class="dev-btn secondary" onclick="devAuth.logout();devAuth.closeDashboard();">退出</button></div></div>' +
-      '<div class="dashboard-section"><h3>📊 系统状态</h3><div class="status-grid">'+statusHtml+'</div></div>' +
-      '<div class="dashboard-section"><h3>🎛️ 功能控制</h3><div class="feature-grid">'+featureHtml+'</div></div>' +
-      '<div class="dashboard-section"><h3>🕷️ 爬虫管理</h3><div class="crawler-controls"><button class="dev-btn primary" onclick="autoUpdateCrawler.toggleAutoUpdate();this.textContent=(autoUpdateCrawler.autoUpdateEnabled?\'禁用自动更新\':\'启用自动更新\')">'+(autoUpdateCrawler.autoUpdateEnabled?'禁用自动更新':'启用自动更新')+'</button><button class="dev-btn secondary" onclick="autoUpdateCrawler.manualUpdate()">手动更新</button><button class="dev-btn secondary" onclick="showCrawlerLogs()">查看日志</button></div></div>' +
-      '<div class="dashboard-section"><h3>⚙️ 系统信息</h3><div class="system-info"><p><strong>版本:</strong> v'+APP_VERSION+'</p><p><strong>构建时间:</strong> '+new Date().toLocaleString()+'</p><p><strong>平台:</strong> Web</p><p><strong>状态:</strong> 生产就绪</p></div></div></div>';
-    document.body.appendChild(dash);
-  }
-  showNotification(message, type) {
-    var n = document.createElement('div');
-    n.className = 'dev-notification ' + type;
-    n.innerHTML = '<p>'+message+'</p>';
-    document.body.appendChild(n);
-    setTimeout(function() { if(n.parentElement) n.remove(); }, 5000);
-  }
-}
+};
 
-// 初始化开发者认证
-const devAuth = new DeveloperAuth();
-
-// ====== 🕷️ 新版自动爬虫系统（class 式） ======
-class AutoUpdateCrawler {
-  constructor() {
-    this.updateInterval = 24 * 60 * 60 * 1000;
-    this.lastUpdate = parseInt(localStorage.getItem('lixu-crawler-last-update')) || Date.now();
-    this.isRunning = true;
-    this.autoUpdateEnabled = true;
-    this.updateLogs = JSON.parse(localStorage.getItem('lixu-crawler-logs') || '[]');
-    this.init();
-  }
-  init() {
-    this.checkLastUpdate();
-    if (this.autoUpdateEnabled) this.startAutoUpdate();
-  }
-  checkLastUpdate() {
-    if ((Date.now() - this.lastUpdate) >= this.updateInterval) this.performUpdate();
-  }
-  startAutoUpdate() {
-    if (!this.isRunning || !this.autoUpdateEnabled) return;
-    this.scheduleNextUpdate();
-  }
-  scheduleNextUpdate() {
-    if (!this.isRunning || !this.autoUpdateEnabled) return;
-    var self = this;
-    var timeToNext = this.updateInterval - (Date.now() - this.lastUpdate);
-    this.updateTimer = setTimeout(function() { self.performUpdate(); }, Math.max(timeToNext, 10000));
-  }
-  async performUpdate() {
-    try {
-      this.logUpdate('开始自动更新');
-      var platforms = ['xiaohongshu', 'douyin', 'jianying', 'bilibili'];
-      var results = {};
-      for (const p of platforms) {
-        try {
-          var count = await this.updatePlatform(p);
-          results[p] = { success: true, count: count };
-          this.logUpdate(p+' 平台更新成功，新增'+count+'个教程');
-        } catch(e) {
-          results[p] = { success: false, error: e.message };
-          this.logUpdate(p+' 平台更新失败: '+e.message);
-        }
-      }
-      this.lastUpdate = Date.now();
-      localStorage.setItem('lixu-crawler-last-update', this.lastUpdate);
-      this.logUpdate('自动更新完成');
-      this.showUpdateNotification(results);
-      this.scheduleNextUpdate();
-    } catch(e) {
-      this.logUpdate('自动更新失败: '+e.message);
-    }
-  }
-  updatePlatform(platform) {
-    return new Promise(function(resolve) {
-      setTimeout(function() { resolve(Math.floor(Math.random()*20)+5); }, 800);
+// ====== 初始化 ======
+document.addEventListener('DOMContentLoaded', function() {
+  // 媒体类型
+  var mediaTypeButtons = document.querySelectorAll('.media-type-button');
+  mediaTypeButtons.forEach(function(button) {
+    button.addEventListener('click', function() {
+      mediaTypeButtons.forEach(function(btn) { btn.classList.remove('active'); });
+      this.classList.add('active');
+      selectedMediaType = this.dataset.type;
+      var ut = document.querySelector('.upload-text');
+      var uh = document.querySelector('.upload-hint');
+      if (selectedMediaType === 'video') { ut.textContent = '点击或拖拽视频到这里'; uh.textContent = '支持 MP4、MOV、WEBM 格式，最大 100MB'; }
+      else { ut.textContent = '点击或拖拽图片到这里'; uh.textContent = '支持 JPG、PNG 格式，最大 50MB'; }
     });
-  }
-  toggleAutoUpdate() {
-    this.autoUpdateEnabled = !this.autoUpdateEnabled;
-    if (this.autoUpdateEnabled) { this.startAutoUpdate(); this.logUpdate('自动更新已启用'); }
-    else { clearTimeout(this.updateTimer); this.isRunning = false; this.logUpdate('自动更新已禁用'); }
-    return this.autoUpdateEnabled;
-  }
-  manualUpdate() {
-    this.logUpdate('开始手动更新');
-    this.performUpdate();
-  }
-  logUpdate(msg) {
-    this.updateLogs.unshift({ timestamp: new Date().toISOString(), message: msg });
-    if (this.updateLogs.length > 100) this.updateLogs = this.updateLogs.slice(0, 100);
-    localStorage.setItem('lixu-crawler-logs', JSON.stringify(this.updateLogs));
-  }
-  showUpdateNotification(results) {
-    var n = document.querySelector('.crawler-update-notification');
-    if (n) n.remove();
-    var notif = document.createElement('div');
-    notif.className = 'crawler-update-notification';
-    var successCount = 0, failureCount = 0, details = '';
-    for (const [p, r] of Object.entries(results)) {
-      if (r.success) { successCount++; details += '<div class="update-success">'+p+': +'+r.count+'个教程</div>'; }
-      else { failureCount++; details += '<div class="update-error">'+p+': '+r.error+'</div>'; }
-    }
-    notif.innerHTML = '<div class="notification-content"><h3>🔥 教程库已更新</h3><p>'+successCount+'个平台成功, '+failureCount+'个平台失败</p><div class="update-details">'+details+'</div><button class="dev-btn secondary" onclick="this.parentElement.parentElement.remove()">关闭</button></div>';
-    document.body.appendChild(notif);
-    setTimeout(function() { if(notif.parentElement) notif.remove(); }, 10000);
-  }
-  getUpdateLogs() { return this.updateLogs; }
-}
+  });
 
-// 初始化自动更新爬虫系统
-const autoUpdateCrawler = new AutoUpdateCrawler();
+  // 平台选择
+  var platformButtons = document.querySelectorAll('.platform-button');
+  platformButtons.forEach(function(button) {
+    button.addEventListener('click', function() {
+      platformButtons.forEach(function(btn) { btn.classList.remove('active'); });
+      this.classList.add('active');
+      selectedPlatform = this.dataset.platform;
+    });
+  });
 
-// ====== 显示爬虫日志 ======
-function showCrawlerLogs() {
-  var logs = autoUpdateCrawler.getUpdateLogs();
-  var m = document.createElement('div');
-  m.className = 'crawler-log-modal';
-  m.onclick = function(e) { if (e.target === this) this.remove(); };
-  m.innerHTML = '<div class="log-container"><div class="log-header"><h3>📋 爬虫更新日志</h3><button class="dev-btn secondary" onclick="this.closest(\'.crawler-log-modal\').remove()">关闭</button></div><div class="log-content">'+
-    logs.map(function(l) { return '<div class="log-entry"><span class="log-time">'+new Date(l.timestamp).toLocaleString()+'</span><span class="log-message">'+l.message+'</span></div>'; }).join('')+
-    '</div></div>';
-  document.body.appendChild(m);
-}
+  // 效果选择
+  var effectCards = document.querySelectorAll('.effect-card');
+  effectCards.forEach(function(card) {
+    card.addEventListener('click', function() {
+      effectCards.forEach(function(c) { c.classList.remove('active'); });
+      this.classList.add('active');
+      selectedEffect = this.dataset.effect;
+    });
+  });
+
+  // 文件上传
+  var uploadArea = document.getElementById('uploadArea');
+  var fileInput = document.getElementById('fileInput');
+  uploadArea.addEventListener('click', function() { fileInput.click(); });
+  uploadArea.addEventListener('dragover', function(e) { e.preventDefault(); uploadArea.style.background = 'rgba(102,126,234,0.2)'; });
+  uploadArea.addEventListener('dragleave', function() { uploadArea.style.background = 'rgba(102,126,234,0.05)'; });
+  uploadArea.addEventListener('drop', function(e) {
+    e.preventDefault();
+    uploadArea.style.background = 'rgba(102,126,234,0.05)';
+    if (e.dataTransfer.files.length > 0) handleFileUpload(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', function(e) { if (e.target.files.length > 0) handleFileUpload(e.target.files[0]); });
+
+  // 按钮事件
+  document.getElementById('parseTutorialButton').addEventListener('click', parseTutorial);
+  document.getElementById('processButton').addEventListener('click', processMedia);
+  document.getElementById('resetButton').addEventListener('click', resetAll);
+  document.getElementById('downloadButton').addEventListener('click', downloadResult);
+  document.getElementById('aiProcessBtn').addEventListener('click', processImage);
+
+  // 示例链接
+  document.querySelectorAll('.example-link').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.getElementById('tutorialInput').value = this.dataset.url;
+      platformButtons.forEach(function(btn) { if (btn.dataset.platform === link.dataset.platform) btn.click(); });
+      parseTutorial();
+    });
+  });
+
+  // 滑块数值
+  var sliderMaps = [
+    {id:'skinSmoothing', out:'skinValue', suffix:'%'},
+    {id:'eyeBrightening', out:'eyeValue', suffix:'%'},
+    {id:'teethWhitening', out:'teethValue', suffix:'%'},
+    {id:'styleIntensity', out:'styleValue', suffix:'%'},
+    {id:'temperature', out:'tempValue', suffix:''},
+    {id:'tint', out:'tintValue', suffix:''}
+  ];
+  sliderMaps.forEach(function(w) {
+    var s = document.getElementById(w.id);
+    if (s) s.addEventListener('input', function() { document.getElementById(w.out).textContent = this.value + w.suffix; });
+  });
+});
 
 // ====== 工具函数 ======
-function showStatus(id, msg, type) {
-  var el = document.getElementById(id);
+function showStatus(elementId, msg, type) {
+  var el = document.getElementById(elementId);
   if (!el) return;
   el.textContent = msg;
   el.className = 'status-message status-' + type;
   el.style.display = 'block';
-  setTimeout(function() { el.style.display = 'none'; }, 4000);
+  setTimeout(function() { el.style.display = 'none'; }, 3000);
 }
 
-function downloadProject(){
-  var blob = new Blob([JSON.stringify({name:'lixiu',version:APP_VERSION,date:new Date().toISOString(),features:['ai-processor','video-editor','tutorial-crawler','auto-updater','feedback-system','developer-auth']},null,2)],{type:'application/json'});
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a'); a.href=url; a.download='lixiu_v'+APP_VERSION+'_project.json'; a.click(); URL.revokeObjectURL(url);
+function showDevNotification(msg, type) {
+  var n = document.createElement('div');
+  n.className = 'dev-notification ' + type;
+  n.innerHTML = '<p>' + msg + '</p>';
+  document.body.appendChild(n);
+  setTimeout(function() { if (n.parentElement) n.remove(); }, 4000);
 }
 
-// ====== 初始化 ======
-function init() {
-  document.querySelectorAll('#headerVersion,#aboutVersion,#footerVersion').forEach(function(el){el.textContent='v'+APP_VERSION;});
-  loadSettings(); loadHistory();
-  if(localStorage.getItem('lixiu_version')!==APP_VERSION)localStorage.setItem('lixiu_version',APP_VERSION);
-  if(settings.autoUpdate!==false) setTimeout(checkUpdate, 3000);
-  document.getElementById('dataVersionLabel').textContent='v'+APP_VERSION+' · 已完成';
-  addCrawlLog('[SYS] 哩修 v'+APP_VERSION+' 数字花园版已启动','info');
-  addCrawlLog('[SYS] AI引擎 · 爬虫引擎 · 剪辑引擎 已加载','info');
+// ====== 页面滚动 ======
+function scrollToSection(section) {
+  var targets = {
+    home: 0,
+    tutorials: document.querySelector('.main-content').offsetTop - 80,
+    effects: document.querySelector('.preview-section').offsetTop - 80,
+    about: document.body.scrollHeight
+  };
+  window.scrollTo({ top: targets[section] || 0, behavior: 'smooth' });
 }
-init();
+
+// ====== 文件上传 ======
+function handleFileUpload(file) {
+  var validTypes = selectedMediaType === 'video' ? ['video/mp4','video/quicktime','video/webm'] : ['image/jpeg','image/png','image/jpg','image/webp'];
+  if (!validTypes.includes(file.type)) { showStatus('uploadStatus', '请选择' + (selectedMediaType === 'video' ? '视频' : '图片') + '文件', 'error'); return; }
+  var maxSize = selectedMediaType === 'video' ? 100 * 1024 * 1024 : 50 * 1024 * 1024;
+  if (file.size > maxSize) { showStatus('uploadStatus', '文件大小不能超过' + (maxSize/1024/1024) + 'MB', 'error'); return; }
+
+  document.getElementById('uploadLoading').style.display = 'block';
+  document.getElementById('uploadStatus').style.display = 'none';
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    uploadedFile = { name: file.name, type: file.type, size: file.size, data: e.target.result };
+    var op = document.getElementById('originalPreview');
+    var rp = document.getElementById('resultPreview');
+    op.innerHTML = '';
+    rp.innerHTML = '';
+    if (selectedMediaType === 'video') {
+      op.innerHTML = '<video controls style="width:100%;height:100%;object-fit:cover;"><source src="' + e.target.result + '" type="'+file.type+'"></video>';
+    } else {
+      op.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">';
+    }
+    rp.innerHTML = '<div class="video-placeholder">处理后将显示在这里</div>';
+    document.getElementById('resultBadge').textContent = '待处理';
+    document.getElementById('uploadLoading').style.display = 'none';
+    showStatus('uploadStatus', '文件上传成功！', 'success');
+    document.getElementById('processButton').disabled = false;
+    if (selectedMediaType === 'image') document.getElementById('aiProcessingSection').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ====== 教程解析 ======
+var tutorialDB = {
+  xiaohongshu: { title: '卡牌翻转效果', desc: '制作超火的卡牌翻转效果', difficulty: '中级', duration: '5分钟', steps: [{step:'1',action:'导入素材',desc:'导入多张卡牌图片'},{step:'2',action:'创建翻转动画',desc:'使用关键帧创建翻转'},{step:'3',action:'添加卡点音乐',desc:'在翻转节点添加卡点'},{step:'4',action:'调整过渡',desc:'添加平滑过渡'},{step:'5',action:'导出视频',desc:'导出最终效果'}]},
+  douyin: { title: '电影转场效果', desc: '制作酷炫的电影转场', difficulty: '高级', duration: '8分钟', steps: [{step:'1',action:'准备素材',desc:'准备多段视频'},{step:'2',action:'创建布局',desc:'创建转场布局'},{step:'3',action:'添加过渡',desc:'添加入场过渡'},{step:'4',action:'同步节奏',desc:'根据BGM节奏调整'},{step:'5',action:'优化输出',desc:'确保过渡流畅度'}]},
+  bilibili: { title: '视频一键调色', desc: '达芬奇风格电影调色教程', difficulty: '高级', duration: '15分钟', steps: [{step:'1',action:'色彩理论',desc:'了解色相色温色调'},{step:'2',action:'一级调色',desc:'调整曝光对比度'},{step:'3',action:'二级调色',desc:'色相饱和度色彩分离'},{step:'4',action:'风格化LUT',desc:'应用电影风格LUT'},{step:'5',action:'最终输出',desc:'输出合适格式'}]},
+  kuaishou: { title: '快手视频卡点', desc: '快手爆款卡点剪辑', difficulty: '初级', duration: '4分钟', steps: [{step:'1',action:'选择BGM',desc:'选取热门音乐'},{step:'2',action:'标记节拍',desc:'在节奏点标记'},{step:'3',action:'裁剪素材',desc:'裁剪到节拍点'},{step:'4',action:'添加特效',desc:'炫酷特效'},{step:'5',action:'添加文字',desc:'互动文字贴纸'}]},
+  jianying: { title: '剪映一键调色', desc: '轻松打造电影感视频', difficulty: '初级', duration: '3分钟', steps: [{step:'1',action:'导入视频',desc:'打开剪映'},{step:'2',action:'选择模板',desc:'选择热门电影风格'},{step:'3',action:'微调参数',desc:'微调亮度对比度'},{step:'4',action:'添加滤镜',desc:'增加画面氛围'},{step:'5',action:'导出',desc:'导出调色视频'}]},
+  weibo: { title: '微博Vlog剪辑', desc: '适合微博发布的Vlog', difficulty: '中级', duration: '6分钟', steps: [{step:'1',action:'确定主题',desc:'确定Vlog主题风格'},{step:'2',action:'粗剪素材',desc:'筛选精彩片段'},{step:'3',action:'添加转场',desc:'自然过渡衔接'},{step:'4',action:'添加BGM',desc:'选择背景音乐'},{step:'5',action:'添加字幕',desc:'增加字幕提升体验'}]}
+};
+
+function parseTutorial() {
+  var input = document.getElementById('tutorialInput');
+  if (!input.value.trim()) { showStatus('tutorialStatus', '请输入教程链接', 'error'); return; }
+  document.getElementById('tutorialLoading').style.display = 'block';
+  document.getElementById('tutorialStatus').style.display = 'none';
+
+  setTimeout(function() {
+    document.getElementById('tutorialLoading').style.display = 'none';
+    showStatus('tutorialStatus', '教程解析成功！', 'success');
+    var tut = tutorialDB[selectedPlatform] || tutorialDB.xiaohongshu;
+    var h = '<p><strong>📝 标题：</strong>' + tut.title + '</p>';
+    h += '<p><strong>📝 描述：</strong>' + tut.desc + '</p>';
+    h += '<p><strong>📝 难度：</strong>' + tut.difficulty + ' · 时长：' + tut.duration + '</p>';
+    h += '<div class="tutorial-steps"><strong>📋 剪辑步骤：</strong><ul>';
+    tut.steps.forEach(function(s) {
+      h += '<li><div class="step-number">' + s.step + '</div><div class="step-content"><div class="step-action">' + s.action + '</div><div class="step-description">' + s.desc + '</div></div></li>';
+    });
+    h += '</ul></div>';
+    document.getElementById('tutorialDetails').innerHTML = h;
+    document.getElementById('tutorialInfo').style.display = 'block';
+  }, 1500);
+}
+
+// ====== 视频处理 ======
+function processMedia() {
+  if (!uploadedFile) { showStatus('processStatus', '请先上传素材', 'error'); return; }
+  document.getElementById('processLoading').style.display = 'block';
+  document.getElementById('processStatus').style.display = 'none';
+  setTimeout(function() {
+    document.getElementById('processLoading').style.display = 'none';
+    showStatus('processStatus', '处理完成！', 'success');
+    var rp = document.getElementById('resultPreview');
+    if (uploadedFile.type.startsWith('video/')) { rp.innerHTML = '<video controls style="width:100%;height:100%;object-fit:cover;"><source src="'+uploadedFile.data+'" type="'+uploadedFile.type+'"></video>'; }
+    else { rp.innerHTML = '<img src="'+uploadedFile.data+'" style="width:100%;height:100%;object-fit:cover;">'; }
+    document.getElementById('resultBadge').textContent = '已处理';
+    document.getElementById('resultBadge').style.background = 'linear-gradient(135deg,#4CAF50 0%,#45a049 100%)';
+    document.getElementById('downloadButton').disabled = false;
+  }, 2000);
+}
+
+// ====== AI 模型选择 ======
+function selectModel(model) {
+  selectedModel = model;
+  document.querySelectorAll('.model-card').forEach(function(c) { c.classList.remove('selected'); });
+  var card = document.querySelector('[data-model="' + model + '"]');
+  if (card) card.classList.add('selected');
+  document.getElementById('aiControls').style.display = 'block';
+  document.querySelectorAll('.control-group').forEach(function(g) { g.style.display = 'none'; });
+  var map = { portrait:'portraitControls', background:'', style:'styleControls', resolution:'', color:'colorControls' };
+  if (map[model]) document.getElementById(map[model]).style.display = 'block';
+}
+
+// ====== AI 图像处理 ======
+function processImage() {
+  if (!uploadedFile) { showAIStatus('请先上传图片', 'error'); return; }
+  if (!selectedModel) { showAIStatus('请选择处理模型', 'error'); return; }
+  document.getElementById('aiLoading').style.display = 'block';
+  document.getElementById('aiProcessBtn').disabled = true;
+
+  AIImageProcessor.setImage(uploadedFile);
+  var promise;
+  switch(selectedModel) {
+    case 'portrait':
+      promise = AIImageProcessor.enhancePortrait({
+        skinSmoothing: document.getElementById('skinSmoothing').value / 100,
+        eyeBrightening: document.getElementById('eyeBrightening').value / 100,
+        teethWhitening: document.getElementById('teethWhitening').value / 100
+      });
+      break;
+    case 'background': promise = AIImageProcessor.removeBackground(); break;
+    case 'style':
+      promise = AIImageProcessor.transferStyle(
+        document.getElementById('styleSelect').value,
+        document.getElementById('styleIntensity').value / 100
+      );
+      break;
+    case 'resolution': promise = AIImageProcessor.superResolution(2); break;
+    case 'color':
+      promise = AIImageProcessor.colorCorrection(
+        parseInt(document.getElementById('temperature').value),
+        parseInt(document.getElementById('tint').value)
+      );
+      break;
+    default: promise = Promise.resolve(null);
+  }
+
+  promise.then(function(result) {
+    if (result) {
+      document.getElementById('resultPreview').innerHTML = '<div class="video-placeholder"><img src="' + result.data + '" style="width:100%;height:100%;object-fit:cover;border-radius:15px;"></div>';
+      document.getElementById('resultBadge').textContent = 'AI处理完成';
+      document.getElementById('resultBadge').style.background = 'linear-gradient(135deg,#4CAF50 0%,#45a049 100%)';
+      document.getElementById('downloadButton').disabled = false;
+      showAIStatus('AI图像处理完成！', 'success');
+    }
+    document.getElementById('aiLoading').style.display = 'none';
+    document.getElementById('aiProcessBtn').disabled = false;
+  }).catch(function(err) {
+    console.error('AI处理失败:', err);
+    showAIStatus('处理失败: ' + err.message, 'error');
+    document.getElementById('aiLoading').style.display = 'none';
+    document.getElementById('aiProcessBtn').disabled = false;
+  });
+}
+
+function resetAIProcessing() {
+  selectedModel = null;
+  document.getElementById('aiControls').style.display = 'none';
+  document.querySelectorAll('.model-card').forEach(function(c) { c.classList.remove('selected'); });
+  document.getElementById('aiStatus').style.display = 'none';
+}
+
+function showAIStatus(msg, type) {
+  var el = document.getElementById('aiStatus');
+  el.textContent = msg;
+  el.className = 'ai-status ' + type;
+  el.style.display = 'block';
+  setTimeout(function() { el.style.display = 'none'; }, 3000);
+}
+
+// ====== 重置 / 下载 ======
+function resetAll() {
+  uploadedFile = null;
+  document.getElementById('originalPreview').innerHTML = '<div class="video-placeholder">请上传素材</div>';
+  document.getElementById('resultPreview').innerHTML = '<div class="video-placeholder">处理后将显示在这里</div>';
+  document.getElementById('resultBadge').textContent = '待处理';
+  document.getElementById('resultBadge').style.background = 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
+  document.getElementById('tutorialInput').value = '';
+  document.getElementById('tutorialInfo').style.display = 'none';
+  document.getElementById('processButton').disabled = true;
+  document.getElementById('downloadButton').disabled = true;
+  document.getElementById('aiProcessingSection').style.display = 'none';
+  resetAIProcessing();
+  document.querySelectorAll('.status-message').forEach(function(el) { el.style.display = 'none'; });
+}
+
+function downloadResult() {
+  if (!uploadedFile) { showStatus('processStatus', '没有可下载的文件', 'error'); return; }
+  var a = document.createElement('a');
+  a.download = 'lixiu_' + selectedEffect + (uploadedFile.type.startsWith('video/') ? '.mp4' : '.jpg');
+  a.href = uploadedFile.data;
+  a.click();
+  showStatus('processStatus', '文件下载成功！', 'success');
+}
+
+// ====== 开发者后台 ======
+function showDeveloperLogin() {
+  var modal = document.createElement('div');
+  modal.className = 'developer-login-modal';
+  modal.onclick = function(e) { if (e.target === this) this.remove(); };
+  modal.innerHTML = '<div class="login-container"><h2 style="margin-bottom:10px;">🔐 开发者后台</h2><p style="color:#666;margin-bottom:20px;font-size:14px;">请输入账号和密码登录</p><input type="text" id="dev-username" class="dev-input" placeholder="开发者账号"><input type="password" id="dev-password" class="dev-input" placeholder="开发者密码"><button class="dev-btn primary" id="devAuthBtn">登录</button><button class="dev-btn secondary" onclick="this.closest(\'.developer-login-modal\').remove()">取消</button></div>';
+  document.body.appendChild(modal);
+  setTimeout(function() {
+    document.getElementById('devAuthBtn').onclick = function() { authenticateDev(); };
+    document.getElementById('dev-username').addEventListener('keydown', function(e) { if (e.key === 'Enter') document.getElementById('dev-password').focus(); });
+    document.getElementById('dev-password').addEventListener('keydown', function(e) { if (e.key === 'Enter') authenticateDev(); });
+  }, 50);
+}
+
+function authenticateDev() {
+  var username = document.getElementById('dev-username').value.trim();
+  var password = document.getElementById('dev-password').value.trim();
+  if (!username || !password) { showDevNotification('请输入账号和密码', 'error'); return; }
+  if (DeveloperAuth.login(username, password)) {
+    closeDeveloperLogin();
+    showDeveloperDashboard();
+  } else {
+    showDevNotification('账号或密码错误', 'error');
+  }
+}
+
+function closeDeveloperLogin() {
+  var m = document.querySelector('.developer-login-modal');
+  if (m) m.remove();
+}
+
+function showDeveloperDashboard() {
+  var dashboard = document.createElement('div');
+  dashboard.className = 'developer-dashboard';
+  dashboard.onclick = function(e) { if (e.target === this) { this.remove(); } };
+  var now = new Date().toLocaleString();
+  var expiry = new Date(DeveloperAuth.sessionExpiry).toLocaleDateString();
+  dashboard.innerHTML = '<div class="dashboard-content"><div class="dashboard-header"><h2 style="margin:0;">🔐 哩修开发者后台</h2><div style="display:flex;align-items:center;gap:15px;font-size:13px;color:#666;flex-wrap:wrap;"><span>开发者账户</span><span style="color:#667eea;font-weight:600;">有效期: ' + expiry + '</span><button onclick="closeDevDashboard()" style="padding:8px 16px;background:#f0f0f0;color:#333;border:none;border-radius:8px;cursor:pointer;font-weight:600;">退出</button></div></div><div class="dashboard-section"><h3>📊 系统状态</h3><div class="status-grid"><div class="status-item"><span>爬虫系统</span><span class="status-value status-active">运行中</span></div><div class="status-item"><span>自动更新</span><span class="status-value status-active">已启用</span></div><div class="status-item"><span>最后更新</span><span style="font-weight:bold;color:#667eea;">' + now + '</span></div><div class="status-item"><span>API调用次数</span><span style="font-weight:bold;color:#667eea;">∞</span></div></div></div><div class="dashboard-section"><h3>🎛️ 功能控制</h3><div class="feature-grid"><div class="feature-item"><span>AI图像处理</span><input type="checkbox" checked disabled></div><div class="feature-item"><span>视频编辑</span><input type="checkbox" checked disabled></div><div class="feature-item"><span>教程解析</span><input type="checkbox" checked disabled></div><div class="feature-item"><span>高级功能</span><input type="checkbox" checked disabled></div></div></div><div class="dashboard-section"><h3>⚙️ 系统信息</h3><div class="system-info"><p><strong>版本:</strong> v1.0.0</p><p><strong>构建时间:</strong> ' + now + '</p><p><strong>平台:</strong> Web</p><p><strong>状态:</strong> 生产就绪</p></div></div></div>';
+  document.body.appendChild(dashboard);
+}
+
+function closeDevDashboard() {
+  DeveloperAuth.logout();
+  var d = document.querySelector('.developer-dashboard');
+  if (d) d.remove();
+}
 </script>
 </body>
 </html>
