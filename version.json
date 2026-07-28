@@ -1,19 +1,20 @@
 {
-  "version": "2.1.0",
+  "version": "2.1.1",
   "lastUpdate": "2026-07-28",
   "downloadUrl": "https://lixiu-ohye.github.io/lixiu/",
   "changelog": [
-    "🎨 全面赛博朋克霓虹视觉重构（深黑底色 + 网格矩阵 + CRT扫描线 + 青紫渐变）",
-    "🔐 开发者永久后台登录系统（仪表盘 + 功能控制 + 爬虫管理）",
-    "🕷️ 6大平台教程爬虫（小红书、抖音、B站、快手、剪映、微博）",
+    "🎨 全面温柔女性审美视觉重构（玫瑰金+香槟粉+奶油紫）",
+    "🔐 新版开发者认证系统（class DeveloperAuth，1年有效期）",
+    "🕷️ 新版自动爬虫系统（class AutoUpdateCrawler，24h定时更新，日志管理）",
     "🤖 AI图像处理模块（人像增强、去背景、风格迁移、超分辨率、色彩校正）",
     "🔄 自动更新检测系统",
-    "📋 历史记录与项目管理"
+    "📋 历史记录、设置面板、反馈系统完整保留"
   ],
   "dependencies": {
-    "ai-processor": "^2.1.0",
-    "video-editor": "^2.1.0",
-    "tutorial-crawler": "^2.1.0",
-    "developer-auth": "^2.1.0"
+    "ai-processor": "^2.1.1",
+    "video-editor": "^2.1.1",
+    "tutorial-crawler": "^2.1.1",
+    "developer-auth": "^2.1.1",
+    "auto-update-crawler": "^2.1.1"
   }
 }
