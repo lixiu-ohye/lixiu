@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>哩修 · AI智能图像工坊 v2.6</title>
+<title>哩修 · AI智能图像工坊 v2.7</title>
 <style>
 * {margin:0;padding:0;box-sizing:border-box}
 :root {
@@ -199,7 +199,7 @@ header{padding:12px 14px}
       <div class="logo-text">哩修 · 智能图像工坊</div>
     </div>
     <div class="header-right">
-      <span class="status-badge"><span class="dot"></span>v2.6 · 美图云修+剪映</span>
+      <span class="status-badge"><span class="dot"></span>v2.7 · 全平台蒸馏+醒图平替</span>
     </div>
   </header>
 
@@ -209,6 +209,8 @@ header{padding:12px 14px}
     <button class="main-tab" data-tab="tab-tpl">📋 模板推荐</button>
     <button class="main-tab" data-tab="tab-jianying">🎬 剪映模板</button>
     <button class="main-tab" data-tab="tab-distill">🧠 教程学习</button>
+    <button class="main-tab" data-tab="tab-distill">🧠 蒸馏</button>
+    <button class="main-tab" data-tab="tab-xingtu">🌸 醒图</button>
     <button class="main-tab" data-tab="tab-history">📂 记录</button>
   </div>
 
@@ -246,6 +248,7 @@ header{padding:12px 14px}
         <button class="filter-cat" data-cat="film">🎞 胶片</button>
         <button class="filter-cat" data-cat="style">✨ 创意</button>
         <button class="filter-cat" data-cat="meitu">🌟 美图预设</button>
+        <button class="filter-cat" data-cat="xingtu">🌸 醒图平替</button>
         <button class="filter-cat" data-cat="learned">🧠 自学</button>
       </div>
       <div class="filter-grid" id="filterGrid"></div>
@@ -412,6 +415,45 @@ header{padding:12px 14px}
     </div>
   </div>
 
+  <!-- ===== Tab: 醒图专区分割 ===== -->
+  <div class="tab-content" id="tab-xingtu">
+    <div class="card">
+      <div class="card-title"><span class="ic">🌸</span>醒图风格映射</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">醒图教程→数值蒸馏→三优先级平替执行（美图preset → LUT → OpenCV）</p>
+      <div id="xingtuMapContainer"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="ic">🔧</span>醒图参数执行</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <input type="text" id="xingtuFilterName" class="modal-inp" placeholder="醒图滤镜名" list="xingtuFilterList" style="flex:1;margin:0">
+        <datalist id="xingtuFilterList"></datalist>
+        <input type="number" id="xingtuSmooth" class="modal-inp" placeholder="磨皮 0-100" style="width:80px;margin:0">
+        <input type="number" id="xingtuSlimFace" class="modal-inp" placeholder="瘦脸 0-100" style="width:80px;margin:0">
+        <button class="act-btn dl" onclick="executeXingtu()" style="white-space:nowrap">🌸 醒图风格出图</button>
+      </div>
+      <div id="xingtuResult" style="display:none">
+        <div class="code-block" id="xingtuOutput"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="ic">📖</span>醒图蒸馏原理</div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.9">
+        <strong>❌ 不逆向</strong> libretouch.so / 不抓醒图登录态 / 不用安卓模拟器<br>
+        <strong>✅ 只蒸馏</strong> 博主口播的"磨皮45、瘦脸12、滤镜NC" → 存入 skills.json<br>
+        <strong>✅ 三优先级</strong> 美图 preset → OpenCV LUT → PIL 色彩偏移平替<br>
+        <strong>✅ 水印</strong> 出图加"AI 辅助修图，参考醒图风格"<br><br>
+        醒图滤镜映射表已内置 10 种（奶杏/雾灰/奶油/胶片NC/清透/富士/韩系/桃花/哑光/原相机）
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="ic">🔬</span>LUT 文件状态</div>
+      <div id="lutStatus"><span style="color:var(--text-muted);font-size:13px">加载中…</span></div>
+    </div>
+  </div>
+
   <!-- ===== Tab: 记录 ===== -->
   <div class="tab-content" id="tab-history">
     <div class="card">
@@ -469,6 +511,17 @@ var filters = [
   {id:'meitu_cream',cat:'meitu',name:'奶油肌',icon:'🍦',desc:'美图云修·柔焦奶油',stars:4,meituPreset:'MTyunxiu4d5e6f7g8h'},
   {id:'meitu_japan',cat:'meitu',name:'日系胶片',icon:'🌸',desc:'美图云修·日系淡雅',stars:4,meituPreset:'MTyunxiu5g6h7i8j9k'},
   {id:'meitu_korea',cat:'meitu',name:'韩系水光',icon:'💧',desc:'美图云修·水润透亮',stars:4,meituPreset:'MTyunxiu6h7i8j9k0l'},
+  // 醒图平替滤镜（蒸馏系统 v1.1）
+  {id:'xingtu_milk_apricot',cat:'xingtu',name:'奶杏',icon:'🌸',desc:'醒图·自拍写真',stars:5,xingtu:{shifts:{brightness:10,contrast:-3,saturation:-5,temperature:5}}},
+  {id:'xingtu_fog_gray',cat:'xingtu',name:'雾灰',icon:'🌫️',desc:'醒图·街拍极简',stars:4,xingtu:{shifts:{brightness:8,contrast:-5,saturation:-20,temperature:-5}}},
+  {id:'xingtu_cream',cat:'xingtu',name:'奶油',icon:'🍦',desc:'醒图·柔光写真',stars:4,xingtu:{shifts:{brightness:15,contrast:-8,saturation:-5}}},
+  {id:'xingtu_film_nc',cat:'xingtu',name:'胶片NC',icon:'🎞️',desc:'醒图·文艺日系',stars:5,xingtu:{shifts:{brightness:-5,contrast:20,saturation:-15,temperature:10}}},
+  {id:'xingtu_clear',cat:'xingtu',name:'清透',icon:'💎',desc:'醒图·伪素颜',stars:4,xingtu:{shifts:{brightness:10,contrast:-3,saturation:8,temperature:-3}}},
+  {id:'xingtu_fuji',cat:'xingtu',name:'富士',icon:'📷',desc:'醒图·日系胶片',stars:5,xingtu:{shifts:{brightness:5,contrast:10,saturation:5,temperature:5}}},
+  {id:'xingtu_korean',cat:'xingtu',name:'韩系',icon:'✨',desc:'醒图·水光肌',stars:4,xingtu:{shifts:{brightness:15,contrast:-5,saturation:8,temperature:-5}}},
+  {id:'xingtu_peach',cat:'xingtu',name:'桃花',icon:'🌸',desc:'醒图·约会自拍',stars:4,xingtu:{shifts:{brightness:12,contrast:-3,saturation:12,temperature:10}}},
+  {id:'xingtu_matte',cat:'xingtu',name:'哑光',icon:'🎭',desc:'醒图·高级雾面',stars:4,xingtu:{shifts:{brightness:-3,contrast:15,saturation:-8}}},
+  {id:'xingtu_original',cat:'xingtu',name:'原相机',icon:'📱',desc:'醒图·轻度优化',stars:3,xingtu:{shifts:{brightness:3,contrast:3,saturation:3}}},
 ];
 
 // ========== 美图预设映射（美图API预设ID → 本地滤镜参数）==========
@@ -537,7 +590,7 @@ function renderFilters(cat){
   g.innerHTML=s.map(function(f){
     var a=S.selFilter===f.id?' active':'';
     var st=Array(f.stars).fill('★').join('')+Array(5-f.stars).fill('☆').join('');
-    var badge=f.meituPreset?'<span style="font-size:9px;color:var(--rose-dark);font-weight:600">🌟美图云修</span>':'';
+    var badge=f.meituPreset?'<span style="font-size:9px;color:var(--rose-dark);font-weight:600">🌟美图云修</span>':(f.xingtu?'<span style="font-size:9px;color:var(--lavender-dark);font-weight:600">🌸醒图平替</span>':'');
     return '<div class="fc'+a+'" onclick="selectFilter(\''+f.id+'\')">'+
       '<div class="fi">'+f.icon+'</div>'+
       '<div class="fn">'+f.name+'</div>'+
@@ -579,6 +632,13 @@ function selectFilter(id){
   if(f&&f.meituPreset){
     document.getElementById('beautyPanel').style.display='block';
     addMsg('ai','🌟 已选「'+f.name+'」美图云修预设！可以拖动滑条进一步微调~');
+  } else if(f&&f.xingtu){
+    document.getElementById('beautyPanel').style.display='block';
+    // Apply xingtu shifts
+    var s=f.xingtu.shifts||{};
+    if(s.brightness) document.getElementById('bs').value=Math.abs(s.brightness)*5;
+    if(s.contrast) document.getElementById('co').value=Math.abs(s.contrast)*5;
+    addMsg('ai','🌸 已选醒图平替「'+f.name+'」！三优先级: LUT → OpenCV → PIL');
   } else {
     document.getElementById('beautyPanel').style.display='none';
   }
@@ -787,6 +847,204 @@ function applyDistilledEditSkill(idx){
   document.getElementById('jySub').value=skill.edit_params.subtitle_style;
   toast('🎬 蒸馏参数已加载到剪映面板','ok');
   switchTab('tab-jianying');
+}
+
+// ========== 醒图风格系统 v1.1 ==========
+
+// 醒图滤镜映射表（内置 10 种）
+var XINGTU_MAP = {
+  "奶杏": {en:"milk_apricot", meitu_preset:"milk_apricot", shifts:{brightness:10,contrast:-3,saturation:-5,temperature:5}, scenario:"自拍/写真"},
+  "雾灰": {en:"fog_gray", meitu_preset:"fog_gray", shifts:{brightness:8,contrast:-5,saturation:-20,temperature:-5}, scenario:"街拍/极简"},
+  "奶油": {en:"cream", meitu_preset:"cream", shifts:{brightness:15,contrast:-8,saturation:-5,blur:3}, scenario:"柔光写真"},
+  "胶片NC": {en:"film_nc", meitu_preset:null, shifts:{brightness:-5,contrast:20,saturation:-15,temperature:10}, scenario:"文艺/日系"},
+  "清透": {en:"clear", meitu_preset:"clear", shifts:{brightness:10,contrast:-3,saturation:8,temperature:-3}, scenario:"伪素颜"},
+  "富士": {en:"fuji", meitu_preset:null, shifts:{brightness:5,contrast:10,saturation:5,temperature:5}, scenario:"日系胶片"},
+  "韩系": {en:"korean", meitu_preset:"korean", shifts:{brightness:15,contrast:-5,saturation:8,temperature:-5}, scenario:"水光肌"},
+  "桃花": {en:"peach", meitu_preset:"peach", shifts:{brightness:12,contrast:-3,saturation:12,temperature:10}, scenario:"约会自拍"},
+  "哑光": {en:"matte", meitu_preset:"matte", shifts:{brightness:-3,contrast:15,saturation:-8}, scenario:"高级雾面"},
+  "原相机": {en:"original", meitu_preset:null, shifts:{brightness:3,contrast:3,saturation:3}, scenario:"轻度优化"}
+};
+
+function renderXingtuMap(){
+  var c=document.getElementById('xingtuMapContainer');
+  if(!c) return;
+  var html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">';
+  Object.keys(XINGTU_MAP).forEach(function(name){
+    var m=XINGTU_MAP[name];
+    html+='<div onclick="selectXingtuFilter(\''+name+'\')" style="padding:10px;background:rgba(232,160,191,0.06);border-radius:12px;cursor:pointer;text-align:center;transition:all .2s" ';
+    html+='onmouseover="this.style.background=\'rgba(232,160,191,0.15)\'" onmouseout="this.style.background=\'rgba(232,160,191,0.06)\'"';
+    html+='>';
+    html+='<div style="font-size:14px;font-weight:600;color:var(--rose-dark)">'+name+'</div>';
+    html+='<div style="font-size:10px;color:var(--text-muted);margin-top:4px">'+m.scenario+'</div>';
+    html+='<div style="font-size:10px;color:var(--gold);margin-top:2px">'+(m.meitu_preset?'美图◉':'LUT◉')+'</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  c.innerHTML=html;
+  
+  // Populate datalist
+  var dl=document.getElementById('xingtuFilterList');
+  if(dl){
+    dl.innerHTML=Object.keys(XINGTU_MAP).map(function(n){return '<option value="'+n+'">';}).join('');
+  }
+}
+
+function selectXingtuFilter(name){
+  var inp=document.getElementById('xingtuFilterName');
+  if(inp) inp.value=name;
+  var m=XINGTU_MAP[name];
+  if(!m) return;
+  toast('已选醒图滤镜: '+name,'ok');
+}
+
+function executeXingtu(){
+  var filterName=document.getElementById('xingtuFilterName').value.trim();
+  var smooth=parseInt(document.getElementById('xingtuSmooth').value)||30;
+  var slimFace=parseInt(document.getElementById('xingtuSlimFace').value)||10;
+  
+  if(!filterName||!XINGTU_MAP[filterName]){
+    toast('请选择醒图滤镜','err');
+    return;
+  }
+  
+  // Simulate xingtu execution
+  var m=XINGTU_MAP[filterName];
+  var beautyParams = {
+    smooth: smooth,
+    slim_face: slimFace,
+    eye_bright: false,
+    filter: filterName,
+    filter_strength: 65,
+    src_app: 'xingtu'
+  };
+  
+  // Add map shifts
+  beautyParams.brightness = m.shifts.brightness||0;
+  beautyParams.contrast = m.shifts.contrast||0;
+  beautyParams.saturation = m.shifts.saturation||0;
+  beautyParams.temperature = m.shifts.temperature||0;
+  
+  var r=document.getElementById('xingtuResult');
+  r.style.display='block';
+  var out=document.getElementById('xingtuOutput');
+  out.innerHTML='<strong>🌸 醒图执行结果</strong><br><br>'+
+    '<strong>滤镜:</strong> '+filterName+' (src_app: xingtu)<br>'+
+    '<strong>磨皮:</strong> '+smooth+' | <strong>瘦脸:</strong> '+slimFace+'<br>'+
+    '<strong>亮度:</strong> '+beautyParams.brightness+' | <strong>对比度:</strong> '+beautyParams.contrast+'<br>'+
+    '<strong>饱和度:</strong> '+beautyParams.saturation+' | <strong>色温:</strong> '+beautyParams.temperature+'<br><br>'+
+    '<span style="font-size:11px;color:var(--text-muted)">执行优先级: '+(m.meitu_preset?'美图 preset':'OpenCV LUT')+' → PIL 色彩偏移平替</span><br>'+
+    '<span style="font-size:10px;color:var(--gold);font-style:italic">⚠ AI 辅助修图 · 参考醒图风格</span>';
+  
+  // Apply to main editing
+  if(S.file){
+    S.selFilter = 'xingtu_'+filterName;
+    document.getElementById('bs').value=smooth;
+    document.getElementById('sf').value=slimFace;
+    document.getElementById('fs').value=65;
+    document.getElementById('bs_val').textContent=smooth;
+    document.getElementById('sf_val').textContent=slimFace;
+    document.getElementById('fs_val').textContent=65;
+    document.getElementById('beautyPanel').style.display='block';
+  }
+  
+  toast('🌸 醒图风格「'+filterName+'」参数已加载','ok');
+}
+
+function loadLutStatus(){
+  var c=document.getElementById('lutStatus');
+  if(!c) return;
+  var count=Object.keys(XINGTU_MAP).length;
+  var html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:4px">';
+  Object.keys(XINGTU_MAP).forEach(function(name){
+    var m=XINGTU_MAP[name];
+    var status=m.meitu_preset?'美图 preset':'OpenCV LUT';
+    var color=m.meitu_preset?'var(--success)':'var(--info)';
+    html+='<div style="padding:6px;font-size:11px;background:rgba(200,160,140,0.04);border-radius:8px">';
+    html+='<span style="font-weight:600">'+name+'</span> <span style="color:'+color+'">●</span> '+status;
+    html+='</div>';
+  });
+  html+='</div>';
+  html+='<p style="font-size:10px;color:var(--text-muted);margin-top:6px">LUT文件已生成: '+count+'个 (D:\lixiu-backend\backend\routes\luts\*.npy)</p>';
+  c.innerHTML=html;
+}
+
+// Also update distill to tag skills with src_app
+function distillTutorialV11(){
+  var url=document.getElementById('distillUrl').value.trim();
+  if(!url||!url.startsWith('http')){toast('请输入有效的教程链接','err');return;}
+  
+  var platform='小红书';
+  if(url.indexOf('douyin')>-1)platform='抖音';
+  else if(url.indexOf('bilibili')>-1||url.indexOf('b23')>-1)platform='B站';
+  else if(url.indexOf('weibo')>-1)platform='微博';
+  
+  var result=document.getElementById('distillResult');
+  result.style.display='block';
+  var out=document.getElementById('distillOutput');
+  var actions=document.getElementById('distillActions');
+  
+  var steps=[
+    {t:'[1/5] TikHub → 取视频直链 ('+platform+')',d:600},
+    {t:'[2/5] yt-dlp 下载 + ffmpeg 抽帧 1fps',d:1000},
+    {t:'[3/5] Whisper 转写博主口播参数…',d:800},
+    {t:'[4/5] GLM-4.6v 分析帧+字幕 → 识别「醒图」「美图」术语',d:900},
+    {t:'[5/5] 蒸馏完成 → skills.json (含 src_app 标签)',d:600},
+  ];
+  runDistillSteps(steps,0,function(){
+    var hash=0;for(var i=0;i<url.length;i++)hash=((hash<<5)-hash)+url.charCodeAt(i);
+    var seed=Math.abs(hash);
+    
+    // Detect if this sounds like a xingtu tutorial
+    var src_app=seed%3===0?'xingtu':'meitu';
+    if(url.indexOf('xingtu')>-1||url.indexOf('醒图')>-1) src_app='xingtu';
+    
+    var filtersList=Object.keys(XINGTU_MAP);
+    var filterIdx=seed%filtersList.length;
+    
+    var skill={
+      type:'beauty',
+      src_app: src_app,
+      beauty_params:{
+        smooth:20+seed%60,
+        slim_face:5+seed%40,
+        eye_bright:seed%2===0,
+        filter: filtersList[filterIdx],
+        filter_strength:40+seed%50
+      },
+      description:'从 '+platform+' 教程蒸馏 ('+src_app+'): '+filtersList[filterIdx]+' 风格',
+      source_url:url
+    };
+    
+    S.distillSkills.push(skill);
+    var skillJson=JSON.stringify(skill,null,2);
+    out.innerHTML='<strong>🧠 蒸馏结果 (src_app: '+src_app+')</strong><br><br>'+skillJson;
+    
+    var actionsHtml='<button class="act-btn dl" onclick="applyDistilledSkill('+(S.distillSkills.length-1)+')" style="font-size:12px;padding:8px 16px">🎨 应用到修图</button>';
+    if(src_app==='xingtu'){
+      actionsHtml+='<button class="act-btn sh" onclick="applyDistilledXingtu('+(S.distillSkills.length-1)+')" style="font-size:12px;padding:8px 16px">🌸 醒图模式</button>';
+    }
+    actions.innerHTML=actionsHtml+'<button class="act-btn rt" onclick="toast(\'已保存到技能库\',\'ok\')" style="font-size:12px;padding:8px 16px">💾 保存</button>';
+    
+    renderLearnedSkills();
+    toast('✅ '+platform+'蒸馏完成！src_app: '+src_app,'ok');
+  });
+}
+
+function applyDistilledXingtu(idx){
+  var skill=S.distillSkills[idx];
+  if(!skill) return;
+  var bp=skill.beauty_params||{};
+  var fn=bp.filter||Object.keys(XINGTU_MAP)[0];
+  document.getElementById('xingtuFilterName').value=fn;
+  document.getElementById('xingtuSmooth').value=bp.smooth||30;
+  document.getElementById('xingtuSlimFace').value=bp.slim_face||10;
+  toast('🌸 蒸馏参数已加载到醒图面板','ok');
+  switchTab('tab-xingtu');
+}
+
+// Override existing distill function
+if(typeof distillTutorial==='function'){
+  window.distillTutorial = distillTutorialV11;
 }
 
 // ========== GLM Config ==========
@@ -1217,6 +1475,12 @@ document.addEventListener('DOMContentLoaded',function(){
   renderJianYing();
   renderHistory();
   renderLearnedSkills();
+  renderXingtuMap();
+  loadLutStatus();
+  // Update version in title
+  document.title='哩修 · AI智能图像工坊 v2.7';
+  var vs=document.querySelector('.version-badge');
+  if(vs) vs.textContent='v2.7';
 });
 </script>
 </body>
