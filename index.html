@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -419,24 +419,23 @@ header{padding:12px 14px}
     <div class="sub-tab-content active" id="sub-recommend">
       <!-- 平台筛选 -->
       <div class="card">
-        <div class="card-title"><span class="ic">📺</span>看教程 · 学修图</div>
+                <div class="card-title"><span class="ic">📺</span>看教程 · 学修图</div>
         <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">刷到喜欢的修图效果 → 点「⚡️ 提取同款参数」→ 技能自动入库</p>
+        <!-- 搜索栏 + 排序 -->
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <input type="text" id="videoSearchInput" class="modal-inp" placeholder="🔍 搜索修图教程、博主、滤镜..." style="flex:1;margin:0">
+          <button class="act-btn sh" onclick="searchVideos()" style="white-space:nowrap">🔍 搜索</button>
+          <button class="act-btn rt" id="sortToggle" style="white-space:nowrap">⏶ 最热</button>
+        </div>
         <div class="filter-cats" style="margin-bottom:14px">
-          <button class="filter-cat active" data-plt="all">🔥 全部</button>
+          <button class="filter-cat active" data-plt="all">🌐 全部</button>
           <button class="filter-cat" data-plt="douyin">🎵 抖音</button>
           <button class="filter-cat" data-plt="xiaohongshu">📕 小红书</button>
           <button class="filter-cat" data-plt="bilibili">📺 B站</button>
-          <button class="filter-cat" data-plt="weibo">📱 微博</button>
+          <button class="filter-cat" data-plt="weibo">💬 微博</button>
         </div>
         <div class="video-grid" id="videoGrid"></div>
       </div>
-
-      <!-- GLM API配置（折叠） -->
-      <div class="card" style="padding:14px 20px">
-        <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text-muted)">
-          <span>🔧 GLM API 配置（用于分析教程）</span>
-          <span style="font-size:10px">展开 ▼</span>
-        </div>
         <div style="display:none;margin-top:12px" id="glmConfigArea">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <input type="password" id="glmKey" class="modal-inp" placeholder="GLM API Key" style="flex:2;margin:0">
@@ -803,54 +802,160 @@ function generateJianYingDraft(){
 // ========== 教程学习 v1.2: 推荐教程 + 技能库 + task_type 分流 ==========
 
 // 模拟视频教程列表
-var tutorialVideos = [
-  {id:'v1',platform:'douyin',title:'低像素自拍变高清！三步画质修复',task_type:'enhance',desc:'超分+去噪+锐化，手机照片秒变单反',icon:'🔍',source:'🎵抖音'},
-  {id:'v2',platform:'douyin',title:'冷白皮磨皮教程｜一键美颜',task_type:'beauty',desc:'白皙通透，博主最爱参数大公开',icon:'🌸',source:'🎵抖音'},
-  {id:'v3',platform:'xiaohongshu',title:'醒图奶杏滤镜参数分享',task_type:'beauty',desc:'甜妹必备！奶杏+磨皮45',icon:'🌸',source:'📕小红书'},
-  {id:'v4',platform:'xiaohongshu',title:'霓虹城市夜景→电影感调色',task_type:'beauty',desc:'城市夜景修图全流程，色温/色调/HSL全参数',icon:'🌃',source:'📕小红书'},
-  {id:'v5',platform:'bilibili',title:'5分钟学会剪映Vlog剪辑',task_type:'edit',desc:'叠化转场+字幕描边+节奏卡点全流程',icon:'🎬',source:'📺B站'},
-  {id:'v6',platform:'xiaohongshu',title:'老照片修复教程-AI超分去噪',task_type:'enhance',desc:'低分辨率老照片修复，超分4倍+去划痕',icon:'🔍',source:'📕小红书'},
-  {id:'v7',platform:'weibo',title:'日杂风胶片感｜复古修图参数',task_type:'beauty',desc:'哑光+高对比，文艺感溢出屏幕',icon:'🎞️',source:'📱微博'},
-  {id:'v8',platform:'douyin',title:'开箱测评视频剪辑模板',task_type:'edit',desc:'产品特写+字幕动效+BGM卡点',icon:'📦',source:'🎵抖音'},
-  {id:'v9',platform:'xiaohongshu',title:'手机照片去噪点变清晰',task_type:'enhance',desc:'噪点过多怎么办？三步降噪变清晰',icon:'🔍',source:'📕小红书'},
-  {id:'v10',platform:'bilibili',title:'赛博朋克城市调色教程',task_type:'beauty',desc:'紫蓝霓虹风格，PS/Lightroom参数全公开',icon:'🌃',source:'📺B站'},
-  {id:'v11',platform:'douyin',title:'视频去模糊｜画面增强教程',task_type:'enhance',desc:'抖音博主教你把糊片变4K超清',icon:'🔍',source:'🎵抖音'},
-  {id:'v12',platform:'xiaohongshu',title:'奶油肌修图｜醒图平替方案',task_type:'beauty',desc:'水光肌参数+美图API一键出图',icon:'🍦',source:'📕小红书'},
-];
+// ===== 爬虫视频系统：从后端 API 拉取真实数据 =====
+var API_BASE = 'http://localhost:8700/api';
+var _videoCache = [];          // 缓存的视频列表
+var _videoPagination = {page:1,total:0,total_pages:1};
+var _videoLoading = false;
+var currentPlatform = 'all';
+var currentSort = 'hot';
+var currentKeyword = '';
+var currentVidPage = 1;
 
-// 分类标签映射
+// 类型标签映射（保持与原系统一致）
 var TASK_TYPE_LABELS = {
   beauty: {label:'人像美颜',icon:'💄',tagClass:'vtag-beauty',skillClass:'skill-type-beauty'},
   enhance: {label:'画质增强',icon:'🔍',tagClass:'vtag-enhance',skillClass:'skill-type-enhance'},
   edit: {label:'视频剪辑',icon:'✂️',tagClass:'vtag-edit',skillClass:'skill-type-edit'}
 };
 
-// 视频教程平台筛选
-var currentPlatform = 'all';
-
-function renderVideoGrid(){
+// 🌐 从后端 API 获取视频
+function fetchVideos(append){
+  if(_videoLoading) return;
+  _videoLoading = true;
+  
   var g=document.getElementById('videoGrid');
-  if(!g) return;
-  var filtered = currentPlatform==='all' ? tutorialVideos.slice() : tutorialVideos.filter(function(v){return v.platform===currentPlatform;});
-  g.innerHTML = filtered.map(function(v,i){
-    var tt = TASK_TYPE_LABELS[v.task_type]||{label:'未知',icon:'❓',tagClass:'',skillClass:''};
-    return '<div class="video-card">'+
-      '<div class="video-thumb">'+v.icon+
-        '<span class="vtag">'+v.source+'</span>'+
-      '</div>'+
-      '<div class="vinfo">'+
-        '<div class="vtitle">'+v.title+'</div>'+
-        '<div class="vmeta">'+
-          '<span class="vtag-type '+tt.tagClass+'">'+tt.icon+' '+tt.label+'</span>'+
-        '</div>'+
-        '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">'+v.desc+'</div>'+
-        '<button class="extract-btn" onclick="extractSkill('+i+')">⚡️ 提取同款参数</button>'+
-      '</div></div>';
-  }).join('');
-  if(filtered.length===0) g.innerHTML='<div class="empty-s">当前平台暂无教程，试试其他平台</div>';
+  if(!append) g.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-muted)">⏳ 正在加载教程视频…</div>';
+  
+  var url=API_BASE+'/videos?page='+currentVidPage+'&page_size=20&sort='+currentSort;
+  if(currentPlatform!=='all') url+='&platform='+currentPlatform;
+  if(currentKeyword) url+='&keyword='+encodeURIComponent(currentKeyword);
+  
+  fetch(url)
+    .then(function(r){return r.json();})
+    .then(function(resp){
+      _videoLoading = false;
+      var data = resp.data || {};
+      var items = data.items || [];
+      _videoPagination = resp.pagination || {page:1,total:0,total_pages:1};
+      
+      if(!append){
+        _videoCache = items;
+      } else {
+        _videoCache = _videoCache.concat(items);
+      }
+      renderFetchedVideos(append);
+    })
+    .catch(function(err){
+      _videoLoading = false;
+      console.error('FETCH_VIDEOS_ERR', err);
+      g.innerHTML='<div class="empty-s">⚠️ 后端未启动，无法加载视频数据。<br>请确认后端已运行在 localhost:8700</div>';
+    });
 }
 
-// 平台筛选切换
+function renderFetchedVideos(append){
+  var g=document.getElementById('videoGrid');
+  if(!g) return;
+  
+  if(!append) g.innerHTML='';
+  
+  if(_videoCache.length===0){
+    g.innerHTML='<div class="empty-s">暂无符合条件的教程视频。<br>换个关键词或平台试试</div>';
+    return;
+  }
+  
+  _videoCache.forEach(function(v,i){
+    var tt = TASK_TYPE_LABELS[v.task_type]||{label:'未知',icon:'❓',tagClass:'',skillClass:''};
+    var platformLabels = {douyin:'🎵抖音',xiaohongshu:'📕小红书',bilibili:'📺B站',weibo:'📱微博'};
+    var platLabel = platformLabels[v.platform]||v.platform;
+    var likeStr = v.like_count > 9999 ? (v.like_count/10000).toFixed(1)+'w' : v.like_count;
+    var viewStr = v.view_count > 9999 ? (v.view_count/10000).toFixed(1)+'w' : v.view_count;
+    
+    // 出处标注
+    var sourceLabel = '';
+    try{
+      if(typeof v.source_mark==='string'){
+        var sm = JSON.parse(v.source_mark);
+        sourceLabel = sm.source_label||'来源：'+platLabel+' @'+v.author_name;
+      }
+    }catch(e){sourceLabel='来源：'+platLabel+' @'+v.author_name;}
+    if(!sourceLabel && v.author_name) sourceLabel='来源：'+platLabel+' @'+v.author_name;
+    
+    var cardHtml = '<div class="video-card" data-vid="'+i+'">'+
+      '<div class="video-thumb">'+
+        (v.cover_url ? '<img src="'+v.cover_url+'" alt="" style="width:100%;height:100%;object-fit:cover">' : '📺')+
+        '<span class="vtag">'+platLabel+'</span>'+
+      '</div>'+
+      '<div class="vinfo">'+
+        '<div class="vtitle">'+escapeHtml(v.title)+'</div>'+
+        '<div class="vmeta">'+
+          '<span class="vtag-type '+tt.tagClass+'">'+tt.icon+' '+tt.label+'</span>'+
+          '<span>❤️'+likeStr+'</span>'+
+          '<span>👁'+viewStr+'</span>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">'+escapeHtml(sourceLabel)+'</div>'+
+        '<div style="font-size:10px;color:var(--gold);margin-bottom:8px;font-style:italic">⚠️ 仅供技术学习参考，著作权归原作者</div>'+
+        '<div style="display:flex;gap:6px;align-items:center">'+
+          '<button class="extract-btn" onclick="extractSkillFromAPI('+i+')">⚡️ 提取同款参数</button>'+
+          (v.source_url ? '<button class="skill-btn skill-btn-del" onclick="window.open(\''+v.source_url+'\',\'_blank\')" style="font-size:10px">查看原文 ›</button>' : '')+
+        '</div>'+
+      '</div></div>';
+    
+    // Append to grid
+    if(append){
+      g.insertAdjacentHTML('beforeend', cardHtml);
+    } else {
+      g.innerHTML += cardHtml;
+    }
+  });
+  
+  // 加载更多按钮
+  var hasMore = _videoPagination.page < _videoPagination.total_pages;
+  var loadMoreEl = document.getElementById('loadMoreBtn');
+  if(hasMore){
+    if(!loadMoreEl){
+      var btn = document.createElement('div');
+      btn.id = 'loadMoreBtn';
+      btn.style.cssText = 'text-align:center;margin-top:10px';
+      btn.innerHTML = '<button class="skill-btn skill-btn-use" onclick="loadMoreVideos()" style="padding:10px 30px">📥 加载更多视频</button>';
+      g.parentNode.appendChild(btn);
+    }
+  } else {
+    if(loadMoreEl) loadMoreEl.style.display='none';
+  }
+}
+
+function loadMoreVideos(){
+  currentVidPage++;
+  fetchVideos(true);
+}
+
+function escapeHtml(s){
+  if(!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// 搜索
+function searchVideos(){
+  var inp=document.getElementById('videoSearchInput');
+  if(!inp) return;
+  currentKeyword = inp.value.trim();
+  currentVidPage = 1;
+  fetchVideos(false);
+}
+
+// 搜索框 Enter 键支持
+document.addEventListener('click',function(e){
+  if(e.target.id==='videoSearchInput') return;
+  // 使用 keydown 监听
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter' && document.activeElement && document.activeElement.id==='videoSearchInput'){
+    searchVideos();
+  }
+});
+
+// 平台切换
 function initStudyPlatformFilter(){
   var bar=document.querySelector('#sub-recommend .filter-cats');
   if(!bar) return;
@@ -860,7 +965,20 @@ function initStudyPlatformFilter(){
     bar.querySelectorAll('[data-plt]').forEach(function(t){t.classList.remove('active');});
     b.classList.add('active');
     currentPlatform = b.getAttribute('data-plt');
-    renderVideoGrid();
+    currentVidPage = 1;
+    fetchVideos(false);
+  });
+}
+
+// 排序切换
+function initSortToggle(){
+  var el=document.getElementById('sortToggle');
+  if(!el) return;
+  el.addEventListener('click',function(){
+    currentSort = currentSort==='hot' ? 'new' : 'hot';
+    el.textContent = currentSort==='hot' ? '⏶ 最热' : '🕐 最新';
+    currentVidPage = 1;
+    fetchVideos(false);
   });
 }
 
@@ -871,8 +989,9 @@ function loadSkillLibrary(){
   var c=document.getElementById('skillsList');
   if(!c) return;
   var badge=document.getElementById('skillCountBadge');
+  if(!badge) return;
   var filtered = currentSkillType==='all' ? S.distillSkills.slice() : S.distillSkills.filter(function(s){return s.task_type===currentSkillType;});
-  if(badge) badge.textContent = S.distillSkills.length+' 个技能';
+  badge.textContent = S.distillSkills.length+' 个技能';
   if(filtered.length===0){
     c.innerHTML='<div class="empty-s">还没有提取过教程参数。<br>去「推荐教程」刷视频 → 点⚡️提取同款</div>';
     return;
@@ -898,13 +1017,15 @@ function loadSkillLibrary(){
     if(s.task_type==='beauty') actionsHtml+='<button class="skill-btn skill-btn-use" onclick="applyLibSkill('+s._libIdx+')">🎨 应用到修图</button>';
     if(s.task_type==='edit') actionsHtml+='<button class="skill-btn skill-btn-use" onclick="applyLibEditSkill('+s._libIdx+')">🎬 生成草稿</button>';
     if(s.task_type==='enhance') actionsHtml+='<button class="skill-btn skill-btn-use" onclick="applyLibEnhance('+s._libIdx+')">🔍 画质增强</button>';
+    // Source attribution in skill card
+    var sourceText = s.source_url || (s.platform ? '来自'+s.platform : '') || '教程蒸馏';
     return '<div class="skill-card">'+
       '<div class="skill-header">'+
-        '<span class="skill-source">'+s.source_url||'教程蒸馏'+'</span>'+
+        '<span class="skill-source">'+escapeHtml(sourceText)+'</span>'+
         '<span class="skill-type-tag '+tt.skillClass+'">'+tt.icon+' '+tt.label+'</span>'+
       '</div>'+
-      '<div class="skill-title">'+s.title||'技能#'+(i+1)+'</div>'+
-      '<div class="skill-desc">'+s.description||''+'</div>'+
+      '<div class="skill-title">'+escapeHtml(s.title||'技能#'+(i+1))+'</div>'+
+      '<div class="skill-desc">'+escapeHtml(s.description||'')+'</div>'+
       '<div class="skill-params">'+chips.map(function(c){return '<span class="skill-param-chip">'+c+'</span>';}).join('')+'</div>'+
       '<div class="skill-actions">'+actionsHtml+'</div></div>';
   }).join('');
@@ -924,10 +1045,10 @@ function initSkillTypeFilter(){
   });
 }
 
-// ⚡️ 提取同款参数（核心蒸馏入口）
-function extractSkill(videoIdx){
-  var video = tutorialVideos[videoIdx];
-  if(!video) return;
+// ⚡️ 从实时API数据中提取同款参数
+function extractSkillFromAPI(videoCacheIdx){
+  var v = _videoCache[videoCacheIdx];
+  if(!v) return;
   
   // Show progress modal
   var modal=document.getElementById('distillProgressModal');
@@ -937,14 +1058,15 @@ function extractSkill(videoIdx){
   var detail=document.getElementById('distillProgDetail');
   fill.style.width='0%';
   
-  // Simulate 5-step extraction with real task_type classification
-  // Step 1: detect platform + download
+  var platformLabels = {douyin:'🎵抖音',xiaohongshu:'📕小红书',bilibili:'📺B站',weibo:'📱微博'};
+  var platLabel = platformLabels[v.platform]||v.platform;
+  
   var steps = [
-    {pct:10, icon:'📡', msg:'连接 '+video.source+'…'},
+    {pct:10, icon:'📡', msg:'连接 '+platLabel+'…'},
     {pct:25, icon:'📥', msg:'下载视频 + 抽帧 1fps…'},
     {pct:45, icon:'🎤', msg:'Whisper 转写口播文字…'},
-    {pct:70, icon:'🧠', msg:'GLM-4.6v 分析帧+文字 → 判断 task_type…'},
-    {pct:90, icon:'💾', msg:'按任务类型保存到技能库…'},
+    {pct:70, icon:'🧠', msg:'GLM-4.6v 分析帧+文字 → 分类 task_type…'},
+    {pct:90, icon:'💾', msg:'参数保存到技能库…'},
   ];
   
   var si=0;
@@ -958,10 +1080,12 @@ function extractSkill(videoIdx){
       si++;
     } else {
       clearInterval(iv);
-      // 提取完成！根据视频 title/desc 智能分类 task_type
-      var task_type = classifyTutorialTask(video);
-      var skill = buildSkillFromVideo(video, task_type);
+      // Classify task_type from real data
+      var task_type = classifyTutorialTask(v);
+      var skill = buildSkillFromVideo(v, task_type);
       skill._libIdx = S.distillSkills.length;
+      skill.source_url = v.source_url || v.platform || '';
+      skill.platform = v.platform;
       S.distillSkills.push(skill);
       
       fill.style.width='100%';
@@ -969,60 +1093,47 @@ function extractSkill(videoIdx){
       text.textContent='提取完成！';
       detail.textContent='已识别为 '+TASK_TYPE_LABELS[task_type].label;
       
-      // Sync skills to learned filters if beauty
       syncSkillToFilter(skill);
-      
-      // Refresh skill library
       loadSkillLibrary();
       
       setTimeout(function(){
         modal.style.display='none';
         toast('✅ 同款参数已存入技能库！','ok');
-        // Auto-switch to skills tab
         switchStudySubTab('skills');
       },1500);
     }
   },600);
 }
 
-// 智能分类 task_type（模仿 GLM 判定）
+// 智能分类 task_type
 function classifyTutorialTask(video){
-  var title = video.title;
-  var desc = video.desc;
+  var title = video.title||'';
+  var desc = video.description||'';
   var combined = title+' '+desc;
-  // enhance 关键词
-  var enhanceKeywords = ['清晰','修复','超分','去噪','画质','放大','增强','降噪','变清楚','高像素','修复老图','4K','去模糊'];
-  for(var ek in enhanceKeywords){
-    if(combined.indexOf(enhanceKeywords[ek])>-1) return 'enhance';
-  }
-  // edit 关键词
-  var editKeywords = ['剪辑','模板','Vlog','转场','BGM','字幕','开箱','节奏','草稿','剪映'];
-  for(var ek2 in editKeywords){
-    if(combined.indexOf(editKeywords[ek2])>-1) return 'edit';
-  }
-  // default beauty
+  var ekw = ['清晰','修复','超分','去噪','画质','放大','增强','降噪','变清楚','高像素','修复老图','4K','去模糊'];
+  for(var ek in ekw){if(combined.indexOf(ekw[ek])>-1) return 'enhance';}
+  var ekw2 = ['剪辑','模板','Vlog','转场','BGM','字幕','开箱','节奏','草稿','剪映'];
+  for(var ek2 in ekw2){if(combined.indexOf(ekw2[ek2])>-1) return 'edit';}
   return 'beauty';
 }
 
-// 根据视频信息构建 skill 对象（含完整 task_type 参数）
+// 构建 skill 对象
 function buildSkillFromVideo(video, task_type){
-  var hash=0;for(var i=0;i<video.title.length;i++)hash=((hash<<5)-hash)+video.title.charCodeAt(i);
+  var title = video.title||'';
+  var hash=0;for(var i=0;i<title.length;i++)hash=((hash<<5)-hash)+title.charCodeAt(i);
   var seed=Math.abs(hash)||Date.now();
   
   var skill = {
     id: 'skill_'+(S.distillSkills.length+1),
-    title: video.title,
+    title: title,
     task_type: task_type,
-    source_url: video.source,
-    description: video.desc,
+    description: video.description||video.desc||'',
     platform: video.platform
   };
   
   if(task_type === 'enhance'){
-    // 画质增强：绝不出 beauty_params
-    var enhanceTasks = ['upscale_deblur_denoise'];
     skill.enhance_params = {
-      action: enhanceTasks[seed%enhanceTasks.length],
+      action: 'upscale_deblur_denoise',
       scale: [2,3,4][seed%3],
       denoise: 20+seed%60,
       sharpen: 30+seed%50,
@@ -1030,7 +1141,6 @@ function buildSkillFromVideo(video, task_type){
       remove_jpeg_artifact: seed%3!==0,
       tool_hint: ['RealESRGAN_x4plus','SwinIR','美图云修画质修复','PS SuperZoom'][seed%4]
     };
-    // 自检：ensure no beauty_params
     if(skill.beauty_params) delete skill.beauty_params;
   } else if(task_type === 'beauty'){
     skill.beauty_params = {
@@ -1040,7 +1150,6 @@ function buildSkillFromVideo(video, task_type){
       filter: ['冷白皮','奶杏','雾灰','蜜桃','日系清透','奶油肌'][seed%6],
       filter_strength: 40+seed%50
     };
-    // 自检：ensure no enhance_params
     if(skill.enhance_params) delete skill.enhance_params;
   } else if(task_type === 'edit'){
     skill.edit_params = {
@@ -1054,7 +1163,7 @@ function buildSkillFromVideo(video, task_type){
   return skill;
 }
 
-// 把 beauty skill 同步到滤镜列表
+// 同步 beauty 技能到滤镜
 function syncSkillToFilter(skill){
   if(!skill || skill.task_type!=='beauty' || !skill.beauty_params) return;
   var filterName = skill.beauty_params.filter||'学习技能#'+(S.distillSkills.length);
@@ -1705,6 +1814,9 @@ document.addEventListener('DOMContentLoaded',function(){
   renderVideoGrid();
   initStudyPlatformFilter();
   initStudySubTabs();
+  initSortToggle();
+  // Fetch real videos from backend API
+  setTimeout(function(){fetchVideos(false);}, 300);
   initSkillTypeFilter();
   switchStudySubTab('recommend');
   // Update version in title
@@ -1715,4 +1827,3 @@ document.addEventListener('DOMContentLoaded',function(){
 </script>
 </body>
 </html>
-
