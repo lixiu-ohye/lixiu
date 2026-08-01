@@ -819,7 +819,7 @@ var TASK_TYPE_LABELS = {
   edit: {label:'视频剪辑',icon:'✂️',tagClass:'vtag-edit',skillClass:'skill-type-edit'}
 };
 
-// 🌐 从后端 API 获取视频
+// 🌐 从静态 JSON 或后端 API 获取视频
 function fetchVideos(append){
   if(_videoLoading) return;
   _videoLoading = true;
@@ -827,7 +827,32 @@ function fetchVideos(append){
   var g=document.getElementById('videoGrid');
   if(!append) g.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-muted)">⏳ 正在加载教程视频…</div>';
   
-  var url=API_BASE+'/videos?page='+currentVidPage+'&page_size=20&sort='+currentSort;
+  // 优先尝试加载静态 videos.json（GitHub Pages 公开访问需要）
+  fetch('videos.json')
+    .then(function(r){ if(!r.ok) throw new Error('static not found'); return r.json(); })
+    .then(function(staticVideos){
+      _videoLoading = false;
+      // 转换为兼容后端 API 格式
+      _videoCache = staticVideos.map(function(v){
+        return {
+          id: v.id,
+          title: v.title,
+          platform: v.platform,
+          task_type: v.task_type,
+          author_name: v.author,
+          like_count: v.likes,
+          view_count: v.views,
+          cover_url: v.cover,
+          source_url: v.source,
+          source_label: {source_label: v.source_label, disclaimer: v.disclaimer}
+        };
+      });
+      _videoPagination = {page:1,total:_videoCache.length,total_pages:1};
+      renderFetchedVideos(false);
+    })
+    .catch(function(){
+      // 静态文件不存在，尝试后端 API
+      var url=API_BASE+'/videos?page='+currentVidPage+'&page_size=20&sort='+currentSort;
   if(currentPlatform!=='all') url+='&platform='+currentPlatform;
   if(currentKeyword) url+='&keyword='+encodeURIComponent(currentKeyword);
   
