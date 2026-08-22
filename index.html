@@ -295,7 +295,7 @@ header{padding:12px 14px}
       <div class="logo-text">哩修 · 智能图像工坊</div>
     </div>
     <div class="header-right">
-      <span class="status-badge"><span class="dot"></span>v2.7 · 教程学习+醒图平替</span>
+      <span class="status-badge"><span class="dot"></span>v2.9 · 视频下载+duyi剪辑</span>
     </div>
   </header>
 
@@ -307,6 +307,7 @@ header{padding:12px 14px}
     <button class="main-tab" data-tab="tab-distill">🧠 教程学习</button>
     <!-- duplicate removed -->
     <button class="main-tab" data-tab="tab-xingtu">🌸 醒图</button>
+    <button class="main-tab" data-tab="tab-download">📥 视频下载</button>
     <button class="main-tab" data-tab="tab-history">📂 记录</button>
   </div>
 
@@ -613,6 +614,36 @@ header{padding:12px 14px}
     <div class="card">
       <div class="card-title"><span class="ic">🔬</span>LUT 文件状态</div>
       <div id="lutStatus"><span style="color:var(--text-muted);font-size:13px">加载中…</span></div>
+    </div>
+  </div>
+
+  <!-- ===== Tab: 视频下载（galaxy-downloader API） ===== -->
+  <div class="tab-content" id="tab-download">
+    <div class="card">
+      <div class="card-title"><span class="ic">📥</span>视频下载 · 支持多平台</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">粘贴 小红书 / 抖音 / B站 / TikTok / Instagram / X / 微博 等平台的分享链接，解析后即可下载无水印视频或提取音频</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <input type="text" id="dlUrlInput" class="modal-inp" placeholder="粘贴视频链接，例如 https://www.douyin.com/video/..." style="flex:1;min-width:260px;margin:0">
+        <button class="act-btn dl" onclick="lixiuDownload.parse()" style="white-space:nowrap">🔍 解析</button>
+      </div>
+      <div style="font-size:11px;color:#b0a8a5;line-height:1.8">
+        支持：小红书(xiaohongshu/xhslink) · 抖音(douyin/v.douyin) · B站(bilibili/b23.tv) · TikTok · Instagram · X · 微博 · 快手 · 微信视频号 · Telegram · Threads · Pinterest · Reddit · Vimeo · Twitch 等
+      </div>
+    </div>
+
+    <div class="card" id="dlResultCard" style="display:none">
+      <div class="card-title"><span class="ic">🎬</span>解析结果</div>
+      <div id="dlResultContent"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="ic">💡</span>使用说明</div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:2">
+        <strong>1.</strong> 打开小红书/抖音/B站 App，点击分享 → 复制链接<br>
+        <strong>2.</strong> 粘贴到上方输入框，点击「解析」<br>
+        <strong>3.</strong> 解析成功后点击「下载视频」或「提取音频」<br>
+        <strong>4.</strong> 配合「🧠 教程学习」Tab，可下载教程视频后学习剪辑技巧
+      </div>
     </div>
   </div>
 
@@ -2167,6 +2198,140 @@ function duyiExportPlan(){
   a.click(); URL.revokeObjectURL(url);
   toast('📋 剪辑方案 JSON 已导出','ok');
 }
+
+// ========== 视频下载模块（galaxy-downloader 公开 API） ==========
+var lixiuDownload = (function(){
+  var API_BASE = 'https://downloader-api.bhwa233.com';
+  var state = { lastResult: null };
+
+  // 平台识别
+  function detectPlatform(url){
+    var u = (url||'').toLowerCase();
+    if(u.indexOf('xiaohongshu.com')>-1||u.indexOf('xhslink.com')>-1) return '小红书';
+    if(u.indexOf('douyin.com')>-1) return '抖音';
+    if(u.indexOf('bilibili.com')>-1||u.indexOf('b23.tv')>-1) return '哔哩哔哩';
+    if(u.indexOf('tiktok.com')>-1) return 'TikTok';
+    if(u.indexOf('instagram.com')>-1) return 'Instagram';
+    if(u.indexOf('x.com')>-1||u.indexOf('twitter.com')>-1) return 'X/Twitter';
+    if(u.indexOf('weibo.com')>-1) return '微博';
+    if(u.indexOf('kuaishou.com')>-1) return '快手';
+    if(u.indexOf('weixin.qq.com')>-1||u.indexOf('mp.weixin.qq.com')>-1) return '微信';
+    if(u.indexOf('telegram.org')>-1||u.indexOf('t.me')>-1) return 'Telegram';
+    if(u.indexOf('threads.net')>-1) return 'Threads';
+    if(u.indexOf('pinterest')>-1) return 'Pinterest';
+    if(u.indexOf('reddit.com')>-1) return 'Reddit';
+    if(u.indexOf('vimeo.com')>-1) return 'Vimeo';
+    if(u.indexOf('twitch.tv')>-1) return 'Twitch';
+    if(u.indexOf('youtube.com')>-1||u.indexOf('youtu.be')>-1) return 'YouTube';
+    return '';
+  }
+
+  // 转义 HTML
+  function esc(s){
+    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // 格式化时长
+  function fmtDur(sec){
+    if(!sec) return '';
+    sec = Math.round(sec);
+    var m = Math.floor(sec/60), s = sec%60;
+    return m+':'+(s<10?'0':'')+s;
+  }
+
+  // 主解析入口
+  function parse(){
+    var input = document.getElementById('dlUrlInput');
+    var url = (input.value||'').trim();
+    if(!url){ toast('请先粘贴视频链接','err'); return; }
+    if(!/^https?:\/\//i.test(url)){ url = 'https://'+url; }
+
+    var card = document.getElementById('dlResultCard');
+    var box = document.getElementById('dlResultContent');
+    card.style.display = 'block';
+    box.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted)"><div style="font-size:28px;margin-bottom:10px">⏳</div>正在解析：'+esc(url)+'<br><span style="font-size:11px">多级解析服务切换中，通常 3~15 秒…</span></div>';
+
+    fetch(API_BASE+'/api/parse?url='+encodeURIComponent(url), {cache:'no-store'})
+      .then(function(res){ return res.json().catch(function(){ return null; }).then(function(j){ return {status: res.status, json: j}; }); })
+      .then(function(r){
+        var j = r.json;
+        if(!j || !j.success || !j.data){
+          var msg = (j && (j.error||j.message)) || ('请求失败 HTTP '+r.status);
+          if(j && j.code==='RATE_LIMITED') msg = '解析服务限流，请稍后重试';
+          if(j && j.code==='NOT_FOUND') msg = '媒体不存在或已删除，请检查链接';
+          if(j && j.code==='PARSE_FAILED') msg = '解析失败，该链接暂不支持或需重试';
+          box.innerHTML = '<div style="text-align:center;padding:24px"><div style="font-size:28px;margin-bottom:10px">😕</div><div style="color:var(--text)">'+esc(msg)+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:8px">'+esc(url)+'</div></div>';
+          return;
+        }
+        renderResult(j.data, url);
+      })
+      .catch(function(e){
+        box.innerHTML = '<div style="text-align:center;padding:24px"><div style="font-size:28px;margin-bottom:10px">❌</div><div style="color:var(--text)">网络请求失败：'+esc(e.message||e)+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:8px">请检查网络后重试</div></div>';
+      });
+  }
+
+  // 渲染解析结果
+  function renderResult(d, url){
+    state.lastResult = d;
+    var plat = detectPlatform(url) || d.platform || '未知平台';
+    var html = '';
+    html += '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">';
+    if(d.cover){
+      html += '<img src="'+esc(d.cover)+'" style="width:150px;height:95px;object-fit:cover;border-radius:10px;border:1px solid rgba(200,160,140,0.2)" onerror="this.style.display=&apos;none&apos;">';
+    }
+    html += '<div style="flex:1;min-width:220px">';
+    html += '<div style="font-size:15px;font-weight:700;margin-bottom:6px">'+esc(d.title||'未命名')+'</div>';
+    html += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">📌 平台：'+esc(plat)+(d.duration?'  ·  ⏱ '+fmtDur(d.duration):'')+'</div>';
+    if(d.desc) html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;max-height:40px;overflow:hidden">'+esc(d.desc)+'</div>';
+
+    // 多P视频（B站分P）
+    if(d.isMultiPart && d.pages && d.pages.length){
+      html += '<div style="margin:10px 0;max-height:180px;overflow-y:auto;border:1px solid rgba(200,160,140,0.15);border-radius:10px;padding:6px">';
+      d.pages.forEach(function(p,i){
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-radius:8px;background:'+(i%2?'rgba(200,160,140,0.05)':'transparent')+'">';
+        html += '<span style="font-size:12px;flex:1">P'+(p.page||i+1)+' · '+esc(p.part||'')+'</span>';
+        if(p.downloadVideoUrl) html += '<button class="act-btn dl" style="font-size:11px;padding:4px 10px" onclick="lixiuDownload.save(&apos;'+esc(p.downloadVideoUrl).replace(/'/g,"\\'")+'&apos;,&apos;P'+(p.page||i+1)+'_'+esc(p.part||'video').replace(/'/g,"\\'")+'.mp4&apos;)">下载</button>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // 操作按钮
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">';
+    var vurl = d.downloadVideoUrl || d.originDownloadVideoUrl;
+    var aurl = d.downloadAudioUrl || d.originDownloadAudioUrl;
+    if(vurl) html += '<button class="act-btn dl" onclick="lixiuDownload.save(&apos;'+esc(vurl).replace(/'/g,"\\'")+'&apos;,&apos;lixiu_video.mp4&apos;)">⬇️ 下载视频</button>';
+    if(aurl) html += '<button class="act-btn ok" onclick="lixiuDownload.save(&apos;'+esc(aurl).replace(/'/g,"\\'")+'&apos;,&apos;lixiu_audio.mp3&apos;)">🎵 提取音频</button>';
+    html += '</div>';
+
+    html += '<div style="font-size:11px;color:#b0a8a5;margin-top:10px">仅用于学习剪辑/修图技术，请遵守平台规则与版权规定</div>';
+    html += '</div></div>';
+    document.getElementById('dlResultContent').innerHTML = html;
+    toast('✅ 解析成功：'+esc(plat),'ok');
+  }
+
+  // 触发下载
+  function save(url, filename){
+    if(!url){ toast('该内容暂无可下载地址','err'); return; }
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename || 'lixiu_download.mp4';
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast('开始下载…','ok');
+  }
+
+  // 回车触发
+  document.addEventListener('DOMContentLoaded', function(){
+    var inp = document.getElementById('dlUrlInput');
+    if(inp) inp.addEventListener('keydown', function(e){ if(e.key==='Enter') parse(); });
+  });
+
+  return { parse: parse, save: save, detectPlatform: detectPlatform };
+})();
 
 </script>
 </body>
