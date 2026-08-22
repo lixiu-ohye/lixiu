@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -229,6 +229,62 @@ header{padding:12px 14px}
 .beauty-grid{grid-template-columns:1fr}
 .modal-row{flex-direction:column}
 }
+
+/* ===== duyi 脚本驱动剪辑 ===== */
+.duyi-card{background:linear-gradient(135deg,rgba(184,217,176,0.12),rgba(200,160,140,0.08));border:1.5px solid rgba(184,217,176,0.3);border-radius:14px;padding:16px;margin-bottom:14px}
+.duyi-card-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.duyi-card-desc{font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.6}
+.duyi-steps{margin-bottom:12px}
+.duyi-step{display:flex;gap:10px;margin-bottom:8px;align-items:flex-start}
+.duyi-step-num{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#b8d9b0,#8ec48a);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.duyi-step-num.done{background:linear-gradient(135deg,#a8d8a8,#6abf6a)}
+.duyi-step-text{font-size:12px;color:var(--text);line-height:1.5}
+.duyi-step-sub{font-size:11px;color:var(--text-muted);margin-top:1px}
+.duyi-preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+.duyi-preset{background:#fff;border-radius:12px;padding:14px;border:2px solid transparent;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+.duyi-preset:hover{border-color:#b8d9b0;transform:translateY(-2px);box-shadow:0 5px 14px rgba(184,217,176,0.15)}
+.duyi-preset.selected{border-color:#8ec48a;background:rgba(184,217,176,0.06)}
+.duyi-preset-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.duyi-preset-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.duyi-preset-tag{padding:2px 8px;background:rgba(184,217,176,0.15);border-radius:10px;font-size:10px;color:#5a8a5a}
+.duyi-preset-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
+.duyi-script-area{margin-bottom:12px}
+.duyi-script-area textarea{width:100%;min-height:120px;padding:10px 12px;border:2px solid rgba(184,217,176,0.3);border-radius:10px;font-size:12px;font-family:monospace;resize:vertical;outline:none;background:rgba(255,255,255,0.8);color:var(--text);line-height:1.6}
+.duyi-script-area textarea:focus{border-color:#8ec48a}
+.duyi-script-hint{font-size:11px;color:var(--text-muted);margin-top:4px}
+.duyi-apply-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.duyi-result{background:rgba(184,217,176,0.06);border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid rgba(184,217,176,0.15)}
+.duyi-result-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.duyi-result-items{margin-bottom:8px}
+.duyi-result-item{display:flex;gap:8px;margin-bottom:6px;align-items:flex-start;font-size:12px}
+.duyi-result-item-num{color:#6abf6a;font-weight:700;flex-shrink:0;width:16px}
+.duyi-result-item-text{color:var(--text)}
+.duyi-result-example{background:#f5f0ec;border-radius:8px;padding:10px;font-family:monospace;font-size:11px;line-height:1.7;color:var(--text);white-space:pre-wrap;margin-top:8px}
+.duyi-example-btn{font-size:11px;color:#8ec48a;cursor:pointer;text-decoration:underline;margin-top:6px;display:inline-block}
+.duyi-gen-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:22px;background:linear-gradient(135deg,#b8d9b0,#8ec48a);color:#fff;font-weight:700;font-size:12px;cursor:pointer;transition:all .2s}
+.duyi-gen-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(184,217,176,0.3)}
+.duyi-gen-btn:active{transform:translateY(0)}
+.duyi-gen-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.duyi-principle{background:rgba(200,160,140,0.06);border-radius:10px;padding:12px;margin-bottom:14px;border:1px solid rgba(200,160,140,0.12)}
+.duyi-principle-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px}
+.duyi-principle p{font-size:11px;color:var(--text-muted);margin:0 0 4px;line-height:1.5}
+.duyi-principle p:last-child{margin-bottom:0}
+.duyi-output-box{background:#1a2e1a;border-radius:10px;padding:12px;font-family:monospace;font-size:11px;line-height:1.7;color:#a8d8a8;white-space:pre-wrap;max-height:200px;overflow-y:auto;margin-top:8px}
+.duyi-output-box::-webkit-scrollbar{width:4px}.duyi-output-box::-webkit-scrollbar-thumb{background:#6abf6a;border-radius:2px}
+.duyi-output-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.duyi-copy-btn{font-size:10px;color:#8ec48a;cursor:pointer;border:1px solid #8ec48a;border-radius:6px;padding:2px 8px;background:transparent;transition:all .2s}
+.duyi-copy-btn:hover{background:#8ec48a;color:#fff}
+.duyi-step-status{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.duyi-step-chip{padding:4px 12px;border-radius:16px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid rgba(200,160,140,0.2);color:var(--text-muted);background:transparent;transition:all .2s}
+.duyi-step-chip.active{border-color:#8ec48a;color:#5a8a5a;background:rgba(184,217,176,0.12)}
+.duyi-step-chip.done{border-color:#6abf6a;color:#6abf6a;background:rgba(184,217,176,0.08)}
+.duyi-format-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.duyi-format-card{background:#fff;border-radius:10px;padding:12px;border:2px solid transparent;cursor:pointer;transition:all .2s;text-align:center}
+.duyi-format-card:hover{border-color:#b8d9b0}
+.duyi-format-card.selected{border-color:#8ec48a;background:rgba(184,217,176,0.06)}
+.duyi-format-card .fmt-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.duyi-format-card .fmt-ratio{font-size:11px;color:var(--text-muted)}
+.duyi-format-card .fmt-icon{font-size:28px;margin-bottom:4px}
 </style>
 </head>
 <body>
@@ -393,7 +449,46 @@ header{padding:12px 14px}
       </div>
       <button class="act-btn dl" onclick="generateJianYingDraft()" style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;font-size:12px">🎬 生成剪映草稿</button>
     </div>
+          <button class="act-btn dl" onclick="generateJianYingDraft()" style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;font-size:12px">🎥 生成剪映草稿</button>
+    </div>
     <div class="card">
+      <div class="card-title"><span class="ic">💻</span>脚本驱动口播剪辑（duyi 方法论）</div>
+      <div class="duyi-card-desc" id="duyiCardDesc">AI 识别口播逐句稿 → 判定可删冗余（重复/语气词/口误/无意义停顿）→ 脚本生成剪辑方案与字幕时间轴 → 交付剪映草稿。只删不改，保留原声真实表达。</div>
+      <div class="duyi-format-grid">
+        <div class="duyi-format-card selected" id="fmtLite" onclick="duyiSelectFormat('lite')">
+          <div class="fmt-icon">📱</div>
+          <div class="fmt-name">竖屏 Lite</div>
+          <div class="fmt-ratio">9:16 口播 · 粗白字幕 · 剪口播冗余</div>
+        </div>
+        <div class="duyi-format-card" id="fmtWide" onclick="duyiSelectFormat('wide')">
+          <div class="fmt-icon">🖥️</div>
+          <div class="fmt-name">横屏 Wide</div>
+          <div class="fmt-ratio">16:9 口播 · 信息卡 + 右侧素材位</div>
+        </div>
+      </div>
+      <div class="duyi-principle">
+        <div class="duyi-principle-title">✅ 剪辑原则（来自 duyi 方法论）</div>
+        <p>· 只删不改：只删口播冗余、修正 ASR 听误，不替说话人改词、改意或改色</p>
+        <p>· 逐句稿必须来自 ASR 且锁定当前源片，定稿后下游不得默默改字</p>
+        <p>· 所有删除项生成 review_required 标记，交人复核后再定稿</p>
+      </div>
+      <div class="duyi-steps" id="duyiSteps">
+        <div class="duyi-step"><div class="duyi-step-num">1</div><div class="duyi-step-text">粘贴逐句口播稿<div class="duyi-step-sub">每行一句，来自 ASR 语音识别或直接粘贴口播文案</div></div></div>
+        <div class="duyi-step"><div class="duyi-step-num">2</div><div class="duyi-step-text">AI 判定删除项<div class="duyi-step-sub">识别重复/语气词/口误/无意义停顿，标记 review_required</div></div></div>
+        <div class="duyi-step"><div class="duyi-step-num">3</div><div class="duyi-step-text">脚本生成剪辑方案<div class="duyi-step-sub">时间戳 + 最终稿 + 字幕样式 + 合成参数</div></div></div>
+        <div class="duyi-step"><div class="duyi-step-num">4</div><div class="duyi-step-text">导出剪映草稿<div class="duyi-step-sub">下载 draft_content.json + README，放入剪映草稿目录</div></div></div>
+      </div>
+      <div class="duyi-script-area">
+        <textarea id="duyiScript" placeholder="粘贴口播逐句稿，每行一句…&#10;例如：&#10;大家好，今天给大家分享一个剪视频的方法&#10;这个方法呢，其实特别简单，特别简单&#10;就是，嗯，用脚本驱动剪辑，就不用自己一帧一帧拉了&#10;我觉得这个真的，真的，真的很好用…"></textarea>
+        <div class="duyi-script-hint">💡 可直接粘贴 ASR 识别结果；AI 会按 duyi 方法论判定冗余并生成剪辑方案</div>
+      </div>
+      <div class="duyi-apply-row">
+        <button class="duyi-gen-btn" onclick="duyiAnalyze()">🤖 AI 分析并生成剪辑方案</button>
+        <button class="duyi-gen-btn" style="background:linear-gradient(135deg,#e8c9a0,#d4a574)" onclick="duyiLoadExample()">✨ 填入示例口播</button>
+      </div>
+      <div id="duyiResult" style="display:none"></div>
+    </div>
+    <div class="card"><div class="card">
       <div class="card-title"><span class="ic">📘</span>如何使用剪映模板</div>
       <div style="font-size:12px;color:var(--text-muted);line-height:1.8">
         1. 选一个预设模板或自定义参数<br>
@@ -704,7 +799,7 @@ function selectFilter(id){
     // Apply xingtu shifts
     var s=f.xingtu.shifts||{};
     if(s.brightness) document.getElementById('bs').value=Math.abs(s.brightness)*5;
-    if(s.contrast) document.getElementById('co').value=Math.abs(s.contrast)*5;
+    if(s.contrast){var coEl=document.getElementById('co')||document.getElementById('fs'); if(coEl) coEl.value=Math.abs(s.contrast)*5;}
     addMsg('ai','🌸 已选醒图平替「'+f.name+'」！三优先级: LUT → OpenCV → PIL');
   } else {
     document.getElementById('beautyPanel').style.display='none';
@@ -812,6 +907,23 @@ var currentSort = 'hot';
 var currentKeyword = '';
 var currentVidPage = 1;
 
+// 🎨 本地封面占位：不依赖外网 picsum.photos（国内访问超时导致页面卡顿）
+function localCoverSeed(id, title){
+  var h=0; var s=String(id||title||'v');
+  for(var i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))>>>0; }
+  var palettes=[['#667eea','#764ba2'],['#f093fb','#f5576c'],['#4facfe','#00f2fe'],['#43e97b','#38f9d7'],['#fa709a','#fee140'],['#30cfd0','#330867'],['#a8edea','#fed6e3'],['#ff9a9e','#fecfef']];
+  var p=palettes[h%palettes.length];
+  var t=title||'教程';
+  var short=t.length>8?t.substring(0,8)+'…':t;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360">'+'<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'+'<stop offset="0%" stop-color="'+p[0]+'"/><stop offset="100%" stop-color="'+p[1]+'"/>'+'</linearGradient></defs>'+'<rect width="640" height="360" fill="url(#g)"/>'+'<text x="320" y="185" font-family="sans-serif" font-size="42" fill="rgba(255,255,255,0.92)" text-anchor="middle">🎬</text>'+'<text x="320" y="235" font-family="sans-serif" font-size="22" fill="rgba(255,255,255,0.85)" text-anchor="middle">'+short.replace(/[<>&"]/g,'')+'</text>'+'</svg>');
+}
+// 外网封面过滤器：仅放行本地/内网/数据图，拦截 picsum 等国外占位图
+function safeCover(url, id, title){
+  if(!url) return localCoverSeed(id, title);
+  if(/^(data:|blob:|file:|http:\/\/localhost|http:\/\/127\.)/.test(url)) return url;
+  return localCoverSeed(id, title);
+}
 // 类型标签映射（保持与原系统一致）
 var TASK_TYPE_LABELS = {
   beauty: {label:'人像美颜',icon:'💄',tagClass:'vtag-beauty',skillClass:'skill-type-beauty'},
@@ -842,7 +954,7 @@ function fetchVideos(append){
           author_name: v.author,
           like_count: v.likes,
           view_count: v.views,
-          cover_url: v.cover,
+          cover_url: safeCover(v.cover, v.id, v.title),
           source_url: v.source,
           source_label: {source_label: v.source_label, disclaimer: v.disclaimer}
         };
@@ -874,8 +986,9 @@ function fetchVideos(append){
     .catch(function(err){
       _videoLoading = false;
       console.error('FETCH_VIDEOS_ERR', err);
-      g.innerHTML='<div class="empty-s">⚠️ 后端未启动，无法加载视频数据。<br>请确认后端已运行在 localhost:8700</div>';
+      g.innerHTML='<div class="empty-s">Backend not running. Start server at localhost:8700</div>';
     });
+})
 }
 
 function renderFetchedVideos(append){
@@ -908,7 +1021,7 @@ function renderFetchedVideos(append){
     
     var cardHtml = '<div class="video-card" data-vid="'+i+'">'+
       '<div class="video-thumb">'+
-        (v.cover_url ? '<img src="'+v.cover_url+'" alt="" style="width:100%;height:100%;object-fit:cover">' : '📺')+
+        (v.cover_url ? '<img src="'+v.cover_url+'" alt="" loading="lazy" onerror="this.src=localCoverSeed(this.getAttribute(\'data-id\'), this.getAttribute(\'data-title\'))" data-id="'+i+'" data-title="'+escapeHtml(v.title)+'" style="width:100%;height:100%;object-fit:cover">' : '📺')+
         '<span class="vtag">'+platLabel+'</span>'+
       '</div>'+
       '<div class="vinfo">'+
@@ -1416,17 +1529,6 @@ function saveGLMConfig(){
 }
 
 // ========== 渲染已学技能 ==========
-function renderLearnedSkills(){
-  var c=document.getElementById('learnedSkills');
-  if(S.distillSkills.length===0){
-    c.innerHTML='<div class="empty-s">还没有蒸馏过教程</div>';return;
-  }
-  c.innerHTML=S.distillSkills.map(function(s,i){
-    var appIcon=s.type==='edit'?'🎬':'🎨';
-    return '<div class="ls"><span>'+appIcon+' '+(s.beauty_params?s.beauty_params.filter:s.edit_params?s.edit_params.first_3s:'未知')+'</span><span class="lb">蒸馏#'+(i+1)+'</span></div>';
-  }).join('');
-}
-
 // ========== 分类标签切换 ==========
 document.getElementById('filterCats').addEventListener('click',function(e){
   var b=e.target.closest('.filter-cat');
@@ -1836,7 +1938,7 @@ document.addEventListener('DOMContentLoaded',function(){
   renderLearnedSkills();
   renderXingtuMap();
   loadLutStatus();
-  renderVideoGrid();
+  renderFetchedVideos(false);
   initStudyPlatformFilter();
   initStudySubTabs();
   initSortToggle();
@@ -1845,10 +1947,227 @@ document.addEventListener('DOMContentLoaded',function(){
   initSkillTypeFilter();
   switchStudySubTab('recommend');
   // Update version in title
-  document.title>哩修 · AI智能图像工坊 v2.8';
+  document.title='哩修 · AI智能图像工坊 v2.8';
   var vs=document.querySelector('.version-badge');
   if(vs) vs.textContent='v2.7';
 });
+
+// ========== duyi 脚本驱动口播剪辑（方法论蒸馏：脚本驱动/只删不改/信息卡节奏） ==========
+var duyiState = { format: 'lite', lastPlan: null };
+
+function duyiSelectFormat(fmt){
+  duyiState.format = fmt;
+  document.getElementById('fmtLite').classList.toggle('selected', fmt==='lite');
+  document.getElementById('fmtWide').classList.toggle('selected', fmt==='wide');
+  var d=document.getElementById('duyiCardDesc');
+  toast('已切换为'+ (fmt==='lite'?'竖屏 Lite 版式':'横屏 Wide 版式'), 'ok');
+}
+
+function duyiLoadExample(){
+  var ex = [
+    '大家好，今天给大家分享一个特别实用的剪辑方法',
+    '这个方法呢，其实特别简单，特别简单',
+    '就是，嗯，用脚本驱动剪辑，就不用自己一帧一帧拉了',
+    '我觉得这个真的，真的，真的很好用',
+    '首先，我们要准备一段口播的视频素材',
+    '然后，然后把口播稿粘贴到工具里',
+    'AI 会自动识别哪些话是重复的、哪些是语气词',
+    '最后，点击生成，就能得到一份剪辑方案',
+    '好了，这个就是今天的分享了，希望对大家有帮助'
+  ].join('\n');
+  document.getElementById('duyiScript').value = ex;
+  toast('已填入示例口播稿，点击 AI 分析试试','ok');
+}
+
+// ---- 口播文本分析：按 duyi 方法论判定冗余 ----
+function duyiAnalyze(){
+  var raw = (document.getElementById('duyiScript').value||'').trim();
+  if(!raw){ toast('请先粘贴口播逐句稿','err'); return; }
+  var lines = raw.split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean);
+  if(lines.length < 3){ toast('至少需要 3 句口播内容','err'); return; }
+
+  // 1. 逐句判定（duyi 方法论：只删不改，删除项必须可复核）
+  var analysis = lines.map(function(line, i){
+    var issue = duyiJudgeLine(line);
+    return { idx:i, text:line, keep:!issue, issue:issue };
+  });
+
+  // 2. 删除项统计
+  var removed = analysis.filter(function(a){return !a.keep;});
+  var kept = analysis.filter(function(a){return a.keep;});
+  var cleanScript = kept.map(function(a){return a.text;}).join('\n');
+
+  // 3. 生成剪辑方案（时间轴估算：每句按语速 ~4.5字/秒 + 0.5s 间隔）
+  var fps=30, W=1080, H=1920, ts=0;
+  if(duyiState.format==='wide'){ W=1920; H=1080; }
+  var timeline = kept.map(function(a){
+    var dur = Math.max(1.2, Math.round((a.text.length/4.5 + 0.5)*10)/10);
+    var seg = { start: Math.round(ts*10)/10, end: Math.round((ts+dur)*10)/10, text: a.text };
+    ts += dur + 0.3;
+    return seg;
+  });
+
+  // 4. 生成字幕样式（Lite 粗白字幕 / Wide 信息卡）
+  var subs = timeline.map(function(s, i){
+    return { id:'s'+(i+1), text:s.text, start:s.start, end:s.end,
+      style: duyiState.format==='lite'
+        ? {size:18, color:'#FFFFFF', stroke:'#000000', pos:'bottom'}
+        : {size:16, color:'#FFFFFF', stroke:'#000000', pos:'left', card:true} };
+  });
+
+  // 5. 信息卡节奏（Wide 专属：前2秒必须有卡、前20秒不留白、平均每10秒一条）
+  var cards = [];
+  if(duyiState.format==='wide'){
+    timeline.forEach(function(s, i){
+      if(i===0 || s.start < 2 || (s.start - (timeline[i-1]?timeline[i-1].end:0)) > 8){
+        cards.push({ text: s.text.slice(0,12), start: s.start, end: s.end, type:'info' });
+      }
+    });
+  }
+
+  duyiState.lastPlan = {
+    format: duyiState.format, analysis: analysis, kept: kept, removed: removed,
+    cleanScript: cleanScript, timeline: timeline, subs: subs, cards: cards,
+    totalDur: Math.round(ts*10)/10, generatedAt: new Date().toLocaleString()
+  };
+  duyiRenderResult(duyiState.lastPlan);
+}
+
+// ---- 单句判定：重复/语气词/口误/无意义停顿 ----
+function duyiJudgeLine(line){
+  var t = line;
+  // 语气词开头（嗯/啊/呃/那个/就是/然后）
+  if(/^(嗯|啊|呃|诶|那个|就是|然后|所以|那啥|怎么说呢)/.test(t)) return '开头语气词';
+  // 与上一句重复（调用方处理相邻重复）
+  // 句内重复（"真的真的"、"特别特别"、"非常非常"）
+  if(/(.)\1{1,}/.test(t) && /(\S{2,})\1/.test(t.replace(/\s/g,''))) return '句内重复';
+  // 无意义结尾（"对吧"、"是吧"、"嗯嗯"、"就是这样"）
+  if(/(对吧|是吧|嗯嗯|就是这样|差不多吧|这样这样)$/.test(t)) return '口头禅结尾';
+  return null;
+}
+
+// ---- 渲染分析结果 ----
+function duyiRenderResult(plan){
+  var box = document.getElementById('duyiResult');
+  box.style.display = 'block';
+  var remHtml = plan.removed.length
+    ? plan.removed.map(function(r){ return '<div class="duyi-result-item"><span class="duyi-result-item-num">✂️</span><span class="duyi-result-item-text" style="text-decoration:line-through;color:#c99">'+escapeHtml(r.text)+' <span style="color:#d88;font-size:10px;text-decoration:none">('+r.issue+' · review_required)</span></span></div>'; }).join('')
+    : '<div class="duyi-result-item"><span class="duyi-result-item-num">✅</span><span class="duyi-result-item-text">无冗余，全保留</span></div>';
+
+  var cardHtml = plan.cards.length
+    ? '<div class="duyi-result-title">🎴 信息卡节奏（'+plan.cards.length+' 张）</div><div class="duyi-result-items">'+
+      plan.cards.map(function(c){ return '<div class="duyi-result-item"><span class="duyi-result-item-num">['+c.start+'s]</span><span class="duyi-result-item-text">'+escapeHtml(c.text)+'</span></div>'; }).join('')+'</div>'
+    : '';
+
+  box.innerHTML =
+    '<div class="duyi-result">'+
+      '<div class="duyi-result-title">🎬 剪辑方案 · '+(plan.format==='lite'?'竖屏 Lite':'横屏 Wide')+' · 总时长 '+plan.totalDur+'s</div>'+
+      '<div class="duyi-result-items">'+
+        '<div class="duyi-result-item"><span class="duyi-result-item-num">📝</span><span class="duyi-result-item-text">原稿 '+ (plan.analysis.length) +' 句 → 保留 '+plan.kept.length+' 句 · 删除 '+plan.removed.length+' 句</span></div>'+
+        '<div class="duyi-result-item"><span class="duyi-result-item-num">✂️</span><span class="duyi-result-item-text">删除项均标记 <b>review_required</b>，可人工复核</span></div>'+
+        '<div class="duyi-result-item"><span class="duyi-result-item-num">⏱️</span><span class="duyi-result-item-text">'+plan.timeline.length+' 个视频片段 · '+plan.subs.length+' 条字幕</span></div>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--text-muted);margin:6px 0">—— 删除明细 ——</div>'+
+      '<div class="duyi-result-items">'+remHtml+'</div>'+
+      cardHtml+
+      '<div class="duyi-output-title" style="margin-top:8px">📄 最终稿（'+(plan.format==='lite'?'竖屏':'横屏')+'）<button class="duyi-copy-btn" onclick="duyiCopyText()">复制</button></div>'+
+      '<div class="duyi-result-example" id="duyiFinalScript">'+escapeHtml(plan.cleanScript)+'</div>'+
+    '</div>'+
+    '<div class="duyi-apply-row">'+
+      '<button class="duyi-gen-btn" onclick="duyiExportJianYing()">🎬 导出剪映草稿</button>'+
+      '<button class="duyi-gen-btn" style="background:linear-gradient(135deg,#b0c8d9,#8ab0c9)" onclick="duyiExportPlan()">📋 导出剪辑方案 JSON</button>'+
+    '</div>';
+}
+
+function duyiCopyText(){
+  var t = document.getElementById('duyiFinalScript');
+  var range = document.createRange(); range.selectNodeContents(t);
+  var sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+  document.execCommand('copy'); sel.removeAllRanges();
+  toast('最终稿已复制','ok');
+}
+
+// ---- 导出剪映草稿（Lite/Wide 版式 + duyi 字幕时间轴） ----
+function duyiExportJianYing(){
+  if(!duyiState.lastPlan){ toast('请先生成剪辑方案','err'); return; }
+  var plan = duyiState.lastPlan;
+  var draft = {
+    version: '2.5.0',
+    generated_by: 'Lixiu AI v2.8 + duyi scripted workflow',
+    generated_at: new Date().toLocaleString(),
+    config: { resolution: plan.format==='lite' ? '1080x1920' : '1920x1080', fps: 30, duration_seconds: plan.totalDur },
+    tracks: [
+      { type:'video', name:'主视频道', clips: plan.timeline.map(function(s,i){
+          return { name:'clip_'+(i+1), start_time: s.start, end_time: s.end, text: s.text,
+                   transition: i>0 ? '0.3s淡入' : '无' };
+        }) },
+      { type:'audio', name:'原声', clips: [{ name:'voiceover', start_time:0, end_time: plan.totalDur, volume:1.0 }] },
+      { type:'audio', name:'BGM', clips: [{ name:'bgm_default', start_time:0, volume:0.3 }] },
+      { type:'subtitle', name:'字幕', style: {
+          color:'#FFFFFF', stroke:'#000000',
+          size: plan.format==='lite' ? 18 : 16,
+          pos: plan.format==='lite' ? 'bottom' : 'left'
+        }, clips: plan.subs.map(function(s){ return { start:s.start, end:s.end, text:s.text }; }) }
+    ],
+    info_cards: plan.cards.map(function(c){ return { text:c.text, start:c.start, end:c.end, type:c.type }; }),
+    export_settings: { format:'mp4', codec:'h264', bitrate:'20M', resolution: plan.format==='lite' ? '1080x1920' : '1920x1080' }
+  };
+
+  var jsonStr = JSON.stringify(draft, null, 2);
+  var blob = new Blob([jsonStr], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'Lixiu_Duyi_Draft_draft_content.json';
+  a.click(); URL.revokeObjectURL(url);
+
+  var readme = '= Lixiu AI + duyi Scripted Edit Draft =\n\n' +
+    '版式: ' + (plan.format==='lite' ? '竖屏 Lite (9:16)' : '横屏 Wide (16:9)') + '\n' +
+    '总时长: ' + plan.totalDur + 's\n' +
+    '片段数: ' + plan.timeline.length + ' · 字幕: ' + plan.subs.length + ' 条' + (plan.cards.length ? ' · 信息卡: ' + plan.cards.length + ' 张' : '') + '\n\n' +
+    '使用方法:\n' +
+    '1. 把此文件放入 ~/Documents/JianyingPro Drafts/Lixiu_Duyi_Draft/\n' +
+    '2. 打开剪映专业版\n' +
+    '3. 替换素材为你的口播视频\n' +
+    '4. 按字幕时间轴校对\n' +
+    '5. 导出\n\n' +
+    '剪辑原则（duyi 方法论）:\n' +
+    '- 只删不改：删除项均已标记 review_required，请人工复核\n' +
+    '- 逐句稿锁定当前源片，定稿后不再改字\n';
+  var blob2 = new Blob([readme], {type:'text/plain'});
+  var url2 = URL.createObjectURL(blob2);
+  var a2 = document.createElement('a');
+  a2.href = url2; a2.download = 'Lixiu_Duyi_Draft_README.txt';
+  a2.click(); URL.revokeObjectURL(url2);
+
+  toast('🎬 剪映草稿已生成（' + (plan.format==='lite'?'Lite 竖屏':'Wide 横屏') + '）','ok');
+}
+
+// ---- 导出剪辑方案 JSON ----
+function duyiExportPlan(){
+  if(!duyiState.lastPlan){ toast('请先生成剪辑方案','err'); return; }
+  var plan = duyiState.lastPlan;
+  var out = {
+    workflow: 'duyi-scripted-video-edit methodology (Lixiu distilled)',
+    format: plan.format,
+    total_duration: plan.totalDur,
+    edits: plan.analysis.map(function(a){
+      return { index:a.idx+1, text:a.text, action: a.keep ? 'keep' : 'remove', reason: a.issue || null, review_required: !a.keep };
+    }),
+    final_script: plan.cleanScript,
+    timeline: plan.timeline,
+    subtitles: plan.subs,
+    info_cards: plan.cards,
+    export_hint: 'Open in CapCut/JianyingPro via duyiExportJianYing()'
+  };
+  var jsonStr = JSON.stringify(out, null, 2);
+  var blob = new Blob([jsonStr], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'lixiu_duyi_edit_plan.json';
+  a.click(); URL.revokeObjectURL(url);
+  toast('📋 剪辑方案 JSON 已导出','ok');
+}
+
 </script>
 </body>
 </html>
