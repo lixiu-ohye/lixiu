@@ -2022,6 +2022,30 @@ function duyiLoadExample(){
 }
 
 // ---- 口播文本分析：按 duyi 方法论判定冗余 ----
+// 保留优先级打分：勾子句/数字句/总结句/呼吁句 优先保留
+function duyiScorePriority(text, idx, total){
+  var score = 50;
+  if(idx === 0 || idx === total-1) score += 20;
+  if(/[0-9一二三四五六七八九十]/.test(text)) score += 15;
+  if(/^(总结|总之|最后|简而言之|所以说)/.test(text)) score += 15;
+  if(/^(大家|你们|小伙伴|朋友们)/.test(text)) score += 10;
+  if(/…|去做|快去|一定要/.test(text)) score += 10;
+  return score;
+}
+// 语义段落分组：按主题转换（新句开头标识词）分段
+function duyiGroupParagraphs(timeline){
+  var groups = [];
+  var cur = [];
+  var markers = /^(首先|其次|然后|最后|第一|第二|第三|一、|二、|三、|总结|总之|那么|接下来)/;
+  timeline.forEach(function(s){
+    if(markers.test(s.text) && cur.length){ groups.push(cur); cur = []; }
+    cur.push(s);
+  });
+  if(cur.length) groups.push(cur);
+  return groups;
+}
+
+
 function duyiAnalyze(){
   var raw = (document.getElementById('duyiScript').value||'').trim();
   if(!raw){ toast('请先粘贴口播逐句稿','err'); return; }
@@ -2042,10 +2066,14 @@ function duyiAnalyze(){
   // 3. 生成剪辑方案（时间轴估算：每句按语速 ~4.5字/秒 + 0.5s 间隔）
   var fps=30, W=1080, H=1920, ts=0;
   if(duyiState.format==='wide'){ W=1920; H=1080; }
-  var timeline = kept.map(function(a){
-    var dur = Math.max(1.2, Math.round((a.text.length/4.5 + 0.5)*10)/10);
-    var seg = { start: Math.round(ts*10)/10, end: Math.round((ts+dur)*10)/10, text: a.text };
-    ts += dur + 0.3;
+  var timeline = kept.map(function(a, i){
+    // 标点加权停顿：句号/感叹号 0.6s，逗号 0.3s，提问 0.5s
+    var pause = (a.text.match(/[。！？]/g)||[]).length * 0.6
+              + (a.text.match(/，/g)||[]).length * 0.3;
+    var dur = Math.max(1.2, Math.round((a.text.length/4.5 + pause + 0.3)*10)/10);
+    var seg = { start: Math.round(ts*10)/10, end: Math.round((ts+dur)*10)/10, text: a.text,
+      priority: duyiScorePriority(a.text, i, kept.length) };
+    ts += dur + 0.25;
     return seg;
   });
 
@@ -2069,6 +2097,8 @@ function duyiAnalyze(){
 
   duyiState.lastPlan = {
     format: duyiState.format, analysis: analysis, kept: kept, removed: removed,
+    priorities: kept.map(function(a, i){ return duyiScorePriority(a.text, i, kept.length); }),
+    groups: duyiGroupParagraphs(timeline),
     cleanScript: cleanScript, timeline: timeline, subs: subs, cards: cards,
     totalDur: Math.round(ts*10)/10, generatedAt: new Date().toLocaleString()
   };
@@ -2078,14 +2108,42 @@ function duyiAnalyze(){
 // ---- 单句判定：重复/语气词/口误/无意义停顿 ----
 function duyiJudgeLine(line){
   var t = line;
-  // 语气词开头（嗯/啊/呃/那个/就是/然后）
-  if(/^(嗯|啊|呃|诶|那个|就是|然后|所以|那啥|怎么说呢)/.test(t)) return '开头语气词';
-  // 与上一句重复（调用方处理相邻重复）
-  // 句内重复（"真的真的"、"特别特别"、"非常非常"）
-  if(/(.)\1{1,}/.test(t) && /(\S{2,})\1/.test(t.replace(/\s/g,''))) return '句内重复';
-  // 无意义结尾（"对吧"、"是吧"、"嗯嗯"、"就是这样"）
-  if(/(对吧|是吧|嗯嗯|就是这样|差不多吧|这样这样)$/.test(t)) return '口头禅结尾';
+  // 口头气词开头（嗯/啊/呃/那个/就是/然后）
+  if(/^(嗯|啊|呃|额|那个|就是|然后|所以|那啥|怎么说呢|其实|真的吗)/.test(t)) return '开头气词';
+  // 句中气词嵌入（非开头位置的嗯/啊/那个/就是说）
+  if(/(?<=[^、，。！？；s])(?:嗯|啊|呃|那个|就是说|怎么说呢|你知道吧)(?=[^、，。！？；s])/.test(t)) return '句中气词';
+  // 句尾气词（嗯嗯/啊/哈/呗/哦）
+  if(/(?:嗯+|啊+|哈哈|呗|哦)$/.test(t)) return '句尾气词';
+  // 句内重复（真的真的/特别特别/非常非常，跨空白）
+  var compact = t.replace(/\s/g,'');
+  if(/(\S{2,})\1/.test(compact)) return '句内重复';
+  // 相邻句重复（与上一句核心词重叠）
+  if(duyiPrevLine && duyiSemanticDup(duyiPrevLine, t)) return '语义重复';
+  // 口头禁忌尾（吧/是吧/嗯嗯/就是这样）
+  if(/(吧|是吧|嗯嗯|就是这样|差不多吧|这样那样)$/.test(t)) return '口头禁忌尾';
+  // 低信息句（全是气词/标点）
+  var info = t.replace(/[嗯啊呃哦哈吧呢么了吗。、，！？；s]/g,'');
+  if(info.length < 2) return '信息过少';
   return null;
+}
+
+// 语义重复判定：提取核心词（去气词/标点）后与上一句相似度>0.6
+var duyiPrevLine = '';
+function duyiSemanticDup(prev, cur){
+  var stop = /[嗯啊呃哦哈吧呢么了吗。、，！？；s]/g;
+  var a = prev.replace(stop,'');
+  var b = cur.replace(stop,'');
+  if(!a || !b) return false;
+  // 短句相似：子串包含判定
+  if(a.length <= 6 && b.indexOf(a) >= 0) return true;
+  if(b.length <= 6 && a.indexOf(b) >= 0) return true;
+  // 长句相似：字符重叠比例
+  var chars = {};
+  for(var i=0;i<a.length;i++) chars[a[i]] = 1;
+  var overlap = 0;
+  for(var j=0;j<b.length;j++) if(chars[b[j]]) overlap++;
+  var ratio = overlap / Math.max(a.length, b.length);
+  return ratio > 0.6 && Math.min(a.length, b.length) > 4;
 }
 
 // ---- 渲染分析结果 ----
@@ -2096,7 +2154,17 @@ function duyiRenderResult(plan){
     ? plan.removed.map(function(r){ return '<div class="duyi-result-item"><span class="duyi-result-item-num">✂️</span><span class="duyi-result-item-text" style="text-decoration:line-through;color:#c99">'+escapeHtml(r.text)+' <span style="color:#d88;font-size:10px;text-decoration:none">('+r.issue+' · review_required)</span></span></div>'; }).join('')
     : '<div class="duyi-result-item"><span class="duyi-result-item-num">✅</span><span class="duyi-result-item-text">无冗余，全保留</span></div>';
 
-  var cardHtml = plan.cards.length
+    // 保留优先级展示（高优先级勾子句/数字句 标记）
+  var prioHtml = '';
+  if(plan.priorities && plan.priorities.length){
+    prioHtml = '<div class="duyi-result-item"><span class="duyi-result-item-num">✨</span><span class="duyi-result-item-text">保留优先级：'+
+      plan.timeline.map(function(s, i){
+        var tag = s.priority >= 75 ? '<b style="color:#5a8a5a">高</b>' : (s.priority >= 60 ? '中' : '普通');
+        return '#'+(i+1)+tag;
+      }).join(' · ')+'</span></div>';
+  }
+
+var cardHtml = plan.cards.length
     ? '<div class="duyi-result-title">🎴 信息卡节奏（'+plan.cards.length+' 张）</div><div class="duyi-result-items">'+
       plan.cards.map(function(c){ return '<div class="duyi-result-item"><span class="duyi-result-item-num">['+c.start+'s]</span><span class="duyi-result-item-text">'+escapeHtml(c.text)+'</span></div>'; }).join('')+'</div>'
     : '';
@@ -2107,6 +2175,7 @@ function duyiRenderResult(plan){
       '<div class="duyi-result-items">'+
         '<div class="duyi-result-item"><span class="duyi-result-item-num">📝</span><span class="duyi-result-item-text">原稿 '+ (plan.analysis.length) +' 句 → 保留 '+plan.kept.length+' 句 · 删除 '+plan.removed.length+' 句</span></div>'+
         '<div class="duyi-result-item"><span class="duyi-result-item-num">✂️</span><span class="duyi-result-item-text">删除项均标记 <b>review_required</b>，可人工复核</span></div>'+
+        prioHtml+
         '<div class="duyi-result-item"><span class="duyi-result-item-num">⏱️</span><span class="duyi-result-item-text">'+plan.timeline.length+' 个视频片段 · '+plan.subs.length+' 条字幕</span></div>'+
       '</div>'+
       '<div style="font-size:11px;color:var(--text-muted);margin:6px 0">—— 删除明细 ——</div>'+
