@@ -981,7 +981,14 @@ function fetchVideos(append){
   var g=document.getElementById('videoGrid');
   if(!append) g.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-muted)">⏳ 正在加载教程视频…</div>';
   
-  // 🔴 优先拉取 B站真实视频源（真实封面/标题/链接/播放量）
+  // 🔍 智能判断：GitHub Pages 等静态托管环境无后端，直接读静态 videos.json（含真实B站数据）
+  var isStaticHost = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
+  if(isStaticHost){
+    loadStaticVideos(append);
+    return;
+  }
+  
+  // 🔴 本地开发：优先拉取 B站真实视频源（真实封面/标题/链接/播放量）
   // 注：live 源目前只有B站真实数据；选其他平台时仍显示B站真实视频（不做平台过滤，避免空结果）
   var liveUrl = API_BASE+'/videos/live?page='+currentVidPage+'&page_size=20&sort='+currentSort;
   if(currentKeyword) liveUrl+='&keyword='+encodeURIComponent(currentKeyword);
@@ -1064,6 +1071,39 @@ function fetchVideos(append){
           g.innerHTML='<div class="empty-s">Backend not running. Start server at localhost:8700</div>';
         });
     });
+    });
+}
+
+// 静态托管环境（GitHub Pages）：直接读 videos.json（含真实B站数据）
+function loadStaticVideos(append){
+  var g=document.getElementById('videoGrid');
+  fetch('videos.json')
+    .then(function(r){ if(!r.ok) throw new Error('static not found'); return r.json(); })
+    .then(function(staticVideos){
+      _videoLoading = false;
+      _videoCache = staticVideos.map(function(v){
+        return {
+          id: v.id,
+          title: v.title,
+          platform: v.platform,
+          task_type: v.task_type,
+          author_name: v.author,
+          like_count: v.likes,
+          view_count: v.views,
+          cover_url: safeCover(v.cover, v.id, v.title, v.platform),
+          source_url: v.source,
+          source_label: {source_label: v.source_label, disclaimer: v.disclaimer},
+          source_mark: JSON.stringify({source_label: v.source_label||('来源：'+v.platform+' @'+v.author), disclaimer: v.disclaimer}),
+          description: v.description||''
+        };
+      });
+      _videoPagination = {page:1,total:_videoCache.length,total_pages:1};
+      renderFetchedVideos(false);
+    })
+    .catch(function(err){
+      _videoLoading = false;
+      console.error('LOAD_STATIC_ERR', err);
+      g.innerHTML='<div class="empty-s">videos.json 加载失败，请检查部署</div>';
     });
 }
 
