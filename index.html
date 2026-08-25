@@ -767,6 +767,12 @@ var templates = [
 ];
 
 // ========== 渲染 ==========
+// 兼容旧浏览器：获取当前激活的滤镜分类（替代 ?. 可选链）
+function getActiveFilterCat(){
+  var el=document.querySelector('.filter-cat.active')||document.querySelector('#filterCats .filter-cat.active');
+  return (el && el.getAttribute && el.getAttribute('data-cat')) ? el.getAttribute('data-cat') : 'all';
+}
+
 function renderFilters(cat){
   var g=document.getElementById('filterGrid');
   var s=filters.filter(function(f){
@@ -847,7 +853,7 @@ function applyTemplate(tid){
     var f=filters.find(function(x){return x.meituPreset===t.meitu;});
     if(f){
       S.selFilter=f.id;
-      renderFilters(document.querySelector('.filter-cat.active')?.dataset?.cat||'all');
+      renderFilters(getActiveFilterCat());
       addMsg('ai','🌟 已应用美图云修模板「'+t.icon+' '+t.name+'」');
       switchTab('tab-edit');
       document.getElementById('beautyPanel').style.display='block';
@@ -857,7 +863,7 @@ function applyTemplate(tid){
     var c=filters.filter(function(f){return f.name.indexOf(t.name)!==-1||f.desc.indexOf(t.desc)!==-1||f.cat===t.cat;});
     if(c.length>0){
       S.selFilter=c[0].id;
-      renderFilters(document.querySelector('.filter-cat.active')?.dataset?.cat||'all');
+      renderFilters(getActiveFilterCat());
       addMsg('ai','📋 已应用模板「'+t.icon+' '+t.name+'」');
       switchTab('tab-edit');
       if(S.file)startProc();
@@ -1912,7 +1918,7 @@ function sendChat(){
       if(found.length>0&&S.file){
         setTimeout(function(){
           S.selFilter=found[0].id;
-          var cat=document.querySelector('#filterCats .filter-cat.active')?.dataset?.cat||'all';
+          var cat=getActiveFilterCat();
           renderFilters(cat);
         },1200);
       }
