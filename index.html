@@ -1511,8 +1511,26 @@ function saveGLMConfig(){
   var key=document.getElementById('glmKey').value.trim();
   var model=document.getElementById('glmModel').value;
   if(!key){toast('请输入 GLM API Key','err');return;}
-  toast('✅ GLM 配置已保存（'+model+'）','ok');
-  addMsg('ai','🔧 GLM-4.6v 就绪！','ok');
+  // 真实保存到后端 settings
+  fetch(API_BASE+'/advanced/glm/config', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({api_key:key, model:model})
+  })
+  .then(function(r){return r.json();})
+  .then(function(resp){
+    if(resp.success){
+      toast('✅ GLM 配置已保存（'+model+'）','ok');
+      addMsg('ai','🔧 GLM-4.6v 就绪！后端已保存配置','ok');
+    } else {
+      toast('❌ 保存失败','err');
+    }
+  })
+  .catch(function(err){
+    console.warn('GLM_SAVE_ERR',err);
+    toast('⚠️ 后端未运行，仅本地提示（需启动后端保存）','warn');
+    addMsg('ai','🔧 GLM-4.6v 配置已填，但后端未连接，蒸馏需后端支持','warn');
+  });
 }
 
 // ========== 渲染已学技能 ==========
@@ -1646,8 +1664,26 @@ function saveGLMConfig(){
   var key=document.getElementById('glmKey').value.trim();
   var model=document.getElementById('glmModel').value;
   if(!key){toast('请输入 GLM API Key','err');return;}
-  toast('✅ GLM 配置已保存（'+model+'）','ok');
-  addMsg('ai','🔧 GLM-4.6v 就绪！','ok');
+  // 真实保存到后端 settings
+  fetch(API_BASE+'/advanced/glm/config', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({api_key:key, model:model})
+  })
+  .then(function(r){return r.json();})
+  .then(function(resp){
+    if(resp.success){
+      toast('✅ GLM 配置已保存（'+model+'）','ok');
+      addMsg('ai','🔧 GLM-4.6v 就绪！后端已保存配置','ok');
+    } else {
+      toast('❌ 保存失败','err');
+    }
+  })
+  .catch(function(err){
+    console.warn('GLM_SAVE_ERR',err);
+    toast('⚠️ 后端未运行，仅本地提示（需启动后端保存）','warn');
+    addMsg('ai','🔧 GLM-4.6v 配置已填，但后端未连接，蒸馏需后端支持','warn');
+  });
 }
 
 // ========== 渲染已学技能 ==========
