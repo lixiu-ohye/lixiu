@@ -13,6 +13,11 @@ _wx_*.html
 _wx_*.json
 _wx_fetch*.py
 _wechat_*.json
+_wx_articles/
+_wx_links*
+_wx_single.txt
+_wx_scan_out.txt
+_firecrawl_test.txt
 _patch_*.py
 _test_*.png
 *.fixbak
