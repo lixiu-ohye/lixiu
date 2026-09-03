@@ -1,0 +1,19 @@
+# 调试/临时文件（不入库）
+_diag*
+_dom_check.py
+_final_*.png
+_func_test*.py
+_health_check.py
+_verify*.py
+_verify_*.png
+_*.png
+_*.py
+_*.log
+_wx_*.html
+_wx_*.json
+_wx_fetch*.py
+_patch_*.py
+_test_*.png
+*.fixbak
+index_backup_*.html
+index_fixed_*.html
