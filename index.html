@@ -994,9 +994,9 @@ function fetchVideos(append){
     return;
   }
   
-  // 🔴 本地开发：优先拉取 B站真实视频源（真实封面/标题/链接/播放量）
-  // 注：live 源目前只有B站真实数据；选其他平台时仍显示B站真实视频（不做平台过滤，避免空结果）
+  // ?? 本地环境：优先拉取多平台真实视频源（B站直抓 + 抖音/小红书 MediaCrawler 入库）
   var liveUrl = API_BASE+'/videos/live?page='+currentVidPage+'&page_size=20&sort='+currentSort;
+  if(currentPlatform!=='all') liveUrl+='&platform='+currentPlatform;
   if(currentKeyword) liveUrl+='&keyword='+encodeURIComponent(currentKeyword);
   
   fetch(liveUrl, {cache:'no-store'})
@@ -1014,15 +1014,21 @@ function fetchVideos(append){
         _videoCache = _videoCache.concat(items);
       }
       renderFetchedVideos(append);
-      // 真实数据源提示（仅在全部/非B站筛选时显示一次）
+      // 真实数据源提示
       var hint = document.getElementById('liveSourceHint');
-      if(!hint && resp.source==='bilibili-live'){
+      var src = resp.source || '';
+      var hintTxt = (src==='multi-live')
+        ? '🎬 当前 <b>多平台真实视频源</b>（B站直抓 + 抖音/小红书入库）'
+        : '🎬 当前 <b>B站真实视频源</b>（真实封面/链接/播放量），每10分钟自动刷新';
+      if(!hint){
         hint = document.createElement('div');
         hint.id = 'liveSourceHint';
         hint.style.cssText = 'font-size:11px;color:var(--gold);margin:-6px 0 10px;padding:6px 10px;background:rgba(255,200,100,0.08);border-radius:8px';
-        hint.innerHTML = '🔴 当前为 <b>B站真实视频源</b>（真实封面/链接/播放量），每10分钟自动刷新';
+        hint.innerHTML = hintTxt;
         var grid = document.getElementById('videoGrid');
         if(grid && grid.parentNode) grid.parentNode.insertBefore(hint, grid);
+      } else {
+        hint.innerHTML = hintTxt;
       }
     })
     .catch(function(err){
