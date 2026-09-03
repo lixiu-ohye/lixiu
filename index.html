@@ -1157,7 +1157,7 @@ function renderFetchedVideos(append){
         '<div style="font-size:10px;color:var(--gold);margin-bottom:8px;font-style:italic">⚠️ 仅供技术学习参考，著作权归原作者</div>'+
         '<div style="display:flex;gap:6px;align-items:center">'+
           '<button class="extract-btn" onclick="extractSkillFromAPI('+i+')">⚡️ 提取同款参数</button>'+
-          (v.source_url ? '<button class="skill-btn skill-btn-del" onclick="window.open(\''+v.source_url+'\',\'_blank\')" style="font-size:10px">查看原文 ›</button>' : '')+
+          ((v.video_url||v.source_url) ? '<button class="skill-btn skill-btn-del" onclick="window.open(\''+(v.video_url||v.source_url)+'\',\'_blank\')" style="font-size:10px">查看原文 ›</button>' : '')+
         '</div>'+
       '</div></div>';
     
@@ -1271,7 +1271,8 @@ function loadSkillLibrary(){
     }
     if(s.edit_params){
       chips.push('转场:'+s.edit_params.transition);
-      chips.push('BGM:'+s.edit_params.bgm_style);
+      chips.push('BGM:'+(s.edit_params.bgm_style||s.edit_params.bgm||'未设置'));
+      if(s.edit_params.subtitle) chips.push('字幕:'+s.edit_params.subtitle);
     }
     var actionsHtml = '';
     if(s.task_type==='beauty') actionsHtml+='<button class="skill-btn skill-btn-use" onclick="applyLibSkill('+s._libIdx+')">🎨 应用到修图</button>';
@@ -1306,9 +1307,13 @@ function initSkillTypeFilter(){
 }
 
 // ⚡️ 从实时API数据中提取同款参数
+// ?? 教程?接中提取同款技能（真实调后端 /advanced/distill；后端不可用时降级本地启发式）
 function extractSkillFromAPI(videoCacheIdx){
   var v = _videoCache[videoCacheIdx];
   if(!v) return;
+  
+  // 真实视频链接：live/API源是 video_url（B站真链接），静态源是 source_url
+  var realUrl = v.video_url || v.source_url || '';
   
   // Show progress modal
   var modal=document.getElementById('distillProgressModal');
@@ -1316,55 +1321,168 @@ function extractSkillFromAPI(videoCacheIdx){
   var fill=document.getElementById('distillProgFill');
   var text=document.getElementById('distillProgText');
   var detail=document.getElementById('distillProgDetail');
+  var iconEl=document.getElementById('distillIcon');
   fill.style.width='0%';
+  iconEl.textContent='🔍';
+  text.textContent='准备提取…';
+  detail.textContent='';
   
-  var platformLabels = {douyin:'🎵抖音',xiaohongshu:'📕小红书',bilibili:'📺B站',weibo:'📱微博'};
+  var platformLabels = {douyin:'🎵抖音',xiaohongshu:'📕小红书',bilibili:'📺B站',weibo:'📰微博'};
   var platLabel = platformLabels[v.platform]||v.platform;
   
-  var steps = [
-    {pct:10, icon:'📡', msg:'连接 '+platLabel+'…'},
-    {pct:25, icon:'📥', msg:'下载视频 + 抽帧 1fps…'},
-    {pct:45, icon:'🎤', msg:'Whisper 转写口播文字…'},
-    {pct:70, icon:'🧠', msg:'GLM-4.6v 分析帧+文字 → 分类 task_type…'},
-    {pct:90, icon:'💾', msg:'参数保存到技能库…'},
-  ];
+  function setStep(pct, icon, msg, d){
+    fill.style.width=pct+'%';
+    iconEl.textContent=icon;
+    text.textContent=msg;
+    detail.textContent=d||'';
+  }
   
-  var si=0;
-  var iv=setInterval(function(){
-    if(si<steps.length){
-      var s=steps[si];
-      fill.style.width=s.pct+'%';
-      document.getElementById('distillIcon').textContent=s.icon;
-      text.textContent=s.msg;
-      detail.textContent=(si+1)+'/'+steps.length;
-      si++;
-    } else {
-      clearInterval(iv);
-      // Classify task_type from real data
+  // 本地降级：分类 + 构建 skill（保持原逻辑）
+  function localFallback(reason){
+    console.warn('DISTILL_FALLBACK', reason);
+    setStep(55,'🧠','后端不可用，本地智能分析中…','降级模式');
+    setTimeout(function(){
       var task_type = classifyTutorialTask(v);
       var skill = buildSkillFromVideo(v, task_type);
       skill._libIdx = S.distillSkills.length;
-      skill.source_url = v.source_url || v.platform || '';
+      skill.source_url = realUrl || v.source_url || v.platform || '';
       skill.platform = v.platform;
+      skill._fallback = true;
       S.distillSkills.push(skill);
       
-      fill.style.width='100%';
-      document.getElementById('distillIcon').textContent='✅';
-      text.textContent='提取完成！';
-      detail.textContent='已识别为 '+TASK_TYPE_LABELS[task_type].label;
-      
+      setStep(100,'✅','提取完成（本地模式）','已生成 '+TASK_TYPE_LABELS[task_type].label+' 技能');
       syncSkillToFilter(skill);
       loadSkillLibrary();
       
       setTimeout(function(){
         modal.style.display='none';
-        toast('✅ 同款参数已存入技能库！','ok');
+        toast('⚡ 同款参数已存入技能库（本地模式）','ok');
         switchStudySubTab('skills');
-      },1500);
+      },1200);
+    },500);
+  }
+  
+  // 无真实链接且不在后端环境 → 无法蒸馏，直接本地模式
+  if(!realUrl){
+    localFallback('no real url');
+    return;
+  }
+  
+  // 尝试真实后端蒸馏
+  setStep(8,'📡','连接 '+platLabel+'…','解析真实视频链接');
+  
+  var body = new URLSearchParams();
+  body.append('url', realUrl);
+  body.append('platform', v.platform||'auto');
+  body.append('title', v.title||'');
+  body.append('desc', (v.description||v.desc||'').substring(0,300));
+  if(v.author_name) body.append('author', v.author_name);
+  if(v.task_type) body.append('task_type', v.task_type);
+  
+  var api = API_BASE+'/advanced/distill';
+  var done = false;
+  var iv = setInterval(function(){ // 兜底超时（25s）
+    if(!done){
+      done = true;
+      clearInterval(iv);
+      localFallback('backend timeout');
     }
-  },600);
+  }, 25000);
+  
+  fetch(api, {
+    method:'POST',
+    body: body
+  })
+  .then(function(r){
+    if(!r.ok) throw new Error('distill http '+r.status);
+    return r.json();
+  })
+  .then(function(resp){
+    if(done) return;
+    done = true;
+    clearInterval(iv);
+    if(!resp || !resp.success){
+      localFallback('bad resp');
+      return;
+    }
+    
+    // 后端已接收（可能有 GLM 真实分析），构建本地 skill
+    setStep(60,'🤖', resp.glm_analyzed ? 'GLM 正在分析视频内容…' : '后端接收中，准备入库…', resp.message||'');
+    setTimeout(function(){
+      var task_type = (resp.sampled_params && resp.sampled_params.type) || (v.task_type) || classifyTutorialTask(v);
+      // 优先用后端 GLM 返回的参数；没有则本地启发式
+      var skill = null;
+      if(resp.sampled_params && resp.sampled_params.type && (resp.sampled_params.beauty_params || resp.sampled_params.edit_params || resp.sampled_params.enhance_params)){
+        skill = buildSkillFromBackend(resp.sampled_params, v, task_type);
+      } else {
+        skill = buildSkillFromVideo(v, task_type);
+      }
+      if(resp.skill_id) skill.backend_id = resp.skill_id;
+      skill._libIdx = S.distillSkills.length;
+      skill.source_url = realUrl || v.source_url || '';
+      skill.platform = v.platform;
+      skill.description = (resp.sampled_params && resp.sampled_params.summary) ? resp.sampled_params.summary : (skill.description||v.description||'');
+      skill.glm_analyzed = !!resp.glm_analyzed;
+      skill.tags = (resp.sampled_params && resp.sampled_params.tags) || [];
+      S.distillSkills.push(skill);
+      
+      setStep(100,'✅', resp.glm_analyzed ? 'GLM 分析完成！' : '提取完成！','已生成 '+TASK_TYPE_LABELS[task_type].label+' 技能');
+      syncSkillToFilter(skill);
+      loadSkillLibrary();
+      
+      setTimeout(function(){
+        modal.style.display='none';
+        toast(resp.glm_analyzed ? '🤖 GLM 已分析，同款参数已存入技能库！' : '⚡ 同款参数已存入技能库！','ok');
+        switchStudySubTab('skills');
+      },1200);
+    },400);
+  })
+  .catch(function(err){
+    if(done) return;
+    done = true;
+    clearInterval(iv);
+    console.error('DISTILL_ERR', err);
+    localFallback('backend error: '+err.message);
+  });
 }
 
+// 由后端 /distill 返回的 params 构建前端 skill 对象
+function buildSkillFromBackend(params, video, task_type){
+  var skill = {
+    id: 'skill_'+(S.distillSkills.length+1),
+    title: video.title||'',
+    task_type: task_type||'beauty',
+    description: (params&&params.summary)||video.description||'',
+    platform: video.platform
+  };
+  if(!params) return skill;
+  // 判断某参数块是否有真实业务键（排除仅 src_app 的空骨架）
+  function hasRealKeys(block){
+    if(!block || typeof block!=='object') return false;
+    return Object.keys(block).some(function(k){ return k!=='src_app'; });
+  }
+  var ptype = params.type || task_type || 'beauty';
+  if(ptype==='beauty' && hasRealKeys(params.beauty_params)){
+    skill.beauty_params = params.beauty_params;
+  } else if(ptype==='edit' && hasRealKeys(params.edit_params)){
+    skill.edit_params = params.edit_params;
+  } else if(ptype==='enhance' && hasRealKeys(params.enhance_params)){
+    skill.enhance_params = params.enhance_params;
+  } else {
+    // 兜底：任何有真实键的参数块
+    if(hasRealKeys(params.beauty_params)){
+      skill.beauty_params = params.beauty_params;
+      skill.task_type = 'beauty';
+    } else if(hasRealKeys(params.edit_params)){
+      skill.edit_params = params.edit_params;
+      skill.task_type = 'edit';
+    } else if(hasRealKeys(params.enhance_params)){
+      skill.enhance_params = params.enhance_params;
+      skill.task_type = 'enhance';
+    }
+  }
+  return skill;
+}
 // 智能分类 task_type
 function classifyTutorialTask(video){
   var title = video.title||'';
@@ -1464,11 +1582,11 @@ function applyLibEditSkill(idx){
   var s = S.distillSkills[idx];
   if(!s || !s.edit_params) return;
   var ep = s.edit_params;
-  document.getElementById('jyFirst').value=ep.first_3s||'人脸特写';
+  document.getElementById('jyFirst').value=ep.first_3s||'人物特写';
   document.getElementById('jyTrans').value=ep.transition||'0.3s叠化';
-  document.getElementById('jyBgm').value=ep.bgm_style||'轻快';
-  document.getElementById('jySub').value=ep.subtitle_style||'居中白字描边';
-  toast('🎬 已加载剪辑参数','ok');
+  document.getElementById('jyBgm').value=ep.bgm_style||ep.bgm||'轻快';
+  document.getElementById('jySub').value=ep.subtitle_style||ep.subtitle||'居中白字描边';
+  toast('🎬 已加载剪映参数','ok');
   switchTab('tab-jianying');
 }
 
