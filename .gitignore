@@ -12,6 +12,7 @@ _*.log
 _wx_*.html
 _wx_*.json
 _wx_fetch*.py
+_wechat_*.json
 _patch_*.py
 _test_*.png
 *.fixbak
