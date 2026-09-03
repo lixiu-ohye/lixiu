@@ -1109,6 +1109,8 @@ function loadStaticVideos(append){
           description: v.description||''
         };
       });
+      // 静态模式也按热度排序（like_count 降序），让多平台高赞视频排前面
+      _videoCache.sort(function(a,b){ return ((b.like_count||0)+(b.view_count||0)) - ((a.like_count||0)+(a.view_count||0)); });
       _videoPagination = {page:1,total:_videoCache.length,total_pages:1};
       renderFetchedVideos(false);
     })
