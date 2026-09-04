@@ -1524,7 +1524,11 @@ function extractSkillFromAPI(videoCacheIdx){
     done = true;
     clearInterval(iv);
     console.error('DISTILL_ERR', err);
-    localFallback('backend error: '+err.message);
+    // 429/限流 → 提示后降级本地分析(不中断功能)
+    if(friendlyErr && friendlyErr(err) === 'throttled'){
+      toast('⏳ 智能分析繁忙，已切换本地模式，稍后可重试','warn');
+    }
+    localFallback('backend error: '+(err && err.message ? err.message : err));
   });
 }
 
@@ -2303,6 +2307,22 @@ function showDash(){
 
 // ========== Toast ==========
 function toast(msg,tp){
+
+// ===== 限流友好提示 (429 服务太火爆) =====
+function friendlyErr(err, fallback){
+  var msg = (err && err.message) ? err.message : '';
+  // 智谱/后端限流文案 -> 友好提示
+  if(/429|too many|太火爆|稍后再试|限流|rate.?limit/i.test(msg)){
+    toast('⏳ 服务繁忙(限流)，已自动重试，请稍候…','warn');
+    return 'throttled';
+  }
+  if(/Failed to fetch|network|net::/i.test(msg)){
+    toast('⚠️ 网络连接失败，请确认本地后端已启动(localhost:8700)','err');
+    return 'network';
+  }
+  return fallback;
+}
+
   var e=document.createElement('div');
   e.className='toast '+(tp||'inf');
   e.textContent=msg;
@@ -2852,6 +2872,11 @@ function autoEditRender(){
       btn.disabled = false; btn.style.opacity = 1;
       fill.style.width='0%';
       ptxt.textContent = '出错了';
+      // 429/限流 → 友好提示(glm_client已自动重试, 这里不再重复报错)
+      if(friendlyErr && friendlyErr(err) === 'throttled'){
+        toast('⏳ 服务繁忙(限流)，AI 已在自动重试，请稍后再点一次','warn');
+        return;
+      }
       toast('成片失败: '+(err.message||'未知错误'),'err');
       console.error('AUTOEDIT_ERR', err);
     });
