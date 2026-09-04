@@ -1032,6 +1032,8 @@ function safeCover(url, id, title, platform){
   if(typeof url === 'string' && url.indexOf('local:') === 0) return localCoverSeed(id, title, platform);
   if(/^(data:|blob:|file:|http:\/\/localhost|http:\/\/127\.)/.test(url)) return url;
   if(/^https?:\/\//.test(url)) return url;
+  // ?? 相?路径 (covers/xhs/xxx.jpg 等静态资源) 直接放行
+  if(/^[\w\-]+\.\w{2,5}(\/|$)/.test(url) || url.indexOf('./')===0 || url.indexOf('../')===0 || /^covers\//.test(url)) return url;
   return localCoverSeed(id, title, platform);
 }
 // 类型标签映射（保持与原系统一致）
