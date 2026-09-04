@@ -1115,7 +1115,7 @@ function fetchVideos(append){
               source_label: {source_label: v.source_label, disclaimer: v.disclaimer}
             };
           });
-          _videoPagination = {page:1,total:_videoCache.length,total_pages:1};
+      _videoPagination = {page:1,total:_videoCache.length,total_pages:Math.max(1,Math.ceil(_videoCache.length/24))};
           renderFetchedVideos(false);
         })
         .catch(function(){
@@ -1151,6 +1151,14 @@ function fetchVideos(append){
 // 静态托管环境（GitHub Pages）：直接读 videos.json（含真实B站数据）
 function loadStaticVideos(append){
   var g=document.getElementById('videoGrid');
+  // ?? 已加??且是翻? (append): 直接用现有缓存翻?, 不重新 fetch
+  if(append && _videoCache.length > 0 && _videoPagination.total_pages > 1){
+    _videoLoading = false;
+    if(currentVidPage > _videoPagination.total_pages){ currentVidPage = _videoPagination.total_pages; }
+    _videoPagination.page = currentVidPage;
+    renderFetchedVideos(true);
+    return;
+  }
   fetch('videos.json')
     .then(function(r){ if(!r.ok) throw new Error('static not found'); return r.json(); })
     .then(function(staticVideos){
@@ -1198,6 +1206,12 @@ function renderFetchedVideos(append){
     return;
   }
   
+
+  // ?? 分?渲染: 只渲染当前? (静态模式 992 条不?一次全?!)
+  var _renderStart = (_videoPagination.page-1)*24;
+  var _renderEnd = Math.min(_renderStart+24, _videoCache.length);
+  var _pageItems = _videoCache.slice(_renderStart, _renderEnd);
+
   _videoCache.forEach(function(v,i){
     var tt = TASK_TYPE_LABELS[v.task_type]||{label:'未知',icon:'❓',tagClass:'',skillClass:''};
     var platformLabels = {douyin:'🎵抖音',xiaohongshu:'📕小红书',bilibili:'📺B站',weibo:'📱微博'};
@@ -1261,6 +1275,19 @@ function renderFetchedVideos(append){
 
 function loadMoreVideos(){
   currentVidPage++;
+  var isStaticHost2 = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
+  if(isStaticHost2){
+    // 静态模式: 直接翻页渲染下一页 (不需要重新 fetch)
+    if(currentVidPage <= _videoPagination.total_pages){
+      _videoPagination.page = currentVidPage;
+      renderFetchedVideos(true);
+    } else {
+      currentVidPage = _videoPagination.total_pages;
+      var lm = document.getElementById('loadMoreBtn');
+      if(lm) lm.style.display='none';
+    }
+    return;
+  }
   fetchVideos(true);
 }
 
