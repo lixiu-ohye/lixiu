@@ -1149,10 +1149,12 @@ function fetchVideos(append){
 }
 
 // 静态托管环境（GitHub Pages）：直接读 videos.json（含真实B站数据）
+var _staticAll = [];  // 静态模式全量数据(已排序)
+
 function loadStaticVideos(append){
   var g=document.getElementById('videoGrid');
-  // ?? 已加??且是翻? (append): 直接用现有缓存翻?, 不重新 fetch
-  if(append && _videoCache.length > 0 && _videoPagination.total_pages > 1){
+  // 已加载过且翻页: 直接用过滤后的缓存翻页
+  if(append && _staticAll.length > 0 && _videoPagination.total_pages > 1){
     _videoLoading = false;
     if(currentVidPage > _videoPagination.total_pages){ currentVidPage = _videoPagination.total_pages; }
     _videoPagination.page = currentVidPage;
@@ -1163,37 +1165,51 @@ function loadStaticVideos(append){
     .then(function(r){ if(!r.ok) throw new Error('static not found'); return r.json(); })
     .then(function(staticVideos){
       _videoLoading = false;
-      _videoCache = staticVideos.map(function(v){
+      var mapped = staticVideos.map(function(v){
         return {
-          id: v.id,
-          title: v.title,
-          platform: v.platform,
-          task_type: v.task_type,
-          author_name: v.author,
-          like_count: v.likes,
-          view_count: v.views,
+          id: v.id, title: v.title, platform: v.platform, task_type: v.task_type,
+          author_name: v.author, like_count: v.likes, view_count: v.views,
           cover_url: safeCover(v.cover, v.id, v.title, v.platform),
-          source_url: v.source,
+          video_url: v.source || '', source_url: v.source,
           source_label: {source_label: v.source_label, disclaimer: v.disclaimer},
           source_mark: JSON.stringify({source_label: v.source_label||('来源：'+v.platform+' @'+v.author), disclaimer: v.disclaimer}),
           description: v.description||''
         };
       });
-      // 静态模式也按热度排序（like_count 为主，兼容抖音无播放量字段），让多平台高赞视频排前面
-      _videoCache.sort(function(a,b){
+      // 热度排序 (like 为主, 兼容抖音无播放量)
+      mapped.sort(function(a,b){
         var hotA = (a.like_count||0)*4 + (a.view_count||0);
         var hotB = (b.like_count||0)*4 + (b.view_count||0);
         return hotB - hotA;
       });
-      _videoPagination = {page:1,total:_videoCache.length,total_pages:1};
-      renderFetchedVideos(false);
+      _staticAll = mapped;
+      applyStaticFilterAndRender(false);
     })
     .catch(function(err){
       _videoLoading = false;
       console.error('LOAD_STATIC_ERR', err);
-      g.innerHTML='<div class="empty-s">videos.json 加载失败，请检查部署</div>';
+      if(g) g.innerHTML='<div class="empty-s">videos.json 加载失败，请检查部署</div>';
     });
 }
+
+// 静态模式: 按 平台/关键词 过滤全量数据 → 分页渲染
+function applyStaticFilterAndRender(append){
+  var kw = (currentKeyword||'').trim().toLowerCase();
+  var filtered = _staticAll.filter(function(v){
+    if(currentPlatform!=='all' && v.platform!==currentPlatform) return false;
+    if(kw){
+      var t=(v.title||'').toLowerCase();
+      var a=(v.author_name||'').toLowerCase();
+      if(t.indexOf(kw)===-1 && a.indexOf(kw)===-1) return false;
+    }
+    return true;
+  });
+  _videoCache = filtered;
+  _videoPagination = {page:1,total:_videoCache.length,total_pages:Math.max(1,Math.ceil(_videoCache.length/24))};
+  currentVidPage = 1;
+  renderFetchedVideos(append);
+}
+
 
 function renderFetchedVideos(append){
   var g=document.getElementById('videoGrid');
@@ -1212,7 +1228,7 @@ function renderFetchedVideos(append){
   var _renderEnd = Math.min(_renderStart+24, _videoCache.length);
   var _pageItems = _videoCache.slice(_renderStart, _renderEnd);
 
-  _videoCache.forEach(function(v,i){
+  _pageItems.forEach(function(v,vi){ var i=_renderStart+vi;
     var tt = TASK_TYPE_LABELS[v.task_type]||{label:'未知',icon:'❓',tagClass:'',skillClass:''};
     var platformLabels = {douyin:'🎵抖音',xiaohongshu:'📕小红书',bilibili:'📺B站',weibo:'📱微博'};
     var platLabel = platformLabels[v.platform]||v.platform;
@@ -1302,6 +1318,10 @@ function searchVideos(){
   if(!inp) return;
   currentKeyword = inp.value.trim();
   currentVidPage = 1;
+  var isStaticHostS = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
+  if(isStaticHostS && _staticAll.length>0){ applyStaticFilterAndRender(false); return; }
+  fetchVideos(false);
+  currentVidPage = 1;
   fetchVideos(false);
 }
 
@@ -1326,6 +1346,10 @@ function initStudyPlatformFilter(){
     bar.querySelectorAll('[data-plt]').forEach(function(t){t.classList.remove('active');});
     b.classList.add('active');
     currentPlatform = b.getAttribute('data-plt');
+    currentVidPage = 1;
+    var isStaticHostF = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
+    if(isStaticHostF && _staticAll.length>0){ applyStaticFilterAndRender(false); return; }
+    fetchVideos(false);
     currentVidPage = 1;
     fetchVideos(false);
   });
