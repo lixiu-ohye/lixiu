@@ -753,7 +753,18 @@ var filters = [
   {id:'xingtu_peach',cat:'xingtu',name:'桃花',icon:'🌸',desc:'醒图·约会自拍',stars:4,xingtu:{shifts:{brightness:12,contrast:-3,saturation:12,temperature:10}}},
   {id:'xingtu_matte',cat:'xingtu',name:'哑光',icon:'🎭',desc:'醒图·高级雾面',stars:4,xingtu:{shifts:{brightness:-3,contrast:15,saturation:-8}}},
   {id:'xingtu_original',cat:'xingtu',name:'原相机',icon:'📱',desc:'醒图·轻度优化',stars:3,xingtu:{shifts:{brightness:3,contrast:3,saturation:3}}},
+  // 🎓 教程学·网感滤镜包（参数提炼自抖音/小红书博主真实教程, 可溯源）
+  {id:'learned_0',cat:'learned',name:'直播水光肌',icon:'💄',desc:'抖音博主·磨皮60美白50自然清透',stars:5,learned:{shifts:{brightness:8,saturation:3,contrast:-3},raw_params:{磨皮:60,美白:50,妆容:30,滤镜:55},source:'直播美颜参数',url:'https://www.douyin.com/video/7627796316106397297'}},
+  {id:'learned_1',cat:'learned',name:'宫崎骏通透',icon:'🌤',desc:'抖音博主·逆光废片拯救 降对比高饱和',stars:5,learned:{shifts:{brightness:10,saturation:14,contrast:-12},raw_params:{对比度:-74,高光:-100,阴影:25,自然饱和度:90,饱和度:100},source:'拯救逆光废片',url:'https://www.douyin.com/video/7189550093027052859'}},
+  {id:'learned_2',cat:'learned',name:'韩系冷白皮',icon:'🦢',desc:'小红书博主·去黄冷白清冷感(色温-25)',stars:5,learned:{shifts:{brightness:7,saturation:4,contrast:2,temperature:-8},raw_params:{曝光:20,鲜明度:12,高光:6,色温:-25,色调:14,锐度:12},source:'韩女同款白皮滤镜',url:'https://www.xiaohongshu.com/explore/6a50edeb000000001503cf96'}},
+  {id:'learned_3',cat:'learned',name:'网红氛围感',icon:'✨',desc:'小红书博主·高级感大片(曝光22高光18)',stars:5,learned:{shifts:{brightness:7,saturation:5,contrast:3},raw_params:{曝光:22,高光:18,阴影:23,色温:-10,锐度:15,清晰度:9},source:'网红氛围感修图秘籍',url:'https://www.xiaohongshu.com/explore/67caf5a50000000028029f0d'}},
+
 ];
+// 注册静态网感滤镜到 learned 分类（可与其他蒸馏技能同列）
+['learned_0','learned_1','learned_2','learned_3'].forEach(function(fid){
+  if(S.learned.indexOf(fid)===-1) S.learned.push(fid);
+});
+
 
 // ========== 美图预设映射（美图API预设ID → 本地滤镜参数）==========
 var meituPresetMap = {
@@ -876,6 +887,14 @@ function selectFilter(id){
     if(s.brightness) document.getElementById('bs').value=Math.abs(s.brightness)*5;
     if(s.contrast){var coEl=document.getElementById('co')||document.getElementById('fs'); if(coEl) coEl.value=Math.abs(s.contrast)*5;}
     addMsg('ai','🌸 已选醒图平替「'+f.name+'」！三优先级: LUT → OpenCV → PIL');
+  } else if(f&&f.learned){
+    document.getElementById('beautyPanel').style.display='block';
+    var sl=f.learned.shifts||{};
+    // 映射 shifts 到滑杆: brightness→fs偏置, 显示信息
+    var fsEl=document.getElementById('fs');
+    if(fsEl){ fsEl.value = 50 + Math.round((sl.brightness||0)*2); document.getElementById('fs_val').textContent=fsEl.value; }
+    addMsg('ai','🎓 已用教程网感滤镜「'+f.name+'」· 来自 '+(f.learned.source||'博主教程')+' 参数'+(f.learned.raw_params?('（'+Object.keys(f.learned.raw_params).slice(0,4).join('/')+'）'):'')+'，可在滑杆微调');
+  
   } else {
     document.getElementById('beautyPanel').style.display='none';
   }
@@ -1959,6 +1978,20 @@ var FE={
       case 'meitu_cream':for(i=0;i<l;i+=4){var a=(d[i]+d[i+1]+d[i+2])/3;d[i]=M(255,a+(d[i]-a)*0.85+18);d[i+1]=M(255,a+(d[i+1]-a)*0.85+16);d[i+2]=M(255,a+(d[i+2]-a)*0.85+14);}break;
       case 'meitu_japan':for(i=0;i<l;i+=4){d[i]=M(255,d[i]*1.05+10);d[i+1]=M(255,d[i+1]*1.02+8);d[i+2]=M(255,d[i+2]*1.06+12);}break;
       case 'meitu_korea':for(i=0;i<l;i+=4){d[i]=M(255,d[i]*1.08+15);d[i+1]=M(255,d[i+1]*1.06+12);d[i+2]=M(255,d[i+2]*1.04+10);d[i+1]=M(255,d[i+1]+8);}break;
+      // 🎓 网感滤镜包 (learned_0~3) - 像素级模拟 shifts
+      case 'learned_0': // 直播水光肌: 提亮+低对比+微饱和 (磨皮感靠亮度柔化)
+        for(i=0;i<l;i+=4){var g0=(d[i]+d[i+1]+d[i+2])/3;d[i]=M(255,g0+(d[i]-g0)*0.9+18);d[i+1]=M(255,g0+(d[i+1]-g0)*0.9+16);d[i+2]=M(255,g0+(d[i+2]-g0)*0.9+14);}
+        break;
+      case 'learned_1': // 宫崎骏通透: 降对比+高饱和+提亮 (通透漫画感)
+        for(i=0;i<l;i+=4){var g1=(d[i]+d[i+1]+d[i+2])/3;d[i]=M(255,M(0,g1+(d[i]-g1)*1.7+10));d[i+1]=M(255,M(0,g1+(d[i+1]-g1)*1.7+12));d[i+2]=M(255,M(0,g1+(d[i+2]-g1)*1.7+18));d[i]=M(255,d[i]*1.08+8);d[i+1]=M(255,d[i+1]*1.06+6);d[i+2]=M(255,d[i+2]*1.1+10);}
+        break;
+      case 'learned_2': // 韩系冷白皮: 去黄(蓝调)+提亮+清透
+        for(i=0;i<l;i+=4){var g2=(d[i]+d[i+1]+d[i+2])/3;d[i]=M(255,g2+(d[i]-g2)*0.85+8);d[i+1]=M(255,g2+(d[i+1]-g2)*0.88+10);d[i+2]=M(255,g2+(d[i+2]-g2)*1.15+20);d[i]=M(255,d[i]*1.05);d[i+1]=M(255,d[i+1]*1.03);}
+        break;
+      case 'learned_3': // 网红氛围感: 中提亮+微饱和+微对比 (高级感)
+        for(i=0;i<l;i+=4){var g3=(d[i]+d[i+1]+d[i+2])/3;d[i]=M(255,M(0,g3+(d[i]-g3)*1.15+12));d[i+1]=M(255,M(0,g3+(d[i+1]-g3)*1.12+10));d[i+2]=M(255,M(0,g3+(d[i+2]-g3)*1.05+8));}
+        break;
+
     }
     // Apply beauty panel params (sliders)
     var bs=parseInt(document.getElementById('bs').value);
