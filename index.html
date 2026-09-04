@@ -764,7 +764,7 @@ var filters = [
 
 ];
 // 注册静态网感滤镜到 learned 分类（可与其他蒸馏技能同列）
-['learned_0','learned_1','learned_2','learned_3'].forEach(function(fid){
+['learned_0','learned_1','learned_2','learned_3','learned_5','learned_6'].forEach(function(fid){
   if(S.learned.indexOf(fid)===-1) S.learned.push(fid);
 });
 
@@ -1437,6 +1437,14 @@ function extractSkillFromAPI(videoCacheIdx){
   }
   
   // 无真实链接且不在后端环境 → 无法蒸馏，直接本地模式
+  // ?? 静态托管?境(GitHub Pages)无后端 → 直接本地智能分析, 不等25s超时
+  var isStaticHost = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
+  if(isStaticHost){
+    localFallback('static host (no backend)');
+    return;
+  }
+  
+
   if(!realUrl){
     localFallback('no real url');
     return;
@@ -2778,6 +2786,13 @@ function aeRemoveFile(el){
   document.getElementById('aeStatus').textContent = '已选 ' + _aeFiles.length + ' 个素材';
 }
 function autoEditRender(){
+  // ?? 静态托管?境（GitHub Pages 无后端）提示
+  var isStaticHost = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
+  if(isStaticHost){
+    toast('智能成片需本地后端(ffmpeg+whisper)，请打开 http://localhost:8700 使用','err');
+    return;
+  }
+
   if(_aeFiles.length===0){ toast('请先选择素材','warn'); return; }
   var instruction = document.getElementById('aeInstruction').value.trim();
   if(!instruction){ toast('说一句话告诉 AI 怎么剪','warn'); return; }
