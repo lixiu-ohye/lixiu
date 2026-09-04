@@ -14,6 +14,7 @@ _wx_*.json
 _wx_fetch*.py
 _wechat_*.json
 _wx_articles/
+_wx_articles2/
 _wx_links*
 _wx_single.txt
 _wx_scan_out.txt
