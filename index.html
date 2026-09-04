@@ -302,6 +302,7 @@ header{padding:12px 14px}
   <!-- Main Tabs -->
   <div class="main-tabs">
     <button class="main-tab active" data-tab="tab-edit">🎨 修图</button>
+    <button class="main-tab" data-tab="tab-autoedit">🤖 智能成片</button>
     <button class="main-tab" data-tab="tab-tpl">📋 模板推荐</button>
     <button class="main-tab" data-tab="tab-jianying">🎬 剪映模板</button>
     <button class="main-tab" data-tab="tab-distill">🧠 教程学习</button>
@@ -396,6 +397,45 @@ header{padding:12px 14px}
   </div>
 
   <!-- ===== Tab: 模板推荐 ===== -->
+    <div class="tab-content" id="tab-autoedit">
+      <div class="card-title"><span class="ic">🤖</span>智能成片 · 丢素材 + 说句话 = 出片</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">免费本地方案：上传拍摄素材 → 说需求（"剪成60秒口播，加字幕"）→ 自动剪停顿/拼接/加字幕 → 下载成片</p>
+
+      <div id="aeDropZone" style="border:2px dashed rgba(200,160,140,0.4);border-radius:16px;padding:30px 20px;text-align:center;cursor:pointer;background:rgba(255,252,248,0.6);margin-bottom:14px;transition:all .2s">
+        <div style="font-size:34px;margin-bottom:8px">📁</div>
+        <div style="font-size:14px;color:var(--text);font-weight:600">点击选择或拖拽素材到这里</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">支持 mp4/mov/mkv/avi/jpg/png 等，可多选</div>
+        <input type="file" id="aeFileInput" multiple accept=".mp4,.mov,.mkv,.avi,.webm,.flv,.jpg,.jpeg,.png,.webp" style="display:none">
+      </div>
+      <div id="aeFileList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
+
+      <div class="duyi-script-area">
+        <textarea id="aeInstruction" placeholder="说一句话告诉 AI 怎么剪，例如：&#10;• 把这些素材剪成一条 60 秒的探店 vlog，加字幕&#10;• 剪掉所有停顿和废话，口播节奏紧凑一点&#10;• 前 3 秒放最精彩的镜头，配上字幕和轻快 BGM" style="min-height:90px">把这些素材剪成一条 60 秒的短视频，加上字幕，剪掉停顿废话</textarea>
+        <div class="duyi-script-hint">💡 支持：时长控制 / 加字幕 / 剪停顿 / 风格(口播·vlog·混剪·教程)</div>
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button id="aeRenderBtn" onclick="autoEditRender()" style="padding:10px 26px;background:linear-gradient(135deg,#e8a0bf,#d4a574);border:none;border-radius:22px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">🎬 开始智能成片</button>
+        <span id="aeStatus" style="font-size:12px;color:var(--text-muted)"></span>
+      </div>
+
+      <div id="aeProgressWrap" style="display:none;margin-top:16px">
+        <div style="height:8px;background:rgba(200,160,140,0.15);border-radius:4px;overflow:hidden">
+          <div id="aeProgFill" style="height:100%;width:0%;background:linear-gradient(90deg,#e8a0bf,#d4a574);transition:width .4s"></div>
+        </div>
+        <div id="aeProgText" style="font-size:12px;color:var(--text-muted);margin-top:8px">准备中…</div>
+      </div>
+
+      <div id="aeResult" style="display:none;margin-top:16px;padding:16px;background:rgba(184,217,176,0.1);border-radius:14px">
+        <div style="font-size:14px;font-weight:700;color:#5a9a5a;margin-bottom:8px">✅ 成片完成！</div>
+        <div id="aeResultMeta" style="font-size:12px;color:var(--text-muted);margin-bottom:12px"></div>
+        <div id="aeResultVideo" style="margin-bottom:10px"></div>
+        <a id="aeDownloadBtn" style="display:inline-block;padding:9px 22px;background:linear-gradient(135deg,#b8d9b0,#8ec48a);color:#fff;border-radius:20px;font-size:13px;font-weight:700;text-decoration:none" href="#" download>⬇️ 下载成片</a>
+        <button onclick="autoEditReset()" style="padding:9px 18px;background:transparent;border:1.5px solid rgba(200,160,140,0.3);border-radius:20px;color:var(--text-muted);font-size:12px;margin-left:8px;cursor:pointer">再剪一条</button>
+      </div>
+    </div>
+
+
   <div class="tab-content" id="tab-tpl">
     <div class="card">
       <div class="card-title"><span class="ic">📋</span>精选模板</div>
@@ -2658,6 +2698,114 @@ var lixiuDownload = (function(){
 
   return { parse: parse, save: save, detectPlatform: detectPlatform };
 })();
+
+
+// ═══════ 智能成片 (autoedit) ═══════
+var _aeFiles = [];
+function initAutoEdit(){
+  var dz = document.getElementById('aeDropZone');
+  var fi = document.getElementById('aeFileInput');
+  if(!dz || !fi) return;
+  dz.addEventListener('click', function(){ fi.click(); });
+  fi.addEventListener('change', function(){ aeAddFiles(fi.files); fi.value=''; });
+  dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.style.borderColor='#e8a0bf'; dz.style.background='rgba(232,160,191,0.08)'; });
+  dz.addEventListener('dragleave', function(){ dz.style.borderColor='rgba(200,160,140,0.4)'; dz.style.background='rgba(255,252,248,0.6)'; });
+  dz.addEventListener('drop', function(e){ e.preventDefault(); dz.style.borderColor='rgba(200,160,140,0.4)'; dz.style.background='rgba(255,252,248,0.6)'; aeAddFiles(e.dataTransfer.files); });
+}
+function aeAddFiles(fileList){
+  for(var i=0;i<fileList.length;i++){
+    var f = fileList[i];
+    if(_aeFiles.length>=10){ toast('最多 10 个素材','warn'); break; }
+    _aeFiles.push(f);
+    var tag = document.createElement('span');
+    tag.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1.5px solid rgba(200,160,140,0.25);border-radius:14px;font-size:12px';
+    tag.innerHTML = (f.type.indexOf('video')>-1?'🎬':'🖼️') + ' ' + f.name.substring(0,18) + ' <span style="cursor:pointer;color:#e8a0a0;font-weight:700" onclick="aeRemoveFile(this)">×</span>';
+    tag.setAttribute('data-fname', f.name);
+    document.getElementById('aeFileList').appendChild(tag);
+  }
+  var cnt = document.getElementById('aeFileList').children.length;
+  document.getElementById('aeStatus').textContent = '已选 ' + _aeFiles.length + ' 个素材';
+}
+function aeRemoveFile(el){
+  var name = el.getAttribute('data-fname');
+  _aeFiles = _aeFiles.filter(function(f){ return f.name!==name; });
+  el.parentElement.remove();
+  document.getElementById('aeStatus').textContent = '已选 ' + _aeFiles.length + ' 个素材';
+}
+function autoEditRender(){
+  if(_aeFiles.length===0){ toast('请先选择素材','warn'); return; }
+  var instruction = document.getElementById('aeInstruction').value.trim();
+  if(!instruction){ toast('说一句话告诉 AI 怎么剪','warn'); return; }
+  if(!window.__aeBusy){ window.__aeBusy = true; }
+  var btn = document.getElementById('aeRenderBtn');
+  btn.disabled = true; btn.style.opacity = 0.6;
+  var pw = document.getElementById('aeProgressWrap');
+  var fill = document.getElementById('aeProgFill');
+  var ptxt = document.getElementById('aeProgText');
+  var res = document.getElementById('aeResult');
+  res.style.display='none';
+  pw.style.display='block';
+  fill.style.width='8%';
+  ptxt.textContent='上传素材中…';
+
+  var fd = new FormData();
+  fd.append('instruction', instruction);
+  _aeFiles.forEach(function(f){ fd.append('files', f); });
+
+  var fakeProg = [12,'连接智能剪辑引擎…',25,'上传完成，开始分析素材…',40,'GLM 理解你的需求…',55,'语音转写中（剪停顿准备）…',70,'智能剪辑拼接中…',88,'烧录字幕 / 渲染成片…'];
+  var pi = 0;
+  var pInt = setInterval(function(){
+    if(pi < fakeProg.length){
+      fill.style.width = fakeProg[pi][0]+'%';
+      ptxt.textContent = fakeProg[pi][1];
+      pi++;
+    }
+  }, 2500);
+
+  fetch(API_BASE+'/autoedit/render', { method:'POST', body: fd })
+    .then(function(r){ if(!r.ok) throw new Error('render http '+r.status); return r.json(); })
+    .then(function(data){
+      clearInterval(pInt);
+      fill.style.width='100%';
+      ptxt.textContent='渲染完成！';
+      if(!data.success){ throw new Error(data.message||'render failed'); }
+      setTimeout(function(){
+        pw.style.display='none';
+        btn.disabled = false; btn.style.opacity = 1;
+        res.style.display='block';
+        var meta = '素材 ' + (data.log||'').split(',')[0] || '';
+        document.getElementById('aeResultMeta').textContent = data.log||'';
+        var vbox = document.getElementById('aeResultVideo');
+        vbox.innerHTML = '';
+        var v = document.createElement('video');
+        v.src = API_BASE + data.download_url;
+        v.controls = true;
+        v.style.cssText = 'width:100%;max-width:420px;border-radius:12px;background:#000';
+        vbox.appendChild(v);
+        document.getElementById('aeDownloadBtn').href = API_BASE + data.download_url;
+        toast('🎬 成片完成！','ok');
+      }, 500);
+    })
+    .catch(function(err){
+      clearInterval(pInt);
+      pw.style.display='none';
+      btn.disabled = false; btn.style.opacity = 1;
+      fill.style.width='0%';
+      ptxt.textContent = '出错了';
+      toast('成片失败: '+(err.message||'未知错误'),'err');
+      console.error('AUTOEDIT_ERR', err);
+    });
+}
+function autoEditReset(){
+  document.getElementById('aeResult').style.display='none';
+  document.getElementById('aeFileList').innerHTML='';
+  _aeFiles=[];
+  document.getElementById('aeStatus').textContent='';
+  document.getElementById('aeInstruction').value='把这些素材剪成一条 60 秒的短视频，加上字幕，剪掉停顿废话';
+}
+// Tab 切换时初始化
+setTimeout(initAutoEdit, 800);
+
 
 </script>
 </body>
