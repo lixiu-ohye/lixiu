@@ -946,12 +946,14 @@ function applyJianYingPreset(id){
 
 // ========== 生成剪映草稿 ==========
 function generateJianYingDraft(){
+  // 安全读取参数(元素不存在/未填时用默认值, 避免未点预设直接生成的时序报错)
+  function _jyVal(id, def){ var el=document.getElementById(id); return (el && el.value && el.value.trim()) ? el.value : def; }
   var params={
     video_name:'Lixiu_AI_Edited',
-    first_3s:document.getElementById('jyFirst').value,
-    transition:document.getElementById('jyTrans').value,
-    bgm_style:document.getElementById('jyBgm').value,
-    subtitle_style:document.getElementById('jySub').value,
+    first_3s:_jyVal('jyFirst','人物特写'),
+    transition:_jyVal('jyTrans','0.3s叠化'),
+    bgm_style:_jyVal('jyBgm','轻快'),
+    subtitle_style:_jyVal('jySub','居中白字描边'),
     segment_rules:'每5-7秒切换镜头'
   };
   
