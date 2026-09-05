@@ -2318,8 +2318,26 @@ function renderHistory(){
 }
 function restoreFromHistory(i){
   var h=S.history[i];
-  toast('历史: '+h.filter,'inf');
+  if(!h) return;
+  // 恢复成片显示到对比区
+  if(h.url){
+    S.processedUrl = h.url;
+    var afterEl=document.getElementById('afterImg');
+    if(afterEl) afterEl.innerHTML='<img src="'+h.url+'" style="max-width:100%;max-height:320px;border-radius:12px">';
+    var cs=document.getElementById('compareSection');
+    if(cs) cs.style.display='block';
+    var dl=document.getElementById('dlBtn');
+    if(dl) dl.disabled=false;
+  }
+  // 恢复滤镜选中(如存在且未删除)
+  if(h.filterId){
+    var f=filters.find(function(x){return x.id===h.filterId;});
+    if(f){ S.selFilter=h.filterId; renderFilters('all'); }
+  }
+  switchTab('tab-edit');
+  toast('🕘 已恢复历史: '+h.filter,'ok');
 }
+
 
 // ========== 开发者认证 ==========
 var DA={u:'lixiu-ohye',p:'myy123456',a:false,login:function(u,p){if(u===this.u&&p===this.p){this.a=true;return true;}return false;},logout:function(){this.a=false;}};
