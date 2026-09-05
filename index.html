@@ -1105,7 +1105,7 @@ function fetchVideos(append){
     .catch(function(err){
       console.warn('LIVE_VIDEOS_ERR, fallback to static', err);
       // 降级：尝试静态 videos.json
-      fetch('videos.json')
+      fetch('videos.json?t='+Date.now())
         .then(function(r){ if(!r.ok) throw new Error('static not found'); return r.json(); })
         .then(function(staticVideos){
           _videoLoading = false;
@@ -1170,7 +1170,7 @@ function loadStaticVideos(append){
     renderFetchedVideos(true);
     return;
   }
-  fetch('videos.json')
+  fetch('videos.json?t='+Date.now())
     .then(function(r){ if(!r.ok) throw new Error('static not found'); return r.json(); })
     .then(function(staticVideos){
       _videoLoading = false;
