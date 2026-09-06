@@ -426,11 +426,11 @@ header{padding:12px 14px}
       </div>
 
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <button id="aeRenderBtn" onclick="autoEditRender()" style="padding:10px 26px;background:linear-gradient(135deg,#e8a0bf,#d4a574);border:none;border-radius:22px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">🎬 开始智能成片</button>
+        <button id="aeRenderBtn" onclick="autoEditRender()" style="padding:10px 26px;background:linear-gradient(135deg,#e8a0bf,#d4a574);border:none;border-radius:22px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">🎬 开始智能成片<button id="aeProposeBtn" onclick="autoEditPropose()" title="先让 AI 给出剪辑提案（分镜/保留区间/字幕），确认后再渲染，避免直接渲染浪费" style="padding:10px 22px;background:transparent;border:1.5px solid rgba(200,160,140,0.5);border-radius:22px;color:#8a5a70;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">💡 先生成剪辑提案</button></button>
         <span id="aeStatus" style="font-size:12px;color:var(--text-muted)"></span>
       </div>
 
-      <div id="aeProgressWrap" style="display:none;margin-top:16px">
+      <div id="aeProposalWrap" style="display:none;margin-top:16px;padding:14px 16px;background:rgba(232,160,191,0.07);border:1px solid rgba(232,160,191,0.3);border-radius:14px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:13.5px;font-weight:700;color:#8a5a70">📋 AI 剪辑提案</div><div style="display:flex;gap:8px;align-items:center"><span id="aePropMeta" style="font-size:11px;color:var(--text-muted)"></span><button id="aePropRerun" onclick="autoEditPropose()" style="padding:4px 12px;border:1px solid rgba(200,160,140,0.5);border-radius:14px;background:transparent;color:#8a5a70;font-size:11px;cursor:pointer">🔄 重新提案</button><button id="aePropRender" onclick="autoEditRenderResume()" style="padding:5px 14px;border:none;border-radius:14px;background:linear-gradient(135deg,#2bb673,#5a9a5a);color:#fff;font-size:12px;font-weight:700;cursor:pointer">✅ 确认渲染</button></div></div><div id="aeProposalBody" style="font-size:12px;line-height:1.8;color:var(--text);max-height:280px;overflow:auto"></div></div><div id="aeProgressWrap" style="display:none;margin-top:16px">
         <div style="height:8px;background:rgba(200,160,140,0.15);border-radius:4px;overflow:hidden">
           <div id="aeProgFill" style="height:100%;width:0%;background:linear-gradient(90deg,#e8a0bf,#d4a574);transition:width .4s"></div>
         </div>
@@ -3556,7 +3556,10 @@ function applyHlPreset(id, mode){
   document.head.appendChild(st);
 })();
 
-function autoEditRender(){
+function autoEditRender(opts){
+  opts = opts || {};
+  var __resumeJob = opts.resumeJob || null;
+  var __resumeInstruction = (opts.instruction!=null) ? opts.instruction : null;
   // ?? 静态托管?境（GitHub Pages 无后端）提示
   var isStaticHost = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
   if(isStaticHost){
@@ -3565,11 +3568,14 @@ function autoEditRender(){
   }
 
   if(_aeFiles.length===0){ toast('请先选择素材','warn'); return; }
-  var instruction = document.getElementById('aeInstruction').value.trim();
+  var instruction = (__resumeInstruction!=null) ? __resumeInstruction : document.getElementById('aeInstruction').value.trim();
   if(!instruction){ toast('说一句话告诉 AI 怎么剪','warn'); return; }
+  if(_aeBusyGuard && !__resumeJob) { if(_aeBusyGuard()) return; }
   if(!window.__aeBusy){ window.__aeBusy = true; }
   var btn = document.getElementById('aeRenderBtn');
-  btn.disabled = true; btn.style.opacity = 0.6;
+  if(btn){ btn.disabled = true; btn.style.opacity = 0.6; }
+  var bPropose = document.getElementById('aeProposeBtn');
+  if(bPropose){ bPropose.disabled = true; bPropose.style.opacity = 0.6; }
   var pw = document.getElementById('aeProgressWrap');
   var fill = document.getElementById('aeProgFill');
   var ptxt = document.getElementById('aeProgText');
@@ -3581,9 +3587,13 @@ function autoEditRender(){
 
   var fd = new FormData();
   fd.append('instruction', instruction);
-  _aeFiles.forEach(function(f){ fd.append('files', f); });
+  if(__resumeJob){
+    fd.append('resume', __resumeJob);
+  } else {
+    _aeFiles.forEach(function(f){ fd.append('files', f); });
+  }
 
-  var fakeProg = [12,'连接智能剪辑引擎…',25,'上传完成，开始分析素材…',40,'GLM 理解你的需求…',55,'语音转写中（剪停顿准备）…',70,'智能剪辑拼接中…',88,'烧录字幕 / 渲染成片…'];
+  var fakeProg = __resumeJob ? [12,'复用素材，连接智能剪辑引擎…',30,'按确认提案执行分镜…',55,(__resumeInstruction&&__resumeInstruction.indexOf('"scenes"')>-1)?'Scene 引擎：变速/大字/音效合成中…':'智能剪辑拼接中…',75,'混音渲染中…',88,'烧录字幕 / 渲染成片…'] : [12,'连接智能剪辑引擎…',25,'上传完成，开始分析素材…',40,'GLM 理解你的需求…',55,'语音转写中（剪停顿准备）…',70,'智能剪辑拼接中…',88,'烧录字幕 / 渲染成片…'];
   var pi = 0;
   var pInt = setInterval(function(){
     if(pi < fakeProg.length){
@@ -3602,7 +3612,7 @@ function autoEditRender(){
       if(!data.success){ throw new Error(data.message||'render failed'); }
       setTimeout(function(){
         pw.style.display='none';
-        btn.disabled = false; btn.style.opacity = 1;
+        _aeBusyClear && _aeBusyClear();
         res.style.display='block';
         var meta = '素材 ' + (data.log||'').split(',')[0] || '';
         document.getElementById('aeResultMeta').textContent = data.log||'';
@@ -3620,7 +3630,7 @@ function autoEditRender(){
     .catch(function(err){
       clearInterval(pInt);
       pw.style.display='none';
-      btn.disabled = false; btn.style.opacity = 1;
+      _aeBusyClear && _aeBusyClear();
       fill.style.width='0%';
       ptxt.textContent = '出错了';
       // 429/限流 → 友好提示(glm_client已自动重试, 这里不再重复报错)
@@ -3632,6 +3642,170 @@ function autoEditRender(){
       console.error('AUTOEDIT_ERR', err);
     });
 }
+
+// ---------- 提案-确认工作流 (propose -> resume render) ----------
+function _escH(t){
+  return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function _fmtT(sec){
+  sec = Number(sec)||0;
+  var m = Math.floor(sec/60), s2 = Math.floor(sec%60);
+  return (m>0?(m+'m'+(''+s2).padStart(2,'0')+'s'):(s2+'s'));
+}
+function _aeBusyGuard(){
+  if(window.__aeBusy){ toast('正在处理中，请稍候…','warn'); return true; }
+  window.__aeBusy = true;
+  var b1 = document.getElementById('aeRenderBtn');
+  var b2 = document.getElementById('aeProposeBtn');
+  if(b1){ b1.disabled = true; b1.style.opacity = 0.6; }
+  if(b2){ b2.disabled = true; b2.style.opacity = 0.6; }
+  return false;
+}
+function _aeBusyClear(){
+  window.__aeBusy = false;
+  var b1 = document.getElementById('aeRenderBtn');
+  var b2 = document.getElementById('aeProposeBtn');
+  if(b1){ b1.disabled = false; b1.style.opacity = 1; }
+  if(b2){ b2.disabled = false; b2.style.opacity = 1; }
+}
+function autoEditPropose(){
+  var isStaticHost = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
+  if(isStaticHost){ toast('智能成片需本地后端(ffmpeg+whisper)，请打开 http://localhost:8700 使用','err'); return; }
+  if(_aeFiles.length===0){ toast('请先选择素材','warn'); return; }
+  var instruction = document.getElementById('aeInstruction').value.trim();
+  if(!instruction){ toast('说一句话告诉 AI 怎么剪','warn'); return; }
+  if(_aeBusyGuard()) return;
+
+  var pw = document.getElementById('aeProgressWrap');
+  var fill = document.getElementById('aeProgFill');
+  var ptxt = document.getElementById('aeProgText');
+  var res = document.getElementById('aeResult');
+  if(res) res.style.display='none';
+  var pwrap = document.getElementById('aeProposalWrap');
+  if(pwrap) pwrap.style.display='none';
+  pw.style.display='block';
+  fill.style.width='15%';
+  ptxt.textContent='上传素材，生成剪辑提案…';
+
+  var fd = new FormData();
+  fd.append('instruction', instruction);
+  _aeFiles.forEach(function(f){ fd.append('files', f); });
+
+  var steps = [[20,'素材解析中…'],[45,'语音转写 / 分镜理解中…'],[75,'AI 生成剪辑提案…']];
+  var pi = 0;
+  var pInt = setInterval(function(){
+    if(pi < steps.length){ fill.style.width = steps[pi][0]+'%'; ptxt.textContent = steps[pi][1]; pi++; }
+  }, 2000);
+
+  fetch(API_BASE+'/autoedit/propose', { method:'POST', body: fd })
+    .then(function(r){ if(!r.ok) throw new Error('propose http '+r.status); return r.json(); })
+    .then(function(data){
+      clearInterval(pInt);
+      pw.style.display='none';
+      _aeBusyClear();
+      if(!data.success){ throw new Error(data.message||'propose failed'); }
+      window.__aePendingJob = data.job_id || null;
+      renderAeProposal(data, instruction);
+    })
+    .catch(function(err){
+      clearInterval(pInt);
+      pw.style.display='none';
+      _aeBusyClear();
+      if(friendlyErr && friendlyErr(err)==='throttled'){ toast('⏳ 服务繁忙(限流)，请稍后再试','warn'); return; }
+      toast('提案失败: '+(err.message||'未知错误'),'err');
+      console.error('AUTOEDIT_PROPOSE_ERR', err);
+    });
+}
+function _propSceneRows(prop){
+  var scenes = prop.scenes || [];
+  var rows = [];
+  scenes.forEach(function(sc, i){
+    var t = (sc.text||[]).map(function(x){ return _escH(x.text||''); }).join(' / ');
+    var sfx = (sc.sfx||[]).map(function(x){ return _escH(x.type||''); }).join(',');
+    rows.push('<div style="padding:7px 0;border-bottom:1px dashed rgba(200,160,140,0.25)"><span style="color:#a8812f;font-weight:700">场景 '+(i+1)+'</span> 素材 <b>'+_escH(sc.src||'')+'</b> · 入点 '+_fmtT(sc.in)+' ~ '+_fmtT(sc.out)+
+      (sc.speed?' · 速度 x'+_escH(sc.speed):'')+
+      (sc.interpolate?' · 补帧':'')+
+      (t?'<br>📝 大字：'+t:'')+
+      (sfx?'<br>🔊 音效：'+sfx:'')+
+      '</div>');
+  });
+  return rows.join('');
+}
+function renderAeProposal(data, instruction){
+  var prop = data.proposal || {};
+  var pwrap = document.getElementById('aeProposalWrap');
+  var body = document.getElementById('aeProposalBody');
+  var meta = document.getElementById('aePropMeta');
+  if(!pwrap || !body) return;
+  var kind = prop.kind || data.mode || 'nlu';
+  var isScene = (kind==='scene');
+  var h = '';
+  // summary chips
+  h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
+  if(isScene){
+    var bgm = prop.bgm || {};
+    var n = (prop.scenes||[]).length;
+    h += '<span style="padding:2px 10px;border-radius:10px;background:rgba(43,182,115,0.12);color:#2b6d4d;font-size:11px">🎬 Scene 分镜 ×'+n+'</span>';
+    if(bgm.mood) h += '<span style="padding:2px 10px;border-radius:10px;background:rgba(232,160,191,0.12);color:#8a5a70;font-size:11px">🎵 BGM '+_escH(bgm.mood)+(bgm.bpm?' '+_escH(bgm.bpm)+'BPM':'')+'</span>';
+    if(prop.ratio) h += '<span style="padding:2px 10px;border-radius:10px;background:rgba(232,160,191,0.12);color:#8a5a70;font-size:11px">📐 '+_escH(prop.ratio)+'</span>';
+  } else {
+    var p = prop.params || {};
+    var vi = prop.video_info || {};
+    h += '<span style="padding:2px 10px;border-radius:10px;background:rgba(232,160,191,0.12);color:#8a5a70;font-size:11px">🎞️ 素材 '+_escH(vi.width||'')+'×'+_escH(vi.height||'')+' · '+_fmtT(vi.duration)+'</span>';
+    if(p.duration) h += '<span style="padding:2px 10px;border-radius:10px;background:rgba(232,160,191,0.12);color:#8a5a70;font-size:11px">⏱️ 目标 '+_fmtT(p.duration)+'</span>';
+    if(p.style) h += '<span style="padding:2px 10px;border-radius:10px;background:rgba(232,160,191,0.12);color:#8a5a70;font-size:11px">🎨 风格 '+_escH(p.style)+'</span>';
+    if(p.subtitle!=null) h += '<span style="padding:2px 10px;border-radius:10px;background:rgba(232,160,191,0.12);color:#8a5a70;font-size:11px">💬 字幕 '+(p.subtitle?'开':'关')+'</span>';
+    h += '<span style="padding:2px 10px;border-radius:10px;background:rgba(232,160,191,0.12);color:#8a5a70;font-size:11px">✂️ 保留 '+(prop.keep_segments!=null?prop.keep_segments:(prop.segments||[]).length)+' 段</span>';
+  }
+  h += '</div>';
+  // notes
+  var notes = prop.notes || [];
+  if(notes.length){
+    h += '<div style="margin-bottom:8px;color:#a8812f;font-size:11.5px">'+notes.map(function(x){ return '• '+_escH(x); }).join('<br>')+'</div>';
+  }
+  // body rows
+  if(isScene){
+    h += _propSceneRows(prop);
+    h += '<div style="margin-top:8px;font-size:11px;color:var(--text-muted)">✅ 确认后引擎将按以上分镜合成：BGM/变速补帧/大字描边/三合一音效/调色混音，约 1~3 分钟。</div>';
+  } else {
+    var segs = prop.segments || [];
+    segs.forEach(function(seg, i2){
+      h += '<div style="padding:7px 0;border-bottom:1px dashed rgba(200,160,140,0.25)"><span style="color:#a8812f;font-weight:700">片段 '+(i2+1)+'</span> '+_fmtT(seg.start)+' ~ '+_fmtT(seg.end)+' <span style="color:var(--text-muted)">('+_fmtT(seg.dur)+')</span>'
+        +(seg.text?'<br>🗣️ '+_escH(seg.text):'')+'</div>';
+    });
+    var subs = prop.subtitles || [];
+    if(subs.length){
+      h += '<div style="margin-top:6px;color:#8a5a70;font-size:11px">💬 字幕 '+subs.length+' 条'+(subs.length<=3?'：'+subs.map(function(x){return _escH(x.text||'');}).join(' / '):'')+'</div>';
+    }
+    h += '<div style="margin-top:8px;font-size:11px;color:var(--text-muted)">✅ 确认后按此提案渲染（保留区间 + 字幕 + 风格）。如需调整，改上方指令后点「🔄 重新提案」。</div>';
+  }
+  body.innerHTML = h;
+  pwrap.style.display = 'block';
+  meta.textContent = (data.job_id?('#'+data.job_id.replace('job_','').slice(0,8)):'') + (isScene?' · Scene 引擎':' · 智能粗剪');
+  toast(isScene?'✅ 分镜提案已生成，确认后渲染':'✅ 剪辑提案已生成，确认后渲染','ok');
+  try{ pwrap.scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(e){}
+}
+function autoEditRenderResume(){
+  var job = window.__aePendingJob;
+  if(!job){ toast('没有待确认的提案','warn'); return; }
+  var instruction = document.getElementById('aeInstruction').value.trim();
+  var res = document.getElementById('aeResult');
+  if(res) res.style.display='none';
+  var pwrap = document.getElementById('aeProposalWrap');
+  if(pwrap) pwrap.style.display='none';
+  // 复用 autoEditRender 的渲染主流程
+  try{
+    autoEditRender({ resumeJob: job, instruction: instruction });
+  }catch(e){
+    if(window.autoEditRenderResumeFallback){
+      window.autoEditRenderResumeFallback(job, instruction);
+    } else {
+      toast('渲染调用失败: '+(e.message||e),'err');
+      if(pwrap) pwrap.style.display='block';
+    }
+  }
+}
+
 function autoEditReset(){
   document.getElementById('aeResult').style.display='none';
   document.getElementById('aeFileList').innerHTML='';
