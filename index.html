@@ -2968,19 +2968,506 @@ function aeRemoveFile(el){
   document.getElementById('aeStatus').textContent = '已选 ' + _aeFiles.length + ' 个素材';
 }
 // ===== 高光切片模板库（场景模板：吃鸡四幕 / LOL 六连杀 / 王者五杀） =====
+var hlEngineScenes = {
+ "hl_lol": {
+  "ratio": "16:9",
+  "color": {
+   "sat": 1.16,
+   "contrast": 1.22,
+   "rs": -0.06,
+   "bs": 0.07
+  },
+  "bgm": {
+   "type": "synth",
+   "mood": "phonk",
+   "bpm": 140
+  },
+  "scenes": [
+   {
+    "src": "input_0.mp4",
+    "in": 0.5,
+    "out": 6.0,
+    "speed": 0.9,
+    "interpolate": true,
+    "text": [
+     {
+      "text": "叁杀",
+      "style": "big",
+      "font_size": 190,
+      "color": "#FFD700",
+      "x": "(w-text_w)/2",
+      "y": "h*0.35",
+      "start": 0.25,
+      "end": 2.85,
+      "stroke": {
+       "width": 3,
+       "color": "#000000"
+      }
+     }
+    ],
+    "sfx": [
+     {
+      "type": "boom",
+      "at": 0.35,
+      "vol": 0.9
+     }
+    ]
+   },
+   {
+    "src": "input_1.mp4",
+    "in": 0.5,
+    "out": 5.5,
+    "speed": 1.0,
+    "text": [
+     {
+      "text": "壹杀",
+      "style": "big",
+      "font_size": 190,
+      "color": "#FFD700",
+      "x": "(w-text_w)/2",
+      "y": "h*0.35",
+      "start": 0.25,
+      "end": 2.75,
+      "stroke": {
+       "width": 3,
+       "color": "#000000"
+      }
+     }
+    ],
+    "sfx": [
+     {
+      "type": "boom",
+      "at": 0.3,
+      "vol": 0.8
+     }
+    ]
+   },
+   {
+    "src": "input_2.mp4",
+    "in": 0.5,
+    "out": 5.5,
+    "speed": 0.85,
+    "interpolate": true,
+    "text": [
+     {
+      "text": "壹杀",
+      "style": "big",
+      "font_size": 190,
+      "color": "#FFD700",
+      "x": "(w-text_w)/2",
+      "y": "h*0.35",
+      "start": 0.25,
+      "end": 2.75,
+      "stroke": {
+       "width": 3,
+       "color": "#000000"
+      }
+     }
+    ],
+    "sfx": [
+     {
+      "type": "impact",
+      "at": 0.3,
+      "vol": 0.8
+     }
+    ]
+   },
+   {
+    "src": "input_3.mp4",
+    "in": 0.5,
+    "out": 6.0,
+    "speed": 1.0,
+    "text": [
+     {
+      "text": "贰杀",
+      "style": "big",
+      "font_size": 190,
+      "color": "#FFD700",
+      "x": "(w-text_w)/2",
+      "y": "h*0.35",
+      "start": 0.25,
+      "end": 3.0,
+      "stroke": {
+       "width": 3,
+       "color": "#000000"
+      }
+     }
+    ],
+    "sfx": [
+     {
+      "type": "boom",
+      "at": 0.3,
+      "vol": 0.9
+     }
+    ]
+   },
+   {
+    "src": "input_4.mp4",
+    "in": 0.5,
+    "out": 6.5,
+    "speed": 0.9,
+    "interpolate": true,
+    "text": [
+     {
+      "text": "决胜",
+      "style": "big",
+      "font_size": 190,
+      "color": "#FFD700",
+      "x": "(w-text_w)/2",
+      "y": "h*0.35",
+      "start": 0.25,
+      "end": 3.25,
+      "stroke": {
+       "width": 3,
+       "color": "#000000"
+      }
+     }
+    ],
+    "sfx": [
+     {
+      "type": "boom",
+      "at": 0.4,
+      "vol": 0.95
+     }
+    ]
+   },
+   {
+    "src": "input_5.mp4",
+    "in": 0.5,
+    "out": 6.0,
+    "speed": 1.0,
+    "text": [
+     {
+      "text": "拿下",
+      "style": "big",
+      "font_size": 190,
+      "color": "#FF2E4E",
+      "x": "(w-text_w)/2",
+      "y": "h*0.35",
+      "start": 0.25,
+      "end": 3.0,
+      "stroke": {
+       "width": 3,
+       "color": "#000000"
+      }
+     }
+    ],
+    "sfx": [
+     {
+      "type": "impact",
+      "at": 0.3,
+      "vol": 0.9
+     }
+    ]
+   }
+  ]
+ },
+ "hl_chicken": {
+  "ratio": "16:9",
+  "color": {
+   "sat": 1.12,
+   "contrast": 1.18
+  },
+  "bgm": {
+   "type": "synth",
+   "mood": "phonk",
+   "bpm": 142
+  },
+  "scenes": [
+   {
+    "src": "input_0.mp4",
+    "in": 0.5,
+    "out": 6.5,
+    "speed": 0.85,
+    "interpolate": true,
+    "text": [
+     {
+      "text": "首杀",
+      "style": "big",
+      "font_size": 190,
+      "color": "#00FF88",
+      "x": "(w-text_w)/2",
+      "y": "h*0.35",
+      "start": 0.25,
+      "end": 3.0,
+      "stroke": {
+       "width": 3,
+       "color": "#000000"
+      }
+     }
+    ],
+    "sfx": [
+     {
+      "type": "boom",
+      "at": 0.3,
+      "vol": 0.9
+     }
+    ]
+   },
+   {
+    "src": "input_1.mp4",
+    "in": 0.5,
+    "out": 7.0,
+    "speed": 1.0,
+    "text": [
+     {
+      "text": "连杀",
+      "style": "big",
+      "font_size": 190,
+      "color": "#FFD700",
+      "x": "(w-text_w)/2",
+      "y": "h*0.35",
+      "start": 0.25,
+      "end": 3.0,
+      "stroke": {
+       "width": 3,
+       "color": "#000000"
+      }
+     }
+    ],
+    "sfx": [
+     {
+      "type": "impact",
+      "at": 0.3,
+      "vol": 0.8
+     }
+    ]
+   },
+   {
+    "src": "input_2.mp4",
+    "in": 0.5,
+    "out": 7.5,
+    "speed": 0.9,
+    "interpolate": true,
+    "text": [
+     {
+      "text": "吃鸡",
+      "style": "big",
+      "font_size": 190,
+      "color": "#FFD700",
+      "x": "(w-text_w)/2",
+      "y": "h*0.35",
+      "start": 0.25,
+      "end": 3.25,
+      "stroke": {
+       "width": 3,
+       "color": "#000000"
+      }
+     }
+    ],
+    "sfx": [
+     {
+      "type": "boom",
+      "at": 0.35,
+      "vol": 0.95
+     }
+    ]
+   },
+   {
+    "src": "input_3.mp4",
+    "in": 0.5,
+    "out": 5.0,
+    "speed": 1.0,
+    "text": [
+     {
+      "text": "关注",
+      "style": "big",
+      "font_size": 150,
+      "color": "#FF2E4E",
+      "x": "(w-text_w)/2",
+      "y": "h*0.5",
+      "start": 0.25,
+      "end": 2.75,
+      "stroke": {
+       "width": 3,
+       "color": "#000000"
+      }
+     }
+    ],
+    "sfx": []
+   }
+  ]
+ },
+ "hl_wzry": {
+  "ratio": "16:9",
+  "color": {
+   "sat": 1.18,
+   "contrast": 1.2
+  },
+  "bgm": {
+   "type": "synth",
+   "mood": "hardstyle",
+   "bpm": 150
+  },
+  "scenes": [
+   {
+    "src": "input_0.mp4",
+    "in": 0.5,
+    "out": 5.0,
+    "speed": 1.0,
+    "text": [
+     {
+      "text": "一血",
+      "style": "big",
+      "font_size": 190,
+      "color": "#00FF88",
+      "x": "(w-text_w)/2",
+      "y": "h*0.35",
+      "start": 0.25,
+      "end": 2.5,
+      "stroke": {
+       "width": 3,
+       "color": "#000000"
+      }
+     }
+    ],
+    "sfx": [
+     {
+      "type": "boom",
+      "at": 0.3,
+      "vol": 0.8
+     }
+    ]
+   },
+   {
+    "src": "input_1.mp4",
+    "in": 0.5,
+    "out": 5.5,
+    "speed": 0.9,
+    "interpolate": true,
+    "text": [
+     {
+      "text": "双杀",
+      "style": "big",
+      "font_size": 190,
+      "color": "#FFD700",
+      "x": "(w-text_w)/2",
+      "y": "h*0.35",
+      "start": 0.25,
+      "end": 2.75,
+      "stroke": {
+       "width": 3,
+       "color": "#000000"
+      }
+     }
+    ],
+    "sfx": [
+     {
+      "type": "impact",
+      "at": 0.3,
+      "vol": 0.85
+     }
+    ]
+   },
+   {
+    "src": "input_2.mp4",
+    "in": 0.5,
+    "out": 5.5,
+    "speed": 1.0,
+    "text": [
+     {
+      "text": "三杀",
+      "style": "big",
+      "font_size": 190,
+      "color": "#FFD700",
+      "x": "(w-text_w)/2",
+      "y": "h*0.35",
+      "start": 0.25,
+      "end": 2.75,
+      "stroke": {
+       "width": 3,
+       "color": "#000000"
+      }
+     }
+    ],
+    "sfx": [
+     {
+      "type": "boom",
+      "at": 0.3,
+      "vol": 0.9
+     }
+    ]
+   },
+   {
+    "src": "input_3.mp4",
+    "in": 0.5,
+    "out": 6.0,
+    "speed": 0.85,
+    "interpolate": true,
+    "text": [
+     {
+      "text": "四杀",
+      "style": "big",
+      "font_size": 190,
+      "color": "#FFD700",
+      "x": "(w-text_w)/2",
+      "y": "h*0.35",
+      "start": 0.25,
+      "end": 3.0,
+      "stroke": {
+       "width": 3,
+       "color": "#000000"
+      }
+     }
+    ],
+    "sfx": [
+     {
+      "type": "boom",
+      "at": 0.35,
+      "vol": 0.9
+     }
+    ]
+   },
+   {
+    "src": "input_4.mp4",
+    "in": 0.5,
+    "out": 6.5,
+    "speed": 0.8,
+    "interpolate": true,
+    "text": [
+     {
+      "text": "五杀",
+      "style": "big",
+      "font_size": 200,
+      "color": "#FFD700",
+      "x": "(w-text_w)/2",
+      "y": "h*0.35",
+      "start": 0.25,
+      "end": 3.25,
+      "stroke": {
+       "width": 3,
+       "color": "#FF2E4E"
+      }
+     }
+    ],
+    "sfx": [
+     {
+      "type": "boom",
+      "at": 0.4,
+      "vol": 1.0
+     }
+    ]
+   }
+  ]
+ }
+};
+
 var hlPresets = [
   {id:'hl_chicken', name:'吃鸡·四幕高光', icon:'🪂', game:'和平精英',
+   engine:'hl_chicken',
    scenes:'hook 开局亮眼 → process 连杀推进 → result 决赛圈/吃鸡 → cta 关注引导',
    segs:4, ratio:'横屏 16:9', dur:'25~35s',
    tpl:'游戏高光切片：把素材剪成吃鸡高光集锦，四幕结构——第一幕开场直接放最高光击杀（黄金3秒），第二幕连续击杀推进节奏，第三幕决赛圈或吃鸡名场面收束，第四幕结尾加关注引导。总时长30秒左右，横屏16:9，卡点剪辑，击杀瞬间放慢动作+定格，燃向BGM，击杀时刻加“XXX击杀”大字标注。素材需包含：开镜击杀/连杀/决赛圈/吃鸡或成盒名场面片段。',
    material:'素材建议 ≥6 段：①开局高光击杀 ②-④连续击杀(每段2-4s) ⑤决赛圈博弈 ⑥吃鸡结算画面'},
   {id:'hl_lol', name:'LOL·六连杀燃向', icon:'⚔️', game:'英雄联盟手游',
+   engine:'hl_lol',
    scenes:'叁杀开局 → 单杀 → 越塔 → 团战双杀 → 基地决胜 → 一波拿下（v6-v9 实战脚步）',
    segs:6, ratio:'横屏 16:9', dur:'32~39s',
    case:'cases/case_lol_v9_39s.mp4', caseLabel:'v9 成品 39s · 关注尾卡', caseFrom:'lixiu Agent 实战渲染',
    tpl:'英雄联盟手游高光切片：六连杀燃向结构，每段一个击杀并标注击杀数大字（叁杀/壹杀/壹杀/贰杀/决胜/拿下），击杀点卡BGM重拍，击杀瞬间0.35s定格+慢动作，段间90%硬切，青橙电竞调色，全局英文accent小字（TRIPLE KILL/SOLO KILL等），结尾干净收尾不要关注引导。总时长35秒，横屏16:9。素材需为6段击杀素材：开局三杀/野区单杀/越塔收割/团战连破/基地决胜团/一波带走。',
    material:'素材需 ≥6 段击杀：①开局三杀 ②野区单杀 ③越塔收割 ④团战双杀 ⑤基地决胜团 ⑥一波带走；每段 5-8s'},
   {id:'hl_wzry', name:'王者·五杀高光', icon:'🏆', game:'王者荣耀',
+   engine:'hl_wzry',
    scenes:'一血开局 → 双杀 → 三杀 → 四杀 → 五杀/水晶决胜（可选尾卡）',
    segs:5, ratio:'横屏 16:9', dur:'28~35s',
    tpl:'王者荣耀高光切片：五杀递进燃向结构，从一血到五杀逐级推进，每个击杀标注“X杀”大字+英文（FIRST BLOOD/DOUBLE KILL/TRIPLE KILL/QUADRA KILL/PENTA KILL），五杀瞬间慢放定格+全屏特效，卡点剪辑燃向BGM，击杀时刻三合一音效。总时长30秒，横屏16:9，结尾干净。素材需包含：一血/双杀/三杀/四杀/五杀（或连胜击杀）片段。',
@@ -3017,29 +3504,49 @@ function renderHlTpl(){
         '<span style="font-size:9.5px;background:rgba(140,170,200,0.14);color:#5a7d9e;padding:2px 7px;border-radius:8px;font-weight:600">'+p.dur+'</span>'+
       '</div>'+
       caseHtml+
-      '<button type="button" style="width:100%;padding:6px 0;border:none;border-radius:12px;background:linear-gradient(135deg,var(--rose),var(--gold));color:#fff;font-size:11px;font-weight:700;cursor:pointer">'+(p.case?'雿輻?'+' 琩?撠?':'')+'</button>'+
+      '<div style="display:flex;gap:6px">'+
+      (hlEngineScenes&&hlEngineScenes[p.engine]
+        ? '<button type="button" onclick="event.stopPropagation();applyHlPreset(&#39;'+p.id+'&#39;,&#39;engine&#39;)" style="flex:1;padding:6px 0;border:none;border-radius:12px;background:linear-gradient(135deg,#2bb673,#6fd3a3);color:#fff;font-size:11px;font-weight:700;cursor:pointer">🚀 引擎直渲</button>'
+        : '')+
+      '<button type="button" style="flex:1;padding:6px 0;border:none;border-radius:12px;background:linear-gradient(135deg,var(--rose),var(--gold));color:#fff;font-size:11px;font-weight:700;cursor:pointer">'+(p.case?'🎬 看成品':'使用此模板')+'</button>'+
+    '</div>'+
     '</div>';
   }).join('');
 }
-function applyHlPreset(id){
+function applyHlPreset(id, mode){
   var p = hlPresets.find(function(x){return x.id===id;});
   if(!p) return;
   var ta = document.getElementById('aeInstruction');
-  if(ta){ ta.value = p.tpl; ta.style.borderColor = '#e8a0bf'; }
+  if(!ta) return;
+  var engineMode = (mode==='engine') && hlEngineScenes && hlEngineScenes[p.engine];
+  if(engineMode){
+    ta.value = JSON.stringify(hlEngineScenes[p.engine], null, 1);
+    ta.style.borderColor = '#2bb673';
+  } else if(ta){
+    ta.value = p.tpl;
+    ta.style.borderColor = '#e8a0bf';
+  }
   // 高亮选中卡
   var cards = document.querySelectorAll('.hl-tpl-card');
   cards.forEach(function(c){
-    c.style.borderColor = (c.getAttribute('data-id')===id) ? '#e8a0bf' : 'rgba(232,160,191,0.25)';
+    c.style.borderColor = (c.getAttribute('data-id')===id) ? (engineMode?'#2bb673':'#e8a0bf') : 'rgba(232,160,191,0.25)';
     c.style.boxShadow = (c.getAttribute('data-id')===id) ? '0 0 0 2px rgba(232,160,191,0.25)' : 'none';
   });
   var hint = document.createElement('div');
   hint.id = 'hlTplHint';
-  hint.style.cssText = 'margin-top:8px;padding:9px 12px;background:rgba(232,160,191,0.08);border-radius:10px;font-size:11.5px;line-height:1.7;color:#8a5a70;border-left:3px solid #e8a0bf';
-  hint.innerHTML = '<b>📌 '+p.name+' 素材结构：</b><br>'+p.material+'<br><span style="color:#a8812f;font-size:10.5px">⚠ 当前网页引擎为智能粗剪（变速/大字/特效需人工精剪或用哩秀 Agent 深度渲染）；指令已填好，直接拖素材生成粗剪骨架，再按卡内分镜精修。</span>';
+  hint.style.cssText = 'margin-top:8px;padding:9px 12px;border-radius:10px;font-size:11.5px;line-height:1.7;';
+  if(engineMode){
+    hint.style.cssText += 'background:rgba(43,182,115,0.1);color:#2b6d4d;border-left:3px solid #2bb673';
+    var nS = (p.segs||4)-1;
+    hint.innerHTML = '<b>🚀 引擎直渲（Scene 引擎 v1）：</b>已填入可编辑分镜 JSON，素材按 <b>input_0.mp4 → input_'+nS+'.mp4</b> 顺序对应 '+p.segs+' 段分镜。<br>👉 按卡内结构 <b>多选上传 '+p.segs+' 段素材</b>（保持分镜顺序），直接点「开始渲染」。<br><span style="color:#a8812f;font-size:10.5px">引擎自动完成：140~150BPM BGM 合成 / 变速补帧 / 击杀大字+描边 / 三合一音效 / 电竞调色 / 44.1kHz 混音。渲染耗时约 1~3 分钟。</span>';
+  } else {
+    hint.style.cssText += 'background:rgba(232,160,191,0.08);color:#8a5a70;border-left:3px solid #e8a0bf';
+    hint.innerHTML = '<b>📌 '+p.name+' 素材结构：</b><br>'+p.material+'<br><span style="color:#a8812f;font-size:10.5px">💡 点卡上「🚀 引擎直渲」可用新版 Scene 引擎直接出精剪成片（变速/大字/音效）。</span>';
+  }
   var old = document.getElementById('hlTplHint');
   if(old) old.remove();
   ta.parentElement.appendChild(hint);
-  toast('已套用「'+p.name+'」模板，检查素材结构后生成');
+  toast(engineMode ? '已载入「'+p.name+'」Scene 引擎脚本，多选素材后直接渲染' : '已套用「'+p.name+'」模板，检查素材结构后生成');
   try{ ta.focus(); ta.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
 }
 // 模板卡点击态 CSS 注入（hover）
