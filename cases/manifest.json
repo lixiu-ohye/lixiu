@@ -1,0 +1,44 @@
+[
+  {
+    "file": "case_lol_v3_35s.mp4",
+    "size_mb": 3.3,
+    "duration": "35.0",
+    "res": "720x480"
+  },
+  {
+    "file": "case_lol_v4_35s.mp4",
+    "size_mb": 3.7,
+    "duration": "35.0",
+    "res": "720x480"
+  },
+  {
+    "file": "case_lol_v5_35s.mp4",
+    "size_mb": 3.9,
+    "duration": "35.1",
+    "res": "720x480"
+  },
+  {
+    "file": "case_lol_v6_35s.mp4",
+    "size_mb": 4.3,
+    "duration": "36.0",
+    "res": "720x480"
+  },
+  {
+    "file": "case_lol_v7_32s.mp4",
+    "size_mb": 3.9,
+    "duration": "32.3",
+    "res": "720x480"
+  },
+  {
+    "file": "case_lol_v8_35s.mp4",
+    "size_mb": 4.2,
+    "duration": "35.4",
+    "res": "720x480"
+  },
+  {
+    "file": "case_lol_v9_39s.mp4",
+    "size_mb": 4.2,
+    "duration": "39.2",
+    "res": "720x480"
+  }
+]

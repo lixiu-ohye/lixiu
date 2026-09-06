@@ -2977,6 +2977,7 @@ var hlPresets = [
   {id:'hl_lol', name:'LOL·六连杀燃向', icon:'⚔️', game:'英雄联盟手游',
    scenes:'叁杀开局 → 单杀 → 越塔 → 团战双杀 → 基地决胜 → 一波拿下（v6-v9 实战脚步）',
    segs:6, ratio:'横屏 16:9', dur:'32~39s',
+   case:'cases/case_lol_v9_39s.mp4', caseLabel:'v9 成品 39s · 关注尾卡', caseFrom:'lixiu Agent 实战渲染',
    tpl:'英雄联盟手游高光切片：六连杀燃向结构，每段一个击杀并标注击杀数大字（叁杀/壹杀/壹杀/贰杀/决胜/拿下），击杀点卡BGM重拍，击杀瞬间0.35s定格+慢动作，段间90%硬切，青橙电竞调色，全局英文accent小字（TRIPLE KILL/SOLO KILL等），结尾干净收尾不要关注引导。总时长35秒，横屏16:9。素材需为6段击杀素材：开局三杀/野区单杀/越塔收割/团战连破/基地决胜团/一波带走。',
    material:'素材需 ≥6 段击杀：①开局三杀 ②野区单杀 ③越塔收割 ④团战双杀 ⑤基地决胜团 ⑥一波带走；每段 5-8s'},
   {id:'hl_wzry', name:'王者·五杀高光', icon:'🏆', game:'王者荣耀',
@@ -2986,20 +2987,37 @@ var hlPresets = [
    material:'素材需 ≥5 段击杀：一血/双杀/三杀/四杀/五杀（或同局连胜击杀），每段 4-8s'},
 ];
 
+function caseSrc(c){
+  // 静态托管(GitHub Pages / file://): 相对路径指向 index.html 同目录 cases/
+  // 本地后端: /cases/ 由后端 mount D:\lixiu-project\cases
+  var isStaticHost = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
+  if(isStaticHost) return c;
+  var base = location.pathname;
+  if(base.indexOf('/static/') > -1) return '/'+c;    // 后端 /static/index.html
+  return c;                                            // 其他(仓库根 http 服务等)
+}
 function renderHlTpl(){
   var g = document.getElementById('hlTplGrid');
   if(!g) return;
   g.innerHTML = hlPresets.map(function(p){
+    var caseHtml = '';
+    if(p.case){
+      caseHtml = '<div style="margin:4px 0 8px;border-radius:10px;overflow:hidden;background:#000;position:relative">'+
+        '<video controls preload="metadata" muted playsinline style="width:100%;display:block;max-height:150px" src="'+caseSrc(p.case)+'"></video>'+
+        (p.caseLabel?'<div style="padding:4px 8px;font-size:9.5px;color:#c9a86a;background:rgba(0,0,0,0.55);position:absolute;left:0;right:0;bottom:0;text-align:center;pointer-events:none">'+p.caseLabel+'</div>':'')+
+      '</div>';
+    }
     return '<div class="hl-tpl-card" data-id="'+p.id+'" onclick="applyHlPreset(&#39;'+p.id+'&#39;)" style="background:#fff;border:1.5px solid rgba(232,160,191,0.25);border-radius:12px;padding:12px;cursor:pointer;transition:all .2s;text-align:left">'+
       '<div style="font-size:15px;font-weight:800;margin-bottom:3px">'+p.icon+' '+p.name+'</div>'+
-      '<div style="font-size:10px;color:#b06a8a;font-weight:700;margin-bottom:6px">'+p.game+'</div>'+
+      '<div style="font-size:10px;color:#b06a8a;font-weight:700;margin-bottom:6px">'+p.game+' · '+(p.caseFrom||'')+'</div>'+
       '<div style="font-size:10.5px;color:var(--text-muted);line-height:1.5;margin-bottom:8px">'+p.scenes+'</div>'+
       '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">'+
-        '<span style="font-size:9.5px;background:rgba(232,160,191,0.12);color:#b06a8a;padding:2px 7px;border-radius:8px;font-weight:600">'+p.segs+' 幕</span>'+
+        '<span style="font-size:9.5px;background:rgba(232,160,191,0.12);color:#b06a8a;padding:2px 7px;border-radius:8px;font-weight:600">'+p.segs+' 撟?/span>'+
         '<span style="font-size:9.5px;background:rgba(212,165,116,0.14);color:#a8812f;padding:2px 7px;border-radius:8px;font-weight:600">'+p.ratio+'</span>'+
         '<span style="font-size:9.5px;background:rgba(140,170,200,0.14);color:#5a7d9e;padding:2px 7px;border-radius:8px;font-weight:600">'+p.dur+'</span>'+
       '</div>'+
-      '<button type="button" style="width:100%;padding:6px 0;border:none;border-radius:12px;background:linear-gradient(135deg,var(--rose),var(--gold));color:#fff;font-size:11px;font-weight:700;cursor:pointer">使用此模板</button>'+
+      caseHtml+
+      '<button type="button" style="width:100%;padding:6px 0;border:none;border-radius:12px;background:linear-gradient(135deg,var(--rose),var(--gold));color:#fff;font-size:11px;font-weight:700;cursor:pointer">'+(p.case?'雿輻?'+' 琩?撠?':'')+'</button>'+
     '</div>';
   }).join('');
 }
