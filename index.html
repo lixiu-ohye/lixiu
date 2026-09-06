@@ -401,6 +401,17 @@ header{padding:12px 14px}
       <div class="card-title"><span class="ic">🤖</span>智能成片 · 丢素材 + 说句话 = 出片</div>
       <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">免费本地方案：上传拍摄素材 → 说需求（"剪成60秒口播，加字幕"）→ 自动剪停顿/拼接/加字幕 → 下载成片</p>
 
+      <!-- ===== 高光模板库（游戏切片场景模板，点卡自动填指令） ===== -->
+      <div style="background:linear-gradient(135deg,rgba(232,160,191,0.08),rgba(212,165,116,0.08));border:1.5px solid rgba(232,160,191,0.35);border-radius:16px;padding:14px 16px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:14px;font-weight:800;color:var(--text)">
+            <span style="margin-right:6px">🎬</span>高光切片模板库
+          </div>
+          <span style="font-size:10px;color:var(--text-muted)">点卡自动填入指令 · 附素材结构提示</span>
+        </div>
+        <div id="hlTplGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px"></div>
+      </div>
+
       <div id="aeDropZone" style="border:2px dashed rgba(200,160,140,0.4);border-radius:16px;padding:30px 20px;text-align:center;cursor:pointer;background:rgba(255,252,248,0.6);margin-bottom:14px;transition:all .2s">
         <div style="font-size:34px;margin-bottom:8px">📁</div>
         <div style="font-size:14px;color:var(--text);font-weight:600">点击选择或拖拽素材到这里</div>
@@ -708,6 +719,17 @@ var S = {
   learned: [], history: [], chat: [],
   distillSkills: []
 };
+
+// ===== 历史持久化 =====
+function saveHistory(){
+  try{ localStorage.setItem('lixiu_history', JSON.stringify(S.history.slice(0,20))); }catch(e){}
+}
+try{
+  var _savedHist=JSON.parse(localStorage.getItem('lixiu_history')||'[]');
+  if(_savedHist&&_savedHist.length){ S.history=_savedHist; if(typeof renderHistory==='function')renderHistory(); }
+}catch(e){}
+
+
 
 // ========== 滤镜数据库 ==========
 var filters = [
@@ -1382,6 +1404,11 @@ function initSortToggle(){
 var currentSkillType = 'all';
 
 function loadSkillLibrary(){
+  if(!window.__backendSkillsLoaded){
+    window.__backendSkillsLoaded = true;
+    loadBackendSkillLibrary();
+  }
+
   var c=document.getElementById('skillsList');
   if(!c) return;
   var badge=document.getElementById('skillCountBadge');
@@ -1800,6 +1827,59 @@ function saveGLMConfig(){
 }
 
 // ========== 渲染已学技能 ==========
+// ===== 后端历史蒸馏技能加载（修复：刷新后技能库空白） =====
+function isLocalBackend(){
+  if(location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) return false;
+  if(location.protocol==='file:') return false;
+  return true;
+}
+function loadBackendSkillLibrary(){
+  if(!isLocalBackend()) return;  // GitHub Pages 静态托管无后端
+  var api = (typeof API_BASE!=='undefined' && API_BASE) ? API_BASE : 'http://localhost:8700/api';
+  fetch(api+'/advanced/distill/skills')
+    .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+    .then(function(data){
+      var list = (data && (data.skills||data)) || [];
+      var added = 0;
+      list.forEach(function(s){
+        if(!s || !s.params) return;
+        if(s.status && s.status!=='distilled') return;  // 只收已蒸馏
+        if(s._id && S.distillSkills.some(function(x){ return x.backend_id===s._id; })) return; // 去重
+        var v = { title: s.title||'', platform: s.platform||'', description: s.description||'' };
+        var sk = buildSkillFromBackend(s.params, v, s.params.type);
+        if(!sk.beauty_params && !sk.edit_params && !sk.enhance_params) return; // 空壳不收
+        sk.backend_id = s._id;
+        sk.source_url = s.source || v.platform || '';
+        sk._libIdx = S.distillSkills.length;
+        S.distillSkills.push(sk);
+        if(sk.task_type==='beauty' && sk.beauty_params){
+          // 同步到修图"已学习"滤镜
+          var fname = sk.beauty_params.filter || ('AI技能'+(S.distillSkills.length));
+          var exists = S.learned.indexOf('distilled_'+sk._libIdx) > -1;
+          if(!exists){
+            filters.push({ id:'distilled_'+sk._libIdx, cat:'learned', name:fname, icon:'✨', desc:sk.description||'AI蒸馏技能', stars:4, distillIdx:sk._libIdx, fromBackend:true });
+            S.learned.push('distilled_'+sk._libIdx);
+          }
+        }
+        added++;
+      });
+      if(added>0){
+        var b = document.getElementById('skillCountBadge');
+        if(b) b.textContent = S.distillSkills.length+' 项技能';
+        // 通知已加载
+        try{
+          var ev = new CustomEvent('backendSkillsLoaded', {detail:{added:added}});
+          document.dispatchEvent(ev);
+        }catch(e){}
+      }
+      renderLearned();
+      renderFilters('learned');
+      loadSkillLibrary();  // 再次调用实际渲染（本次已跳过 fetch）
+    })
+    .catch(function(err){
+      console.warn('backend skills load skipped:', err && err.message ? err.message : err);
+    });
+}
 function renderLearnedSkills(){
   // Delegate to new loadSkillLibrary
   loadSkillLibrary();
@@ -2137,7 +2217,8 @@ function startProc(){
       document.getElementById('shBtn').disabled=false;
       document.getElementById('rtBtn').disabled=false;
       S.processing=false;
-      S.history.unshift({filter:f?f.name:'未知',icon:f?f.icon:'🎨',time:new Date().toLocaleString(),url:S.processedUrl});
+      S.history.unshift({filter:f?f.name:'未知',icon:f?f.icon:'🎨',time:new Date().toLocaleString(),url:S.processedUrl,filterId:S.selFilter});
+      saveHistory();
       renderHistory();
       toast('处理完成！','ok');
     });
@@ -2415,6 +2496,7 @@ document.addEventListener('DOMContentLoaded',function(){
   renderFilters('all');
   renderTemplates('all');
   renderJianYing();
+  renderHlTpl();
   renderHistory();
   renderLearnedSkills();
   renderXingtuMap();
@@ -2885,6 +2967,70 @@ function aeRemoveFile(el){
   el.parentElement.remove();
   document.getElementById('aeStatus').textContent = '已选 ' + _aeFiles.length + ' 个素材';
 }
+// ===== 高光切片模板库（场景模板：吃鸡四幕 / LOL 六连杀 / 王者五杀） =====
+var hlPresets = [
+  {id:'hl_chicken', name:'吃鸡·四幕高光', icon:'🪂', game:'和平精英',
+   scenes:'hook 开局亮眼 → process 连杀推进 → result 决赛圈/吃鸡 → cta 关注引导',
+   segs:4, ratio:'横屏 16:9', dur:'25~35s',
+   tpl:'游戏高光切片：把素材剪成吃鸡高光集锦，四幕结构——第一幕开场直接放最高光击杀（黄金3秒），第二幕连续击杀推进节奏，第三幕决赛圈或吃鸡名场面收束，第四幕结尾加关注引导。总时长30秒左右，横屏16:9，卡点剪辑，击杀瞬间放慢动作+定格，燃向BGM，击杀时刻加“XXX击杀”大字标注。素材需包含：开镜击杀/连杀/决赛圈/吃鸡或成盒名场面片段。',
+   material:'素材建议 ≥6 段：①开局高光击杀 ②-④连续击杀(每段2-4s) ⑤决赛圈博弈 ⑥吃鸡结算画面'},
+  {id:'hl_lol', name:'LOL·六连杀燃向', icon:'⚔️', game:'英雄联盟手游',
+   scenes:'叁杀开局 → 单杀 → 越塔 → 团战双杀 → 基地决胜 → 一波拿下（v6-v9 实战脚步）',
+   segs:6, ratio:'横屏 16:9', dur:'32~39s',
+   tpl:'英雄联盟手游高光切片：六连杀燃向结构，每段一个击杀并标注击杀数大字（叁杀/壹杀/壹杀/贰杀/决胜/拿下），击杀点卡BGM重拍，击杀瞬间0.35s定格+慢动作，段间90%硬切，青橙电竞调色，全局英文accent小字（TRIPLE KILL/SOLO KILL等），结尾干净收尾不要关注引导。总时长35秒，横屏16:9。素材需为6段击杀素材：开局三杀/野区单杀/越塔收割/团战连破/基地决胜团/一波带走。',
+   material:'素材需 ≥6 段击杀：①开局三杀 ②野区单杀 ③越塔收割 ④团战双杀 ⑤基地决胜团 ⑥一波带走；每段 5-8s'},
+  {id:'hl_wzry', name:'王者·五杀高光', icon:'🏆', game:'王者荣耀',
+   scenes:'一血开局 → 双杀 → 三杀 → 四杀 → 五杀/水晶决胜（可选尾卡）',
+   segs:5, ratio:'横屏 16:9', dur:'28~35s',
+   tpl:'王者荣耀高光切片：五杀递进燃向结构，从一血到五杀逐级推进，每个击杀标注“X杀”大字+英文（FIRST BLOOD/DOUBLE KILL/TRIPLE KILL/QUADRA KILL/PENTA KILL），五杀瞬间慢放定格+全屏特效，卡点剪辑燃向BGM，击杀时刻三合一音效。总时长30秒，横屏16:9，结尾干净。素材需包含：一血/双杀/三杀/四杀/五杀（或连胜击杀）片段。',
+   material:'素材需 ≥5 段击杀：一血/双杀/三杀/四杀/五杀（或同局连胜击杀），每段 4-8s'},
+];
+
+function renderHlTpl(){
+  var g = document.getElementById('hlTplGrid');
+  if(!g) return;
+  g.innerHTML = hlPresets.map(function(p){
+    return '<div class="hl-tpl-card" data-id="'+p.id+'" onclick="applyHlPreset(&#39;'+p.id+'&#39;)" style="background:#fff;border:1.5px solid rgba(232,160,191,0.25);border-radius:12px;padding:12px;cursor:pointer;transition:all .2s;text-align:left">'+
+      '<div style="font-size:15px;font-weight:800;margin-bottom:3px">'+p.icon+' '+p.name+'</div>'+
+      '<div style="font-size:10px;color:#b06a8a;font-weight:700;margin-bottom:6px">'+p.game+'</div>'+
+      '<div style="font-size:10.5px;color:var(--text-muted);line-height:1.5;margin-bottom:8px">'+p.scenes+'</div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">'+
+        '<span style="font-size:9.5px;background:rgba(232,160,191,0.12);color:#b06a8a;padding:2px 7px;border-radius:8px;font-weight:600">'+p.segs+' 幕</span>'+
+        '<span style="font-size:9.5px;background:rgba(212,165,116,0.14);color:#a8812f;padding:2px 7px;border-radius:8px;font-weight:600">'+p.ratio+'</span>'+
+        '<span style="font-size:9.5px;background:rgba(140,170,200,0.14);color:#5a7d9e;padding:2px 7px;border-radius:8px;font-weight:600">'+p.dur+'</span>'+
+      '</div>'+
+      '<button type="button" style="width:100%;padding:6px 0;border:none;border-radius:12px;background:linear-gradient(135deg,var(--rose),var(--gold));color:#fff;font-size:11px;font-weight:700;cursor:pointer">使用此模板</button>'+
+    '</div>';
+  }).join('');
+}
+function applyHlPreset(id){
+  var p = hlPresets.find(function(x){return x.id===id;});
+  if(!p) return;
+  var ta = document.getElementById('aeInstruction');
+  if(ta){ ta.value = p.tpl; ta.style.borderColor = '#e8a0bf'; }
+  // 高亮选中卡
+  var cards = document.querySelectorAll('.hl-tpl-card');
+  cards.forEach(function(c){
+    c.style.borderColor = (c.getAttribute('data-id')===id) ? '#e8a0bf' : 'rgba(232,160,191,0.25)';
+    c.style.boxShadow = (c.getAttribute('data-id')===id) ? '0 0 0 2px rgba(232,160,191,0.25)' : 'none';
+  });
+  var hint = document.createElement('div');
+  hint.id = 'hlTplHint';
+  hint.style.cssText = 'margin-top:8px;padding:9px 12px;background:rgba(232,160,191,0.08);border-radius:10px;font-size:11.5px;line-height:1.7;color:#8a5a70;border-left:3px solid #e8a0bf';
+  hint.innerHTML = '<b>📌 '+p.name+' 素材结构：</b><br>'+p.material+'<br><span style="color:#a8812f;font-size:10.5px">⚠ 当前网页引擎为智能粗剪（变速/大字/特效需人工精剪或用哩秀 Agent 深度渲染）；指令已填好，直接拖素材生成粗剪骨架，再按卡内分镜精修。</span>';
+  var old = document.getElementById('hlTplHint');
+  if(old) old.remove();
+  ta.parentElement.appendChild(hint);
+  toast('已套用「'+p.name+'」模板，检查素材结构后生成');
+  try{ ta.focus(); ta.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
+}
+// 模板卡点击态 CSS 注入（hover）
+(function(){
+  var st = document.createElement('style');
+  st.textContent = '.hl-tpl-card:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(232,160,191,0.18)}';
+  document.head.appendChild(st);
+})();
+
 function autoEditRender(){
   // ?? 静态托管?境（GitHub Pages 无后端）提示
   var isStaticHost = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
