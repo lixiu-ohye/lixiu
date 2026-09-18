@@ -743,9 +743,37 @@ header{padding:12px 14px}
   <!-- ===== Tab: 醒图专区分割 ===== -->
   <div class="tab-content" id="tab-xingtu">
     <div class="card">
-      <div class="card-title"><span class="ic">🌸</span>醒图风格映射</div>
-      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">醒图教程→数值学习→三优先级平替执行（美图preset → LUT → OpenCV）</p>
-      <div id="xingtuMapContainer"></div>
+      <div class="card-title"><span class="ic">🌸</span>醒图工作台</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">传一张图，套风格、修美颜、调光影，随手P出想要的效果，改好直接保存</p>
+      <input type="file" id="xjFileInput" accept="image/*" style="display:none" onchange="xjPick(event)">
+      <div id="xjUploadArea" onclick="document.getElementById('xjFileInput').click()" style="border:2px dashed rgba(232,160,191,0.5);border-radius:14px;padding:28px 16px;text-align:center;cursor:pointer;background:rgba(232,160,191,0.04)">
+        <div style="font-size:30px">🖼️</div>
+        <div style="font-size:13px;font-weight:600;margin-top:6px">点这里选一张图片</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">支持 JPG / PNG，选完马上就能修</div>
+      </div>
+      <div id="xjEditArea" style="display:none">
+        <div style="border-radius:14px;overflow:hidden;background:#faf7f6;text-align:center;margin-bottom:12px">
+          <canvas id="xjCanvas" style="max-width:100%;max-height:420px"></canvas>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          <button class="act-btn" onclick="xjNatural()" style="flex:1">💄 一键自然美颜</button>
+          <button class="act-btn" onclick="xjReset()" style="flex:1;background:#fff;color:var(--text-main)">↺ 全部重置</button>
+        </div>
+        <div style="font-size:12px;font-weight:600;color:var(--rose-dark);margin-bottom:6px">✨ 一键套风格</div>
+        <div id="xjPresetGrid"></div>
+        <div style="font-size:12px;font-weight:600;color:var(--rose-dark);margin:14px 0 6px">💆 美颜</div>
+        <div class="slider-group"><label>磨皮 <span id="xj_smooth_val">0</span></label><input type="range" id="xj_smooth" min="0" max="100" value="0" oninput="document.getElementById('xj_smooth_val').textContent=this.value;XJ.touch()"></div>
+        <div class="slider-group"><label>美白 <span id="xj_whiten_val">0</span></label><input type="range" id="xj_whiten" min="0" max="100" value="0" oninput="document.getElementById('xj_whiten_val').textContent=this.value;XJ.touch()"></div>
+        <div class="slider-group"><label>红润气色 <span id="xj_blush_val">0</span></label><input type="range" id="xj_blush" min="0" max="100" value="0" oninput="document.getElementById('xj_blush_val').textContent=this.value;XJ.touch()"></div>
+        <div style="font-size:12px;font-weight:600;color:var(--rose-dark);margin:14px 0 6px">🎨 调整光影色彩</div>
+        <div class="slider-group"><label>亮度 <span id="xj_bright_val">0</span></label><input type="range" id="xj_bright" min="-50" max="50" value="0" oninput="document.getElementById('xj_bright_val').textContent=this.value;XJ.touch()"></div>
+        <div class="slider-group"><label>对比度 <span id="xj_contrast_val">0</span></label><input type="range" id="xj_contrast" min="-50" max="50" value="0" oninput="document.getElementById('xj_contrast_val').textContent=this.value;XJ.touch()"></div>
+        <div class="slider-group"><label>饱和度 <span id="xj_satur_val">0</span></label><input type="range" id="xj_satur" min="-50" max="50" value="0" oninput="document.getElementById('xj_satur_val').textContent=this.value;XJ.touch()"></div>
+        <div class="slider-group"><label>色温(冷↔暖) <span id="xj_temp_val">0</span></label><input type="range" id="xj_temp" min="-50" max="50" value="0" oninput="document.getElementById('xj_temp_val').textContent=this.value;XJ.touch()"></div>
+        <div class="slider-group"><label>清晰度 <span id="xj_sharp_val">0</span></label><input type="range" id="xj_sharp" min="0" max="100" value="0" oninput="document.getElementById('xj_sharp_val').textContent=this.value;XJ.touch()"></div>
+        <div class="slider-group"><label>暗角氛围 <span id="xj_vig_val">0</span></label><input type="range" id="xj_vig" min="0" max="100" value="0" oninput="document.getElementById('xj_vig_val').textContent=this.value;XJ.touch()"></div>
+        <button class="act-btn" onclick="xjSave()" style="width:100%;margin-top:10px">💾 保存这张图</button>
+      </div>
     </div>
   </div>
 
@@ -987,12 +1015,12 @@ function selectFilter(id){
     document.getElementById('beautyPanel').style.display='block';
     studioAddBubble('ai','🌟 已选「'+f.name+'」美图云修预设！可以拖动滑条进一步微调~');
   } else if(f&&f.xingtu){
-    document.getElementById('beautyPanel').style.display='block';
-    // Apply xingtu shifts
-    var s=f.xingtu.shifts||{};
-    if(s.brightness) document.getElementById('bs').value=Math.abs(s.brightness)*5;
-    if(s.contrast){var coEl=document.getElementById('co')||document.getElementById('fs'); if(coEl) coEl.value=Math.abs(s.contrast)*5;}
-    studioAddBubble('ai','🌸 已选醒图平替「'+f.name+'」！三优先级: LUT → OpenCV → PIL');
+    document.getElementById('retouchPanel').style.display='block';
+    // 醒图平替 → 直接写入精修工作台滑条，真实像素生效
+    var en=(f.id||'').replace('xingtu_','');
+    var xn=Object.keys(XINGTU_MAP).find(function(k){return XINGTU_MAP[k].en===en;});
+    if(xn){ xjApplyLook('pj_',XINGTU_MAP[xn].look); studioAddBubble('ai','🌸 已套用「'+f.name+'」到精修工作台，可直接出图或继续微调~'); }
+    else { studioAddBubble('ai','🌸 已选醒图平替「'+f.name+'」，可在精修工作台微调~'); }
   } else if(f&&f.learned){
     document.getElementById('beautyPanel').style.display='block';
     var sl=f.learned.shifts||{};
@@ -2021,123 +2049,128 @@ function renderLearnedSkills(){
   loadSkillLibrary();
 }
 
-// ========== 醒图风格系统 v1.1 ==========
+// ========== 醒图工作台（真修图：套风格+美颜+光影调整） ==========
 
-// 醒图滤镜映射表（内置 10 种）
+// 醒图风格映射表（内置 10 种）· look=套用滑条数值
 var XINGTU_MAP = {
-  "奶杏": {en:"milk_apricot", meitu_preset:"milk_apricot", shifts:{brightness:10,contrast:-3,saturation:-5,temperature:5}, scenario:"自拍/写真"},
-  "雾灰": {en:"fog_gray", meitu_preset:"fog_gray", shifts:{brightness:8,contrast:-5,saturation:-20,temperature:-5}, scenario:"街拍/极简"},
-  "奶油": {en:"cream", meitu_preset:"cream", shifts:{brightness:15,contrast:-8,saturation:-5,blur:3}, scenario:"柔光写真"},
-  "胶片NC": {en:"film_nc", meitu_preset:null, shifts:{brightness:-5,contrast:20,saturation:-15,temperature:10}, scenario:"文艺/日系"},
-  "清透": {en:"clear", meitu_preset:"clear", shifts:{brightness:10,contrast:-3,saturation:8,temperature:-3}, scenario:"伪素颜"},
-  "富士": {en:"fuji", meitu_preset:null, shifts:{brightness:5,contrast:10,saturation:5,temperature:5}, scenario:"日系胶片"},
-  "韩系": {en:"korean", meitu_preset:"korean", shifts:{brightness:15,contrast:-5,saturation:8,temperature:-5}, scenario:"水光肌"},
-  "桃花": {en:"peach", meitu_preset:"peach", shifts:{brightness:12,contrast:-3,saturation:12,temperature:10}, scenario:"约会自拍"},
-  "哑光": {en:"matte", meitu_preset:"matte", shifts:{brightness:-3,contrast:15,saturation:-8}, scenario:"高级雾面"},
-  "原相机": {en:"original", meitu_preset:null, shifts:{brightness:3,contrast:3,saturation:3}, scenario:"轻度优化"}
+  "奶杏": {en:"milk_apricot",scenario:"自拍/写真", look:{smooth:30,whiten:20,blush:10,bright:10,contrast:-3,satur:-5,temp:5,sharp:0,vig:0}},
+  "雾灰": {en:"fog_gray",scenario:"街拍/极简", look:{smooth:0,whiten:0,blush:0,bright:8,contrast:-5,satur:-20,temp:-5,sharp:10,vig:10}},
+  "奶油": {en:"cream",scenario:"柔光写真", look:{smooth:40,whiten:15,blush:5,bright:15,contrast:-8,satur:-5,temp:0,sharp:0,vig:0}},
+  "胶片NC": {en:"film_nc",scenario:"文艺/日系", look:{smooth:0,whiten:0,blush:0,bright:-5,contrast:20,satur:-15,temp:10,sharp:15,vig:20}},
+  "清透": {en:"clear",scenario:"伪素颜", look:{smooth:25,whiten:25,blush:5,bright:10,contrast:-3,satur:8,temp:-3,sharp:15,vig:0}},
+  "富士": {en:"fuji",scenario:"日系胶片", look:{smooth:0,whiten:0,blush:0,bright:5,contrast:10,satur:5,temp:5,sharp:10,vig:10}},
+  "韩系": {en:"korean",scenario:"水光肌", look:{smooth:35,whiten:30,blush:5,bright:15,contrast:-5,satur:8,temp:-5,sharp:15,vig:0}},
+  "桃花": {en:"peach",scenario:"约会自拍", look:{smooth:30,whiten:15,blush:25,bright:12,contrast:-3,satur:12,temp:10,sharp:10,vig:0}},
+  "哑光": {en:"matte",scenario:"高级雾面", look:{smooth:10,whiten:0,blush:0,bright:-3,contrast:15,satur:-8,temp:0,sharp:5,vig:15}},
+  "原相机": {en:"original",scenario:"轻度优化", look:{smooth:10,whiten:5,blush:0,bright:3,contrast:3,satur:3,temp:0,sharp:10,vig:0}}
 };
 
+// 把风格数值写入指定前缀的滑条组(xj_=醒图工作台, pj=修图精修台)
+function xjApplyLook(prefix,look){
+  ['smooth','whiten','blush','bright','contrast','satur','temp','sharp','vig'].forEach(function(k){
+    var e=document.getElementById(prefix+k);if(e)e.value=look[k]||0;
+    var lv=document.getElementById(prefix+k+'_val');if(lv)lv.textContent=look[k]||0;
+  });
+}
+
+var XS = { fileUrl: null, img: null, busy: false };
+
 function renderXingtuMap(){
-  var c=document.getElementById('xingtuMapContainer');
+  var c=document.getElementById('xjPresetGrid');
   if(!c) return;
-  var html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">';
+  var html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px">';
   Object.keys(XINGTU_MAP).forEach(function(name){
     var m=XINGTU_MAP[name];
-    html+='<div onclick="selectXingtuFilter(\''+name+'\')" style="padding:10px;background:rgba(232,160,191,0.06);border-radius:12px;cursor:pointer;text-align:center;transition:all .2s" ';
-    html+='onmouseover="this.style.background=\'rgba(232,160,191,0.15)\'" onmouseout="this.style.background=\'rgba(232,160,191,0.06)\'"';
-    html+='>';
-    html+='<div style="font-size:14px;font-weight:600;color:var(--rose-dark)">'+name+'</div>';
-    html+='<div style="font-size:10px;color:var(--text-muted);margin-top:4px">'+m.scenario+'</div>';
-    html+='<div style="font-size:10px;color:var(--gold);margin-top:2px">'+(m.meitu_preset?'美图◉':'LUT◉')+'</div>';
-    html+='</div>';
+    html+='<div onclick="xjPreset(\''+name+'\')" style="padding:10px 6px;background:rgba(232,160,191,0.06);border-radius:12px;cursor:pointer;text-align:center;transition:all .2s" ';
+    html+='onmouseover="this.style.background=\'rgba(232,160,191,0.18)\'" onmouseout="this.style.background=\'rgba(232,160,191,0.06)\'"';
+    html+='><div style="font-size:13px;font-weight:600;color:var(--rose-dark)">'+name+'</div>';
+    html+='<div style="font-size:10px;color:var(--text-muted);margin-top:3px">'+m.scenario+'</div></div>';
   });
   html+='</div>';
   c.innerHTML=html;
-  
-  // Populate datalist
-  var dl=document.getElementById('xingtuFilterList');
-  if(dl){
-    dl.innerHTML=Object.keys(XINGTU_MAP).map(function(n){return '<option value="'+n+'">';}).join('');
-  }
 }
 
-function selectXingtuFilter(name){
-  var inp=document.getElementById('xingtuFilterName');
-  if(inp) inp.value=name;
-  var m=XINGTU_MAP[name];
-  if(!m) return;
-  toast('已选醒图滤镜: '+name,'ok');
-}
-
-function executeXingtu(){
-  var filterName=document.getElementById('xingtuFilterName').value.trim();
-  var smooth=parseInt(document.getElementById('xingtuSmooth').value)||30;
-  var slimFace=parseInt(document.getElementById('xingtuSlimFace').value)||10;
-  
-  if(!filterName||!XINGTU_MAP[filterName]){
-    toast('请选择醒图滤镜','err');
-    return;
-  }
-  
-  // Simulate xingtu execution
-  var m=XINGTU_MAP[filterName];
-  var beautyParams = {
-    smooth: smooth,
-    slim_face: slimFace,
-    eye_bright: false,
-    filter: filterName,
-    filter_strength: 65,
-    src_app: 'xingtu'
+function xjPick(evt){
+  var f=evt.target.files&&evt.target.files[0];
+  if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(e){
+    XS.fileUrl=e.target.result;
+    var im=new Image();
+    im.onload=function(){
+      XS.img=im;
+      document.getElementById('xjUploadArea').style.display='none';
+      document.getElementById('xjEditArea').style.display='block';
+      xjRender();
+      toast('图片已就绪，套风格或拖滑条开修！','ok');
+    };
+    im.src=XS.fileUrl;
   };
-  
-  // Add map shifts
-  beautyParams.brightness = m.shifts.brightness||0;
-  beautyParams.contrast = m.shifts.contrast||0;
-  beautyParams.saturation = m.shifts.saturation||0;
-  beautyParams.temperature = m.shifts.temperature||0;
-  
-  var r=document.getElementById('xingtuResult');
-  r.style.display='block';
-  var out=document.getElementById('xingtuOutput');
-  out.innerHTML='<strong>🌸 醒图执行结果</strong><br><br>'+
-    '<strong>滤镜:</strong> '+filterName+' (src_app: xingtu)<br>'+
-    '<strong>磨皮:</strong> '+smooth+' | <strong>瘦脸:</strong> '+slimFace+'<br>'+
-    '<strong>亮度:</strong> '+beautyParams.brightness+' | <strong>对比度:</strong> '+beautyParams.contrast+'<br>'+
-    '<strong>饱和度:</strong> '+beautyParams.saturation+' | <strong>色温:</strong> '+beautyParams.temperature+'<br><br>'+
-    '<span style="font-size:11px;color:var(--text-muted)">执行优先级: '+(m.meitu_preset?'美图 preset':'OpenCV LUT')+' → PIL 色彩偏移平替</span><br>'+
-    '<span style="font-size:10px;color:var(--gold);font-style:italic">⚠ AI 辅助修图 · 参考醒图风格</span>';
-  
-  // Apply to main editing
-  if(S.file){
-    S.selFilter = 'xingtu_'+filterName;
-    document.getElementById('bs').value=smooth;
-    document.getElementById('sf').value=slimFace;
-    document.getElementById('fs').value=65;
-    document.getElementById('bs_val').textContent=smooth;
-    document.getElementById('sf_val').textContent=slimFace;
-    document.getElementById('fs_val').textContent=65;
-    document.getElementById('beautyPanel').style.display='block';
-  }
-  
-  toast('🌸 醒图风格「'+filterName+'」参数已加载','ok');
+  rd.readAsDataURL(f);
 }
 
-function loadLutStatus(){
-  var c=document.getElementById('lutStatus');
-  if(!c) return;
-  var count=Object.keys(XINGTU_MAP).length;
-  var html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:4px">';
-  Object.keys(XINGTU_MAP).forEach(function(name){
-    var m=XINGTU_MAP[name];
-    var status=m.meitu_preset?'美图 preset':'OpenCV LUT';
-    var color=m.meitu_preset?'var(--success)':'var(--info)';
-    html+='<div style="padding:6px;font-size:11px;background:rgba(200,160,140,0.04);border-radius:8px">';
-    html+='<span style="font-weight:600">'+name+'</span> <span style="color:'+color+'">●</span> '+status;
-    html+='</div>';
+// 读当前滑条值
+function xjRead(){
+  function v(id){var e=document.getElementById(id);return e?(parseInt(e.value)||0):0;}
+  return {smooth:v('xj_smooth'),whiten:v('xj_whiten'),blush:v('xj_blush'),bright:v('xj_bright'),contrast:v('xj_contrast'),satur:v('xj_satur'),temp:v('xj_temp'),sharp:v('xj_sharp'),vig:v('xj_vig')};
+}
+function xjActive(){var p=xjRead();for(var k in p){if(p[k])return true;}return false;}
+
+// 渲染: 原图 → BE精修引擎(美颜+调整)
+function xjRender(){
+  if(!XS.img) return;
+  var c=document.getElementById('xjCanvas');
+  c.width=XS.img.width;c.height=XS.img.height;
+  var x=c.getContext('2d');
+  x.drawImage(XS.img,0,0);
+  var P=xjRead();
+  if(P.smooth||P.whiten||P.blush||P.bright||P.contrast||P.satur||P.temp||P.sharp||P.vig){
+    BE.apply(x,c,P);
+  }
+}
+var XJ={
+  touch:function(){clearTimeout(XJ._t);XJ._t=setTimeout(xjRender,350);}
+};
+
+// 一键套风格: 把风格数值写进滑条再重出图
+function xjPreset(name){
+  var m=XINGTU_MAP[name];
+  if(!m||!XS.img){toast(name?'先选一张图片':'','warn');if(!XS.img)document.getElementById('xjFileInput').click();return;}
+  var L=m.look;
+  ['smooth','whiten','blush','bright','contrast','satur','temp','sharp','vig'].forEach(function(k){
+    var e=document.getElementById('xj_'+k);if(e)e.value=L[k]||0;
+    var lv=document.getElementById('xj_'+k+'_val');if(lv)lv.textContent=L[k]||0;
   });
-  html+='</div>';
-  html+='<p style="font-size:10px;color:var(--text-muted);margin-top:6px">LUT文件已生成: '+count+'个 (D:\lixiu-backend\backend\routes\luts\*.npy)</p>';
-  c.innerHTML=html;
+  xjRender();
+  toast('🌸 已套用「'+name+'」，可继续拖滑条微调','ok');
+}
+
+function xjNatural(){
+  if(!XS.img){document.getElementById('xjFileInput').click();return;}
+  var set={xj_smooth:45,xj_whiten:25,xj_blush:15,xj_bright:0,xj_contrast:0,xj_satur:0,xj_temp:0,xj_sharp:20,xj_vig:0};
+  for(var id in set){var e=document.getElementById(id);if(e){e.value=set[id];var lv=document.getElementById(id+'_val');if(lv)lv.textContent=set[id];}}
+  xjRender();
+  toast('💄 已按「自然美颜」配好，可继续微调','ok');
+}
+
+function xjReset(){
+  ['xj_smooth','xj_whiten','xj_blush','xj_bright','xj_contrast','xj_satur','xj_temp','xj_sharp','xj_vig'].forEach(function(id){
+    var e=document.getElementById(id);if(e){e.value=0;var lv=document.getElementById(id+'_val');if(lv)lv.textContent='0';}
+  });
+  xjRender();
+  toast('已全部重置','ok');
+}
+
+function xjSave(){
+  if(!XS.img){toast('先选一张图片','warn');return;}
+  var c=document.getElementById('xjCanvas');
+  try{
+    var a=document.createElement('a');
+    a.href=c.toDataURL('image/jpeg',0.92);
+    a.download='lixiu_xingtu_'+Date.now()+'.jpg';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    toast('已保存到下载','ok');
+  }catch(e){toast('保存失败，长按图片另存','err');}
 }
 
 // Also update distill to tag skills with src_app
@@ -2580,7 +2613,7 @@ function studioRouteDesc(m,a,p,route){
   if(m==='reverse') return '你想知道这个图/视频是怎么做出来的对吧？把素材传上来，我把它的做法、参数都拆给你，还能照着复刻同款。';
   if(m==='download') return '已识别为【视频下载】意图。前往视频下载页粘贴链接提取素材。';
   if(m==='tpl') return '已识别为【模板推荐】意图。前往模板推荐页挑选合适模板。';
-  if(m==='xingtu') return '已识别为【醒图】意图。前往醒图页套用风格 LUT。';
+  if(m==='xingtu') return '已识别为【醒图】意图。去醒图工作台传一张图，一键套风格+美颜+光影调整。';
   if(m==='history') return '已识别为【记录】意图。前往记录页恢复历史成片。';
   return '已识别意图 → 模块：'+studioModName(m)+'，动作：'+(a||'默认');
 }
@@ -2839,7 +2872,6 @@ document.addEventListener('DOMContentLoaded',function(){
   renderHistory();
   renderLearnedSkills();
   renderXingtuMap();
-  loadLutStatus();
   renderFetchedVideos(false);
   initStudyPlatformFilter();
   initStudySubTabs();
