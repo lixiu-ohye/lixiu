@@ -376,13 +376,36 @@ header{padding:12px 14px}
         <div class="hint">JPG / PNG / WebP  ≤ 50MB</div>
         <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" style="display:none">
       </div>
-      <!-- 美图云修风格参数面板 -->
-      <div class="beauty-panel" id="beautyPanel" style="display:none">
-        <h4>💄 美图云修 · 精细调节</h4>
+      <!-- 精修工作台（PS级）: 不选滤镜也能修 -->
+      <div class="beauty-panel" id="retouchPanel">
+        <h4>✨ 精修工作台 <span style="font-size:11px;color:var(--text-muted);font-weight:400">拖动滑条自动重新出图，不选滤镜也能修</span></h4>
+        <div style="font-size:12px;font-weight:600;color:var(--rose-dark);margin:2px 0 6px">💄 美颜</div>
         <div class="beauty-grid">
-          <div class="slider-group"><label>磨皮 <span id="bs_val">30</span></label><input type="range" id="bs" min="0" max="100" value="30" oninput="document.getElementById('bs_val').textContent=this.value"></div>
-          <div class="slider-group"><label>瘦脸 <span id="sf_val">10</span></label><input type="range" id="sf" min="0" max="100" value="10" oninput="document.getElementById('sf_val').textContent=this.value"></div>
-          <div class="slider-group"><label>滤镜强度 <span id="fs_val">50</span></label><input type="range" id="fs" min="0" max="100" value="50" oninput="document.getElementById('fs_val').textContent=this.value"></div>
+          <div class="slider-group"><label>磨皮 <span id="pj_smooth_val">0</span></label><input type="range" id="pj_smooth" min="0" max="100" value="0" oninput="document.getElementById('pj_smooth_val').textContent=this.value;BE.touch()"></div>
+          <div class="slider-group"><label>美白 <span id="pj_whiten_val">0</span></label><input type="range" id="pj_whiten" min="0" max="100" value="0" oninput="document.getElementById('pj_whiten_val').textContent=this.value;BE.touch()"></div>
+          <div class="slider-group"><label>红润气色 <span id="pj_blush_val">0</span></label><input type="range" id="pj_blush" min="0" max="100" value="0" oninput="document.getElementById('pj_blush_val').textContent=this.value;BE.touch()"></div>
+        </div>
+        <div style="font-size:12px;font-weight:600;color:var(--lavender-dark);margin:10px 0 6px">🎛 调整（相当于 PS 的调整图层）</div>
+        <div class="beauty-grid">
+          <div class="slider-group"><label>亮度 <span id="pj_bright_val">0</span></label><input type="range" id="pj_bright" min="-50" max="50" value="0" oninput="document.getElementById('pj_bright_val').textContent=this.value;BE.touch()"></div>
+          <div class="slider-group"><label>对比度 <span id="pj_contrast_val">0</span></label><input type="range" id="pj_contrast" min="-50" max="50" value="0" oninput="document.getElementById('pj_contrast_val').textContent=this.value;BE.touch()"></div>
+          <div class="slider-group"><label>饱和度 <span id="pj_satur_val">0</span></label><input type="range" id="pj_satur" min="-50" max="50" value="0" oninput="document.getElementById('pj_satur_val').textContent=this.value;BE.touch()"></div>
+          <div class="slider-group"><label>色温(冷↔暖) <span id="pj_temp_val">0</span></label><input type="range" id="pj_temp" min="-50" max="50" value="0" oninput="document.getElementById('pj_temp_val').textContent=this.value;BE.touch()"></div>
+          <div class="slider-group"><label>锐化 <span id="pj_sharp_val">0</span></label><input type="range" id="pj_sharp" min="0" max="100" value="0" oninput="document.getElementById('pj_sharp_val').textContent=this.value;BE.touch()"></div>
+          <div class="slider-group"><label>暗角 <span id="pj_vig_val">0</span></label><input type="range" id="pj_vig" min="0" max="100" value="0" oninput="document.getElementById('pj_vig_val').textContent=this.value;BE.touch()"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button class="act-btn" onclick="BE.natural()" style="padding:7px 14px;font-size:12px">💄 一键自然美颜</button>
+          <button class="act-btn ghost" onclick="BE.reset()" style="padding:7px 14px;font-size:12px;background:#fff;border:1.5px solid var(--rose)">↺ 全部重置</button>
+        </div>
+      </div>
+      <!-- 滤镜微调（原面板收窄为只管滤镜强度） -->
+      <div class="beauty-panel" id="beautyPanel" style="display:none">
+        <h4>🎛 滤镜强度微调</h4>
+        <div class="beauty-grid">
+          <div class="slider-group" style="display:none"><label>磨皮 <span id="bs_val">30</span></label><input type="range" id="bs" min="0" max="100" value="30" oninput="document.getElementById('bs_val').textContent=this.value"></div>
+          <div class="slider-group" style="display:none"><label>瘦脸 <span id="sf_val">10</span></label><input type="range" id="sf" min="0" max="100" value="10" oninput="document.getElementById('sf_val').textContent=this.value"></div>
+          <div class="slider-group"><label>滤镜强度 <span id="fs_val">50</span></label><input type="range" id="fs" min="0" max="100" value="50" oninput="document.getElementById('fs_val').textContent=this.value;BE.touch()"></div>
           <div class="slider-group" style="display:flex;align-items:center;gap:8px">
             <label style="margin:0;display:flex;align-items:center;gap:4px"><input type="checkbox" id="eyeB"> 亮眼</label>
             <label style="margin:0;display:flex;align-items:center;gap:4px"><input type="checkbox" id="useMeitu" checked> 美图API</label>
@@ -2348,9 +2371,71 @@ var FE={
         var idt=x.getImageData(0,0,c.width,c.height);
         idt.data.set(FE.apply(idt.data,id));
         x.putImageData(idt,0,0);
+        BE.apply(x,c,BE.read()); // 精修工作台: 美颜+调整(不选滤镜也生效)
         r(c.toDataURL('image/jpeg',0.92));
       };img.src=url;
     });
+  }
+};
+// ========== 精修引擎 BE（美颜+调整 · 真实像素处理） ==========
+function _blurData(c,x,r){
+  var t=document.createElement('canvas');t.width=c.width;t.height=c.height;
+  var tx=t.getContext('2d');
+  try{tx.filter='blur('+r+'px)';}catch(e){}
+  tx.drawImage(c,0,0);
+  return tx.getImageData(0,0,c.width,c.height).data;
+}
+var BE={
+  read:function(){
+    function v(id){var e=document.getElementById(id);return e?(parseInt(e.value)||0):0;}
+    return {smooth:v('pj_smooth'),whiten:v('pj_whiten'),blush:v('pj_blush'),bright:v('pj_bright'),contrast:v('pj_contrast'),satur:v('pj_satur'),temp:v('pj_temp'),sharp:v('pj_sharp'),vig:v('pj_vig')};
+  },
+  active:function(){var p=BE.read();for(var k in p){if(p[k])return true;}return false;},
+  touch:function(){clearTimeout(BE._t);BE._t=setTimeout(function(){procNow();},350);},
+  natural:function(){
+    var set={pj_smooth:45,pj_whiten:25,pj_blush:15,pj_bright:0,pj_contrast:0,pj_satur:0,pj_temp:0,pj_sharp:20,pj_vig:0};
+    for(var id in set){var e=document.getElementById(id);if(e){e.value=set[id];var lv=document.getElementById(id+'_val');if(lv)lv.textContent=set[id];}}
+    studioAddBubble('ai','💄 已按「自然美颜」配好：磨皮45·美白25·红润15·锐化20。想更白/更磨就继续拖滑条~');
+    procNow();
+  },
+  reset:function(){
+    ['pj_smooth','pj_whiten','pj_blush','pj_bright','pj_contrast','pj_satur','pj_temp','pj_sharp','pj_vig'].forEach(function(id){
+      var e=document.getElementById(id);if(e){e.value=0;var lv=document.getElementById(id+'_val');if(lv)lv.textContent='0';}
+    });
+    var fs=document.getElementById('fs');if(fs){fs.value=50;var fv=document.getElementById('fs_val');if(fv)fv.textContent='50';}
+    procNow();
+  },
+  apply:function(x,c,P){
+    var w=c.width,h=c.height;
+    var img=x.getImageData(0,0,w,h),d=img.data,l=d.length,i,r,g,b;
+    var B1=(P.smooth>0)?_blurData(c,x,Math.max(1,Math.round(P.smooth/14))):null;
+    var B2=(P.sharp>0)?_blurData(c,x,2):null;
+    var sAmt=P.smooth/100,wAmt=P.whiten/100,bAmt=P.blush/100;
+    var brF=1+P.bright/100,ctF=1+P.contrast/100,saF=1+P.satur/100;
+    var tR=P.temp*0.5,tB=-P.temp*0.5;
+    var shAmt=P.sharp/100*1.1;
+    for(i=0;i<l;i+=4){
+      r=d[i];g=d[i+1];b=d[i+2];
+      if(B1){ // 磨皮: 低细节区(皮肤)向模糊靠拢, 边缘保留
+        var df=Math.abs(r-B1[i])+Math.abs(g-B1[i+1])+Math.abs(b-B1[i+2]);
+        if(df<70){var k=sAmt*(1-df/70);r+=(B1[i]-r)*k;g+=(B1[i+1]-g)*k;b+=(B1[i+2]-b)*k;}
+      }
+      if(B2){ r+=(r-B2[i])*shAmt;g+=(g-B2[i+1])*shAmt;b+=(b-B2[i+2])*shAmt; } // 锐化=反锐化掩模
+      var skin=(r>95&&g>40&&b>20&&(r-g)>15&&(r-b)>15);
+      if(skin&&wAmt>0){ r+=(255-r)*wAmt*0.30;g+=(255-g)*wAmt*0.26;b+=(255-b)*wAmt*0.22; } // 美白只作用肤色
+      if(skin&&bAmt>0){ r+=bAmt*14;g-=bAmt*4; } // 红润气色
+      if(P.temp){ r+=tR;b+=tB; }
+      if(P.satur){ var lv=0.299*r+0.587*g+0.114*b;r=lv+(r-lv)*saF;g=lv+(g-lv)*saF;b=lv+(b-lv)*saF; }
+      if(P.contrast){ r=(r-128)*ctF+128;g=(g-128)*ctF+128;b=(b-128)*ctF+128; }
+      if(P.bright){ r*=brF;g*=brF;b*=brF; }
+      d[i]=r<0?0:(r>255?255:r);d[i+1]=g<0?0:(g>255?255:g);d[i+2]=b<0?0:(b>255?255:b);
+    }
+    x.putImageData(img,0,0);
+    if(P.vig>0){ // 暗角
+      var gr=x.createRadialGradient(w/2,h/2,Math.min(w,h)*0.45,w/2,h/2,Math.max(w,h)*0.75);
+      gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,'+(P.vig/100*0.55)+')');
+      x.fillStyle=gr;x.fillRect(0,0,w,h);
+    }
   }
 };
 var M=Math.min;
@@ -2359,7 +2444,8 @@ function Clamp(v){return v<0?0:(v>255?255:v);}
 
 // ========== 处理引擎 ==========
 function startProc(){
-  if(S.processing||!S.fileUrl||!S.selFilter)return;
+  if(S.processing||!S.fileUrl)return;
+  if(!S.selFilter&&!BE.active()){toast('选一个滤镜，或直接拖下面「精修工作台」的滑条','warn');return;}
   S.processing=true;
   var ps=document.getElementById('progressSection');
   ps.style.display='block';
@@ -2386,7 +2472,7 @@ function startProc(){
       document.getElementById('shBtn').disabled=false;
       document.getElementById('rtBtn').disabled=false;
       S.processing=false;
-      S.history.unshift({filter:f?f.name:'未知',icon:f?f.icon:'🎨',time:new Date().toLocaleString(),url:S.processedUrl,filterId:S.selFilter});
+      S.history.unshift({filter:f?f.name:'精修',icon:f?f.icon:'✨',time:new Date().toLocaleString(),url:S.processedUrl,filterId:S.selFilter||'retouch'});
       saveHistory();
       renderHistory();
       toast('处理完成！','ok');
@@ -2394,6 +2480,21 @@ function startProc(){
   });
 }
 
+// 滑条调整专用: 跳过进度动画直接快速重出图(防抖由 BE.touch 控制)
+function procNow(){
+  if(S.processing||!S.fileUrl)return;
+  if(!S.selFilter&&!BE.active())return;
+  S.processing=true;
+  FE.process(S.fileUrl,S.selFilter).then(function(r){
+    S.processedUrl=r;
+    var ai=document.getElementById('afterImg');
+    if(ai)ai.innerHTML='<img src="'+r+'">';
+    var cs=document.getElementById('compareSection');
+    if(cs)cs.style.display='block';
+    ['dlBtn','shBtn','rtBtn'].forEach(function(id){var b=document.getElementById(id);if(b)b.disabled=false;});
+    S.processing=false;
+  });
+}
 function runSteps(steps,i,done){
   if(i>=steps.length){done();return;}
   var s=steps[i];
@@ -2414,7 +2515,7 @@ function addLog(t,type){
 function dlResult(){
   if(!S.processedUrl){toast('还没有结果','err');return;}
   var a=document.createElement('a');
-  a.download='哩修_'+S.selFilter+'_'+Date.now()+'.jpg';
+  a.download='哩修_'+(S.selFilter||'精修')+'_'+Date.now()+'.jpg';
   a.href=S.processedUrl;a.click();
   toast('下载成功！','ok');
 }
