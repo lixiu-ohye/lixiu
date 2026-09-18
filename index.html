@@ -485,6 +485,12 @@ header{padding:12px 14px}
         <div class="duyi-script-hint">💡 支持：时长控制 / 加字幕 / 剪停顿 / 风格(口播·vlog·混剪·教程)</div>
       </div>
 
+      <div style="margin-top:10px">
+        <label style="display:block;font-size:12px;color:#8a5a70;font-weight:600;margin-bottom:5px">🎯 参考范本（选填）</label>
+        <input id="aeReference" type="text" placeholder="贴一个参考视频链接，或写一句想要的效果，例如：节奏像影视飓风、开头要有钩子、配轻快 BGM" style="width:100%;padding:10px 12px;border:1px solid rgba(200,160,140,0.4);border-radius:10px;font-size:13px;font-family:inherit;background:#fff;color:var(--text);outline:none">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">哩秀会照着这个范本的调性来剪，没有就按你上面的话自由发挥。</div>
+      </div>
+
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button id="aeRenderBtn" onclick="autoEditRender()" style="padding:10px 26px;background:linear-gradient(135deg,#e8a0bf,#d4a574);border:none;border-radius:22px;color:#fff;font-size:14px;font-weight:700;cursor:pointer">🎬 开始智能成片</button><button id="aeProposeBtn" onclick="autoEditPropose()" title="先让 AI 给出剪辑提案（分镜/保留区间/字幕），确认后再渲染，避免直接渲染浪费" style="padding:10px 22px;background:transparent;border:1.5px solid rgba(200,160,140,0.5);border-radius:22px;color:#8a5a70;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">💡 先生成剪辑提案</button>
         <span id="aeStatus" style="font-size:12px;color:var(--text-muted)"></span>
@@ -1116,7 +1122,62 @@ function generateJianYingDraft(){
 
 // 模拟视频教程列表
 // ===== 爬虫视频系统：从后端 API 拉取真实数据 =====
-var API_BASE = 'http://localhost:8700/api';
+// 后端地址：网址 ?api= 参数 > 本地保存 > 默认本机 8700
+(function(){
+  var q = new URLSearchParams(location.search).get('api');
+  if(q){ try{ localStorage.setItem('lixiu_api', q); }catch(e){} }
+  else { try{ q = localStorage.getItem('lixiu_api'); }catch(e){ q=null; } }
+  window.__API_BASE__ = (q && q.trim()) ? q.trim().replace(/\/+$/,'') + '/api' : 'http://localhost:8700/api';
+})();
+var API_BASE = window.__API_BASE__;
+// 是否已配置自定义(公网)后端 —— 决定静态托管页(github.io / 本地文件)能否用后端功能
+function _hasCustomBackend(){
+  try{ return !!localStorage.getItem('lixiu_api') || new URLSearchParams(location.search).has('api'); }catch(e){ return new URLSearchParams(location.search).has('api'); }
+}
+// 静态托管页 + 没配后端 = 真的连不上；有自定义后端则放行
+function _blockedStaticHost(){
+  var onStatic = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
+  return onStatic && !_hasCustomBackend();
+}
+// 后端没连上时，注入一条大白话引导条，让用户填自己的后端地址（公网隧道 / 本机皆可）
+function showBackendSetter(msg){
+  var bar = document.getElementById('beSetter');
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id = 'beSetter';
+    bar.style.cssText = 'position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9999;max-width:92vw;width:440px;background:#fff7f0;border:1.5px solid #e8a0bf;border-radius:14px;padding:12px 14px;box-shadow:0 8px 30px rgba(200,120,140,.25);font-size:13px;color:#5a3f42';
+    bar.innerHTML = '<div style="font-weight:700;margin-bottom:6px">🔌 还没连上「哩秀」的后端</div>'+
+      '<div style="color:#8a7b7e;margin-bottom:8px;line-height:1.6">本机跑着后端就填 <b>http://localhost:8700</b>；想在外面也能用，就填你的公网后端地址（形如 https://xxxx.serveousercontent.com）。</div>'+
+      '<div style="display:flex;gap:8px"><input id="beInput" placeholder="粘贴后端地址，例如 http://localhost:8700" style="flex:1;padding:9px 10px;border:1px solid rgba(200,160,140,.5);border-radius:10px;font-size:13px;outline:none"><button id="beSave" style="padding:9px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,#e8a0bf,#d4a574);color:#fff;font-weight:700;cursor:pointer">连上</button></div>';
+    document.body.appendChild(bar);
+    document.getElementById('beSave').onclick = function(){
+      var v = document.getElementById('beInput').value.trim();
+      if(!v){ return; }
+      try{ localStorage.setItem('lixiu_api', v.replace(/\/+$/,'') + '/api'); }catch(e){}
+      window.__API_BASE__ = (v.replace(/\/+$/,'') + '/api');
+      API_BASE = window.__API_BASE__;
+      bar.remove();
+      toast('✅ 已记住后端地址，正在重连…','ok');
+      setTimeout(probeBackend, 400);
+    };
+  }
+  if(msg){ var t = bar.querySelector('div:nth-child(2)'); if(t) t.textContent = msg; }
+  bar.style.display = 'block';
+}
+// 加载时探一下后端通不通；不通且是静态托管页，就弹出引导条
+function probeBackend(){
+  if(_hasCustomBackend() || location.hostname.indexOf('github.io')>-1 || location.protocol==='file:'){
+    fetch(API_BASE + '/advanced/glm/config', {cache:'no-store'}).then(function(r){
+      if(!r.ok) throw 0;
+      var b = document.getElementById('beSetter'); if(b) b.remove();
+    }).catch(function(){
+      if(location.protocol==='file:' || location.hostname.indexOf('github.io')>-1){
+        showBackendSetter('填一下后端地址，「哩秀」就能正常出片了 👇');
+      }
+    });
+  }
+}
+setTimeout(probeBackend, 1200);
 var _videoCache = [];          // 缓存的视频列表
 var _videoPagination = {page:1,total:0,total_pages:1};
 var _videoLoading = false;
@@ -1180,7 +1241,7 @@ function fetchVideos(append){
   if(!append) g.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-muted)">⏳ 正在加载教程视频…</div>';
   
   // 🔍 智能判断：GitHub Pages 等静态托管环境无后端，直接读静态 videos.json（含真实B站数据）
-  var isStaticHost = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
+  var isStaticHost = _blockedStaticHost();
   if(isStaticHost){
     loadStaticVideos(append);
     return;
@@ -1421,7 +1482,7 @@ function renderFetchedVideos(append){
 
 function loadMoreVideos(){
   currentVidPage++;
-  var isStaticHost2 = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
+  var isStaticHost2 = _blockedStaticHost();
   if(isStaticHost2){
     // 静态模式: 直接翻页渲染下一页 (不需要重新 fetch)
     if(currentVidPage <= _videoPagination.total_pages){
@@ -1448,7 +1509,7 @@ function searchVideos(){
   if(!inp) return;
   currentKeyword = inp.value.trim();
   currentVidPage = 1;
-  var isStaticHostS = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
+  var isStaticHostS = _blockedStaticHost();
   if(isStaticHostS && _staticAll.length>0){ applyStaticFilterAndRender(false); return; }
   fetchVideos(false);
   currentVidPage = 1;
@@ -1477,7 +1538,7 @@ function initStudyPlatformFilter(){
     b.classList.add('active');
     currentPlatform = b.getAttribute('data-plt');
     currentVidPage = 1;
-    var isStaticHostF = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
+    var isStaticHostF = _blockedStaticHost();
     if(isStaticHostF && _staticAll.length>0){ applyStaticFilterAndRender(false); return; }
     fetchVideos(false);
     currentVidPage = 1;
@@ -1624,7 +1685,7 @@ function extractSkillFromAPI(videoCacheIdx){
   
   // 无真实链接且不在后端环境 → 无法蒸馏，直接本地模式
   // ?? 静态托管?境(GitHub Pages)无后端 → 直接本地智能分析, 不等25s超时
-  var isStaticHost = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
+  var isStaticHost = _blockedStaticHost();
   if(isStaticHost){
     localFallback('static host (no backend)');
     return;
@@ -3256,14 +3317,16 @@ function autoEditRender(opts){
   var __resumeJob = opts.resumeJob || null;
   var __resumeInstruction = (opts.instruction!=null) ? opts.instruction : null;
   // ?? 静态托管?境（GitHub Pages 无后端）提示
-  var isStaticHost = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
+  var isStaticHost = _blockedStaticHost();
   if(isStaticHost){
     toast('智能成片需本地后端(ffmpeg+whisper)，请打开 http://localhost:8700 使用','err');
     return;
   }
 
   if(_aeFiles.length===0){ toast('请先选择素材','warn'); return; }
+  var _ref = (document.getElementById('aeReference')||{}).value || '';
   var instruction = (__resumeInstruction!=null) ? __resumeInstruction : document.getElementById('aeInstruction').value.trim();
+  if(_ref && !__resumeInstruction){ instruction = instruction + '\n参考范本：' + _ref; }
   if(!instruction){ toast('说一句话告诉 AI 怎么剪','warn'); return; }
   if(_aeBusyGuard && !__resumeJob) { if(_aeBusyGuard()) return; }
   if(!window.__aeBusy){ window.__aeBusy = true; }
@@ -3373,10 +3436,12 @@ function _aeBusyClear(){
   if(b2){ b2.disabled = false; b2.style.opacity = 1; }
 }
 function autoEditPropose(){
-  var isStaticHost = (location.protocol==='https:' && location.hostname.indexOf('github.io')>-1) || location.protocol==='file:';
-  if(isStaticHost){ toast('智能成片需本地后端(ffmpeg+whisper)，请打开 http://localhost:8700 使用','err'); return; }
+  var isStaticHost = _blockedStaticHost();
+  if(isStaticHost){ showBackendSetter('智能成片需要连上后端才能出片，填一下地址就好 👇'); return; }
   if(_aeFiles.length===0){ toast('请先选择素材','warn'); return; }
+  var _ref = (document.getElementById('aeReference')||{}).value || '';
   var instruction = document.getElementById('aeInstruction').value.trim();
+  if(_ref){ instruction = instruction + '\n参考范本：' + _ref; }
   if(!instruction){ toast('说一句话告诉 AI 怎么剪','warn'); return; }
   if(_aeBusyGuard()) return;
 
@@ -3493,7 +3558,17 @@ function renderAeProposal(data, instruction){
   pwrap.style.display = 'block';
   pwrap.style.margin = '0';
   meta.textContent = (data.job_id?('#'+data.job_id.replace('job_','').slice(0,8)):'') + (isScene?' · Scene 引擎':' · 智能粗剪');
-  var pb = aeAddBubble('ai','📋 剪辑提案出来了（'+(isScene?'Scene 分镜':'智能粗剪')+'）。看看合不合心意，确认后我就开拍 ↓');
+  var _p = prop.params || {};
+  var _sum = isScene
+    ? ('分镜 ×' + (prop.scenes||[]).length + (prop.bgm&&prop.bgm.mood ? ' · BGM '+prop.bgm.mood : ''))
+    : ('保留 ' + (prop.keep_segments!=null?prop.keep_segments:(prop.segments||[]).length) + ' 段'
+       + (_p.subtitle ? ' · 加字幕' : ' · 不加字幕')
+       + (_p.style ? ' · '+_p.style+'风格' : '')
+       + (_p.duration ? ' · 目标 '+_fmtT(_p.duration) : ''));
+  var _guide = '📋 我先把你的素材拆成了一份剪辑方案（<b>'+_escH(_sum)+'</b>）。你看看合不合心意：<br>'
+    + '• 想更长/更短、不要字幕、换风格 → 直接改上面那句话，或加个「参考范本」，再点「🔄 重新提案」<br>'
+    + '• 觉得 OK → 点下面「✅ 确认渲染」，我就正式开拍 👇';
+  var pb = aeAddBubble('ai', _guide);
   if(pb) pb.appendChild(pwrap);
   toast(isScene?'✅ 分镜提案已生成，确认后渲染':'✅ 剪辑提案已生成，确认后渲染','ok');
 }
@@ -3522,6 +3597,7 @@ function autoEditReset(){
   document.getElementById('aeFileList').innerHTML='';
   _aeFiles=[];
   document.getElementById('aeStatus').textContent='';
+  var _refEl = document.getElementById('aeReference'); if(_refEl) _refEl.value='';
   document.getElementById('aeInstruction').value='把这些素材剪成一条 60 秒的短视频，加上字幕，剪掉停顿废话';
 }
 // Tab 切换时初始化
