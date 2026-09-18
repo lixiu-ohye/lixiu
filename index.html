@@ -95,6 +95,10 @@ header{background:rgba(255,252,248,0.9);backdrop-filter:blur(12px);border-radius
 .route-card .rc-btn{border:none;border-radius:16px;padding:6px 16px;font-size:12px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--rose),var(--gold));color:#fff;transition:all .2s}
 .route-card .rc-btn:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(232,160,191,.35)}
 .route-card .rc-btn.ghost{background:#fff;color:var(--rose-dark);border:1.5px solid var(--rose)}
+.rc-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.rc-chip-btn{border:1.5px solid var(--rose);background:#fff;color:var(--rose-dark);border-radius:14px;padding:5px 12px;font-size:12px;cursor:pointer;transition:all .15s;text-align:left}
+.rc-chip-btn:hover{background:linear-gradient(135deg,var(--rose),var(--gold));color:#fff;transform:translateY(-1px)}
+.rc-confirm-tag{position:absolute;top:-9px;left:12px;background:#fff;color:var(--rose-dark);border:1.5px solid var(--rose);font-size:10px;font-weight:700;border-radius:8px;padding:0 9px;letter-spacing:.5px}
 /* 旁白标注 */
 .callout{display:flex;gap:8px;align-items:flex-start;margin:0 0 16px;max-width:82%}
 .callout .co-dot{width:9px;height:9px;border-radius:50%;background:var(--lavender-dark);margin-top:6px;flex-shrink:0;box-shadow:0 0 0 3px rgba(201,182,217,.25)}
@@ -359,7 +363,7 @@ header{padding:12px 14px}
     <!-- duplicate removed -->
     <button class="main-tab" data-tab="tab-xingtu">🌸 醒图</button>
     <button class="main-tab" data-tab="tab-download">📥 视频下载</button>
-    <button class="main-tab" data-tab="tab-history">📂 记录</button>
+    <button class="main-tab" data-tab="tab-history">📦 成品交付</button>
   </div>
 
   <!-- ===== Tab: 修图 ===== -->
@@ -403,45 +407,7 @@ header{padding:12px 14px}
     </div>
 
     <div class="chat-tut-row">
-      <div class="card chat-box">
-        <div class="card-title"><span class="ic">🎨</span>智能对话工作台 · Ardot 画布</div>
-        <div class="studio-wrap">
-          <!-- 左侧图层树 -->
-          <div class="studio-side">
-            <h5>图层 · LAYERS</h5>
-            <div class="layer-node sel"><span class="ln-ic">🗂️</span> 对话画布</div>
-            <div id="layerList"></div>
-          </div>
-          <!-- 右侧主区 -->
-          <div class="studio-main">
-            <div class="studio-top">
-              <span class="file-name">哩秀 · 智能对话.ardot</span>
-              <span class="node-chip">node_id: 0:1</span>
-              <span class="spacer"></span>
-              <span class="studio-pill">AI 旁白</span>
-              <span class="studio-pill">设计边框 ✓</span>
-            </div>
-            <div class="studio-canvas" id="studioCanvas">
-              <div class="frame-label" style="top:6px;left:10px">Frame · 对话流</div>
-              <div class="callout"><span class="co-dot"></span><span class="co-txt">旁白：直接说需求，AI 自动识别你想用的功能，并在画布上用虚线设计边框圈出重点模块。可识别：修图 / 智能成片 / 模板 / 剪映 / 教程蒸馏 / 反推提示词 / 视频下载。</span></div>
-            </div>
-            <div style="padding:9px 12px 0;background:#f8f2ec;border-top:1px solid rgba(200,160,140,0.15)">
-              <div class="hint-chips">
-                <span class="hint-chip" onclick="studioQuick('帮我把这张图修成韩系冷白皮')">🖼️ 修图</span>
-                <span class="hint-chip" onclick="studioQuick('剪成30秒口播加字幕')">🤖 智能成片</span>
-                <span class="hint-chip" onclick="studioQuick('这个视频是怎么剪的，反推提示词')">🔍 反推提示词</span>
-                <span class="hint-chip" onclick="studioQuick('生成剪映草稿')">🎬 剪映草稿</span>
-                <span class="hint-chip" onclick="studioQuick('贴个教程链接学会新滤镜')">🧠 教程蒸馏</span>
-              </div>
-            </div>
-            <div class="studio-input">
-              <input type="text" id="chatInput" placeholder="说一句话，AI 自动路由到对应功能并画设计边框…">
-              <button class="studio-send" id="chatSendBtn" onclick="sendChat()">发送</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card tut-box">
+      <div class="card tut-box" style="flex:1">
         <div class="card-title"><span class="ic">🔗</span>快速自学</div>
         <div class="tut-inp">
           <input type="text" id="tutInput" placeholder="小红书/B站教程链接">
@@ -476,6 +442,33 @@ header{padding:12px 14px}
 
   <!-- ===== Tab: 模板推荐 ===== -->
     <div class="tab-content" id="tab-autoedit">
+      <div class="card chat-box">
+        <div class="card-title"><span class="ic">💬</span>和 AI 说说你想做什么</div>
+        <div class="studio-wrap" style="grid-template-columns:1fr">
+          <div class="studio-main">
+            <div class="studio-top">
+              <span class="file-name">✨ 哩秀 AI 助手</span>
+              <span class="spacer"></span>
+              <span class="studio-pill">先确认 · 再动手</span>
+            </div>
+            <div class="studio-canvas" id="studioCanvas">
+              <div class="callout"><span class="co-dot"></span><span class="co-txt">直接说出你想要的效果，比如「把这张图变冷白皮」或「剪成30秒口播加字幕」。我会先跟你确认理解得对不对，缺的信息我也会问清楚，你点头之后我才开工。</span></div>
+            </div>
+            <div style="padding:9px 12px 0;background:#f8f2ec;border-top:1px solid rgba(200,160,140,0.15)">
+              <div class="hint-chips">
+                <span style="font-size:11px;color:var(--text-muted)">试试：</span>
+                <span class="hint-chip" onclick="studioQuick('帮我把这张图修成韩系冷白皮')">🖼️ 修图变美</span>
+                <span class="hint-chip" onclick="studioQuick('剪成30秒口播加字幕')">🎬 剪个视频</span>
+                <span class="hint-chip" onclick="studioQuick('生成剪映草稿')">📱 做个剪映草稿</span>
+              </div>
+            </div>
+            <div class="studio-input">
+              <input type="text" id="chatInput" placeholder="例如：把这张图变冷白皮 / 剪成30秒口播加字幕">
+              <button class="studio-send" id="chatSendBtn" onclick="sendChat()">发送</button>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="card-title"><span class="ic">🤖</span>智能成片 · 丢素材 + 说句话 = 出片</div>
       <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">免费本地方案：上传拍摄素材 → 说需求（"剪成60秒口播，加字幕"）→ 自动剪停顿/拼接/加字幕 → 下载成片</p>
 
@@ -795,6 +788,13 @@ header{padding:12px 14px}
 
   <!-- ===== Tab: 记录 ===== -->
   <div class="tab-content" id="tab-history">
+    <div class="card">
+      <div class="card-title">
+        <span class="ic">🚀</span>制作进度
+        <span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-left:auto">AI 正在帮你做的，都在这里</span>
+      </div>
+      <div id="jobProgressList"><div class="empty-s">当前没有正在制作的任务。去「智能成片」说一句需求就能开工</div></div>
+    </div>
     <div class="card">
       <div class="card-title">
         <span class="ic">📂</span>处理记录
@@ -2159,6 +2159,62 @@ function switchTab(id){
   if(tb)tb.classList.add('active');
   var tc=document.getElementById(id);
   if(tc)tc.classList.add('active');
+  if(id==='tab-history') startJobPoll();
+}
+
+// ========== 成品交付 · 制作进度轮询 ==========
+var __jobPollTimer=null;
+function jobStageTxt(s){
+  var map={queued:'⏳ 排队中',running:'🎬 AI 正在制作',proposing:'📝 正在出提案',done:'✅ 已完成',failed:'❌ 制作失败',cancelled:'🚫 已取消'};
+  return map[s]||('⏳ '+s);
+}
+async function pollJobs(){
+  var box=document.getElementById('jobProgressList'); if(!box) return;
+  try{
+    var r=await fetch(API_BASE+'/jobs');
+    var j=await r.json();
+    if(!j||!j.success||!j.items||!j.items.length){
+      box.innerHTML='<div class="empty-s">当前没有正在制作的任务。去「智能成片」说一句需求就能开工</div>';
+      return;
+    }
+    var act=j.items.filter(function(x){return x.stage!=='done'&&x.stage!=='failed'&&x.stage!=='cancelled';});
+    var recent=j.items.filter(function(x){return x.stage==='done';}).slice(0,6);
+    var html='';
+    if(act.length){
+      act.forEach(function(x){
+        var pc=Math.max(0,Math.min(100,x.progress||0));
+        html+='<div style="padding:10px 0;border-bottom:1px dashed rgba(200,160,140,.25)">'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
+          '<span style="font-size:12.5px;font-weight:700;color:var(--text)">'+_escH(jobStageTxt(x.stage))+'</span>'+
+          '<span style="font-size:11px;color:var(--text-muted)">'+pc+'%</span></div>'+
+          '<div style="height:8px;background:rgba(200,160,140,.15);border-radius:4px;overflow:hidden">'+
+          '<div style="height:100%;width:'+pc+'%;background:linear-gradient(90deg,#e8a0bf,#d4a574);transition:width .4s"></div></div>'+
+          (x.message?'<div style="font-size:11px;color:var(--text-muted);margin-top:6px">'+_escH(x.message)+'</div>':'')+
+          '</div>';
+      });
+    }
+    if(recent.length){
+      html+='<div style="font-size:11.5px;font-weight:700;color:var(--text-muted);margin:12px 0 4px">🎉 最近做完的</div>';
+      recent.forEach(function(x){
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px dashed rgba(200,160,140,.2)">'+
+          '<span style="font-size:12px;color:var(--text)">'+_escH(x.message||'成品已完成')+'</span>'+
+          '<span style="font-size:10.5px;color:var(--text-muted)">'+_escH((x.updated_at||'').slice(5,16))+'</span></div>';
+      });
+    }
+    if(!html) html='<div class="empty-s">当前没有正在制作的任务。去「智能成片」说一句需求就能开工</div>';
+    box.innerHTML=html;
+  }catch(e){
+    box.innerHTML='<div class="empty-s">暂时连不上制作进度（后端未启动）。功能本地可用，启动后端即可查看</div>';
+  }
+}
+function startJobPoll(){
+  if(__jobPollTimer) return;
+  pollJobs();
+  __jobPollTimer=setInterval(function(){
+    var tc=document.getElementById('tab-history');
+    if(!tc||!tc.classList.contains('active')){ clearInterval(__jobPollTimer); __jobPollTimer=null; return; }
+    pollJobs();
+  },5000);
 }
 
 // ========== 文件上传 ==========
@@ -2374,39 +2430,7 @@ function retryRandom(){
   startProc();
 }
 
-// ========== 聊天 ==========
-var cr={
-  '冷白':'帮你选中「冷白皮」！拖滑条微调',
-  '白':'想要白？「冷白皮」或「牛奶肌」',
-  '美颜':'自然美颜安排',
-  '日系':'日系风格！甜美或清新',
-  '韩系':'韩系水光肌',
-  '水光':'水光肌安排',
-  '复古':'复古胶片感',
-  '胶片':'胶片风格',
-  '粉':'粉嫩效果',
-  '动漫':'动漫风',
-  '黑白':'黑白经典',
-  '暗':'暗黑风格',
-  '蓝':'蓝调',
-  '鲜艳':'自然鲜艳',
-  '淡':'淡彩',
-  '对比':'高对比',
-  '亮':'提亮',
-  '赛博':'赛博朋克',
-  '反转':'反转色',
-  '素描':'素描',
-  '日落':'日落暖',
-  '电影':'电影感',
-  '奶油':'奶油肌',
-  '玻璃':'玻璃肌',
-  '剪映':'去剪映模板页看看~',
-  '模板':'去模板推荐页',
-  '美图':'美图云修预设⬆️在滤镜区选「美图预设」',
-  '学习':'去「教程学习」贴链接',
-  '帮助':'1.传图 2.选滤镜 3.调参数 4.下载·剪映模板·教程蒸馏·都在新Tab里',
-  '默认':'试试: 冷白皮、日系、复古、美图预设、剪映模板…'
-};
+// ========== 聊天(智能确认式对话: 复述→追问→确认→执行) ==========
 
 // ========== 智能对话工作台 (Ardot 画布 · 旁白气泡 · 设计边框) ==========
 var __studioSeq=0;
@@ -2428,7 +2452,7 @@ function studioAddBubble(role, html){
   return b;
 }
 function studioModName(m){
-  var map={edit:'修图',autoedit:'智能成片',tpl:'模板推荐',jianying:'剪映模板',distill:'教程学习',xingtu:'醒图',download:'视频下载',history:'记录',reverse:'反推提示词'};
+  var map={edit:'修图',autoedit:'智能成片',tpl:'模板推荐',jianying:'剪映草稿',distill:'教程学习',xingtu:'醒图',download:'视频下载',history:'记录',reverse:'看懂做法'};
   return map[m]||(m||'功能');
 }
 function studioRouteDesc(m,a,p,route){
@@ -2436,7 +2460,7 @@ function studioRouteDesc(m,a,p,route){
   if(m==='autoedit') return '已识别为【智能成片】意图。前往智能成片页，已帮你填好剪辑指令，上传素材即可出片。';
   if(m==='jianying') return '已识别为【剪映草稿】意图。前往剪映模板页生成 CapCut 草稿。';
   if(m==='distill') return '已识别为【教程蒸馏】意图。前往教程学习页贴链接，AI 自动拆解参数。';
-  if(m==='reverse') return '已识别为【反推提示词】意图。上传图片/视频即可反推文生图提示词与剪辑手法。';
+  if(m==='reverse') return '你想知道这个图/视频是怎么做出来的对吧？把素材传上来，我把它的做法、参数都拆给你，还能照着复刻同款。';
   if(m==='download') return '已识别为【视频下载】意图。前往视频下载页粘贴链接提取素材。';
   if(m==='tpl') return '已识别为【模板推荐】意图。前往模板推荐页挑选合适模板。';
   if(m==='xingtu') return '已识别为【醒图】意图。前往醒图页套用风格 LUT。';
@@ -2447,14 +2471,13 @@ function studioAddRouteCard(route){
   var c=document.getElementById('studioCanvas'); if(!c||!route) return;
   var m=route.module||'', a=route.action||'', p=route.params||{};
   var card=document.createElement('div'); card.className='route-card';
-  var paramStr=Object.keys(p).length?JSON.stringify(p):'';
   var key='r'+(++__studioSeq);
   __studioRouteStore[key]={m:m,p:p,ins:route.instruction||''};
   var goBtn='<button class="rc-btn" onclick="studioGo(\''+_escH(m)+'\')">前往 '+_escH(studioModName(m))+' →</button>';
-  var applyBtn='<button class="rc-btn ghost" onclick="studioApply(\''+key+'\')">套用参数</button>';
-  card.innerHTML='<span class="rc-tag">设计边框 · '+_escH(studioModName(m))+'</span>'+
+  var applyBtn='<button class="rc-btn ghost" onclick="studioApply(\''+key+'\')">就这样办</button>';
+  var card_tag=route.confident===false?'和你确认一下':'AI 帮你选好了';
+  card.innerHTML='<span class="rc-tag'+(route.confident===false?' rc-confirm-tag':'')+'">'+_escH(card_tag+' · '+studioModName(m))+'</span>'+
     '<div class="rc-body">'+_escH(studioRouteDesc(m,a,p,route))+'</div>'+
-    (paramStr?'<div class="rc-params">'+_escH(paramStr)+'</div>':'')+
     '<div class="rc-go">'+goBtn+applyBtn+'</div>';
   c.appendChild(card); c.scrollTop=c.scrollHeight;
 }
@@ -2479,9 +2502,37 @@ function studioApply(key){
     switchTab('tab-autoedit');
   } else { studioGo(m); }
 }
-function keywordReply(t){
-  for(var k in cr){ if(t.indexOf(k)!==-1) return cr[k]; }
-  return '试试：冷白皮、日系、复古、智能成片、剪映、反推提示词、教程蒸馏…';
+// 本地轻量路由(后端不可达时的兜底): 命中关键词给确认卡, 没命中给针对性追问, 不再甩万金油
+function _localRoute(t){
+  function hit(){ for(var i=0;i<arguments.length;i++){ if(t.indexOf(arguments[i])!==-1) return true; } return false; }
+  if(hit('反推','提示词','怎么剪的','怎么拍的','同款')) return {status:'route',module:'reverse',action:'',params:{},instruction:t,confident:false};
+  if(hit('剪映','草稿')) return {status:'route',module:'jianying',action:'',params:{},instruction:t,confident:false};
+  if(hit('教程','蒸馏','学一下','提取参数')) return {status:'route',module:'distill',action:'',params:{},instruction:t,confident:false};
+  if(hit('醒图')) return {status:'route',module:'xingtu',action:'',params:{},instruction:t,confident:false};
+  if(hit('零素材','全自动')) return {status:'route',module:'auto',action:'',params:{},instruction:t,confident:false};
+  if(hit('下载')) return {status:'route',module:'download',action:'',params:{},instruction:t,confident:false};
+  if(hit('历史','上次')) return {status:'route',module:'history',action:'',params:{},instruction:t,confident:false};
+  if(typeof S!=='undefined'&&S.file) return {status:'clarify',understand:'你想处理已上传的图片：'+t,clarify:{question:'想做什么效果?',options:['人像精修(冷白皮/美颜)','换风格滤镜(日系/复古/电影感)','这个图是怎么做的? 帮我拆解','生成剪映同款草稿']}};
+  if(hit('剪','成片','口播','字幕','视频')) return {status:'clarify',understand:'你想做视频：'+t,clarify:{question:'素材在哪里、要剪成什么样的?',options:['上传素材剪成30秒口播+字幕','上传素材剪成15秒卡点混剪','没有素材，AI 全自动生成','这个视频怎么剪的? 反推手法']}};
+  return {status:'clarify',understand:t,clarify:{question:'你想做哪件事?',options:['修一张图(滤镜/美颜)','剪一个视频(口播/卡点/成片)','反推图片或视频的提示词','看看历史记录']}};
+}
+// 在 AI 气泡里追加可点击的追问选项; 点击 = 以该选项继续对话
+function studioAddChips(bubble, opts){
+  if(!bubble||!opts||!opts.length) return;
+  var wrap=document.createElement('div'); wrap.className='rc-chips';
+  opts.forEach(function(o){
+    var btn=document.createElement('button'); btn.className='rc-chip-btn'; btn.textContent=o;
+    btn.onclick=function(){ var i=document.getElementById('chatInput'); if(i) i.value=o; sendChat(); };
+    wrap.appendChild(btn);
+  });
+  bubble.appendChild(wrap); bubble.scrollIntoView({behavior:'smooth',block:'end'});
+}
+// 渲染追问: 复述理解 + 提问 + 可点选项
+function studioAskClarify(route){
+  var c=route.clarify||{};
+  var html=(route.understand?'我理解你想：<b>'+_escH(route.understand)+'</b><br>':'')+'但还差关键信息：'+_escH(c.question||'能补充一下需求吗?');
+  var b=studioAddBubble('ai',html);
+  studioAddChips(b,c.options);
 }
 var __studioBusy=false;
 async function sendChat(){
@@ -2502,11 +2553,17 @@ async function sendChat(){
     if(j&&j.success&&j.route) route=j.route;
   }catch(e){ route=null; }
   if(sendBtn){ sendBtn.disabled=false; sendBtn.textContent='发送'; }
-  if(route){
-    studioAddBubble('ai','已理解你的意图 → 路由到 <b>'+_escH(studioModName(route.module))+'</b> 模块，下方虚线框为重点模块圈选。');
+  if(route && route.status==='clarify' && route.clarify){
+    studioAskClarify(route);
+  } else if(route && route.module){
+    // 确认式: 先复述理解, 卡片上的「前往」才是确认执行, 不直接替用户做决定
+    var conf=route.confident!==false;
+    studioAddBubble('ai',(conf?'我理解你想做':'我猜你想做')+'：<b>'+_escH(route.instruction||t)+'</b> → 去 <b>'+_escH(studioModName(route.module))+'</b> 模块。理解对了就点卡片「前往」，不对直接打字纠正我~');
     studioAddRouteCard(route);
   } else {
-    studioAddBubble('ai', _escH(keywordReply(t)));
+    var lr=_localRoute(t);
+    if(lr.status==='clarify') studioAskClarify(lr);
+    else { studioAddBubble('ai','我猜你想做：<b>'+_escH(lr.instruction)+'</b> → 去 <b>'+_escH(studioModName(lr.module))+'</b> 模块。对的话点卡片「前往」~'); studioAddRouteCard(lr); }
   }
 }
 document.getElementById('chatInput').addEventListener('keydown',function(e){
