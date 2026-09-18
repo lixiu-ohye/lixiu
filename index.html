@@ -598,35 +598,29 @@ header{padding:12px 14px}
       <button class="act-btn dl" onclick="generateJianYingDraft()" style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;font-size:12px">🎬 生成剪映草稿</button>
     </div>
     <div class="card">
-      <div class="card-title"><span class="ic">💻</span>脚本驱动口播剪辑（duyi 方法论）</div>
-      <div class="duyi-card-desc" id="duyiCardDesc">AI 识别口播逐句稿 → 判定可删冗余（重复/语气词/口误/无意义停顿）→ 脚本生成剪辑方案与字幕时间轴 → 交付剪映草稿。只删不改，保留原声真实表达。</div>
+      <div class="card-title"><span class="ic">💬</span>口播视频 · 自动去掉废话</div>
+      <div class="duyi-card-desc" id="duyiCardDesc">把口播稿贴进来，AI 自动找出重复的话、语气词、口误和停顿，只删废话、不动你说的内容，直接生成剪映草稿。</div>
       <div class="duyi-format-grid">
         <div class="duyi-format-card selected" id="fmtLite" onclick="duyiSelectFormat('lite')">
           <div class="fmt-icon">📱</div>
-          <div class="fmt-name">竖屏 Lite</div>
-          <div class="fmt-ratio">9:16 口播 · 粗白字幕 · 剪口播冗余</div>
+          <div class="fmt-name">竖屏（手机版）</div>
+          <div class="fmt-ratio">适合发抖音、快手、视频号</div>
         </div>
         <div class="duyi-format-card" id="fmtWide" onclick="duyiSelectFormat('wide')">
           <div class="fmt-icon">🖥️</div>
-          <div class="fmt-name">横屏 Wide</div>
-          <div class="fmt-ratio">16:9 口播 · 信息卡 + 右侧素材位</div>
+          <div class="fmt-name">横屏（电脑版）</div>
+          <div class="fmt-ratio">适合发 B站、网页播放</div>
         </div>
       </div>
-      <div class="duyi-principle">
-        <div class="duyi-principle-title">✅ 剪辑原则（来自 duyi 方法论）</div>
-        <p>· 只删不改：只删口播冗余、修正 ASR 听误，不替说话人改词、改意或改色</p>
-        <p>· 逐句稿必须来自 ASR 且锁定当前源片，定稿后下游不得默默改字</p>
-        <p>· 所有删除项生成 review_required 标记，交人复核后再定稿</p>
-      </div>
       <div class="duyi-steps" id="duyiSteps">
-        <div class="duyi-step"><div class="duyi-step-num">1</div><div class="duyi-step-text">粘贴逐句口播稿<div class="duyi-step-sub">每行一句，来自 ASR 语音识别或直接粘贴口播文案</div></div></div>
-        <div class="duyi-step"><div class="duyi-step-num">2</div><div class="duyi-step-text">AI 判定删除项<div class="duyi-step-sub">识别重复/语气词/口误/无意义停顿，标记 review_required</div></div></div>
-        <div class="duyi-step"><div class="duyi-step-num">3</div><div class="duyi-step-text">脚本生成剪辑方案<div class="duyi-step-sub">时间戳 + 最终稿 + 字幕样式 + 合成参数</div></div></div>
-        <div class="duyi-step"><div class="duyi-step-num">4</div><div class="duyi-step-text">导出剪映草稿<div class="duyi-step-sub">下载 draft_content.json + README，放入剪映草稿目录</div></div></div>
+        <div class="duyi-step"><div class="duyi-step-num">1</div><div class="duyi-step-text">贴上你说的每句话<div class="duyi-step-sub">每行一句，照着念的稿子或语音转的文字都行</div></div></div>
+        <div class="duyi-step"><div class="duyi-step-num">2</div><div class="duyi-step-text">AI 帮你找出废话<div class="duyi-step-sub">重复的话、嗯嗯啊啊、说错的、不必要的停顿都会标出来</div></div></div>
+        <div class="duyi-step"><div class="duyi-step-num">3</div><div class="duyi-step-text">自动排好画面和字幕<div class="duyi-step-sub">哪里保留、哪里删掉、字幕怎么放，都替你安排好</div></div></div>
+        <div class="duyi-step"><div class="duyi-step-num">4</div><div class="duyi-step-text">导出到剪映<div class="duyi-step-sub">下载文件放进剪映草稿夹，打开剪映就能继续用</div></div></div>
       </div>
       <div class="duyi-script-area">
         <textarea id="duyiScript" placeholder="粘贴口播逐句稿，每行一句…&#10;例如：&#10;大家好，今天给大家分享一个剪视频的方法&#10;这个方法呢，其实特别简单，特别简单&#10;就是，嗯，用脚本驱动剪辑，就不用自己一帧一帧拉了&#10;我觉得这个真的，真的，真的很好用…"></textarea>
-        <div class="duyi-script-hint">💡 可直接粘贴 ASR 识别结果；AI 会按 duyi 方法论判定冗余并生成剪辑方案</div>
+        <div class="duyi-script-hint">💡 录音转出来的文字直接贴进来就行，AI 会自动标出可以删的部分</div>
       </div>
       <div class="duyi-apply-row">
         <button class="duyi-gen-btn" onclick="duyiAnalyze()">🤖 AI 分析并生成剪辑方案</button>
@@ -2806,7 +2800,7 @@ function duyiSelectFormat(fmt){
   document.getElementById('fmtLite').classList.toggle('selected', fmt==='lite');
   document.getElementById('fmtWide').classList.toggle('selected', fmt==='wide');
   var d=document.getElementById('duyiCardDesc');
-  toast('已切换为'+ (fmt==='lite'?'竖屏 Lite 版式':'横屏 Wide 版式'), 'ok');
+  toast('已切换为'+ (fmt==='lite'?'竖屏（手机版）':'横屏（电脑版）'), 'ok');
 }
 
 function duyiLoadExample(){
@@ -2955,7 +2949,7 @@ function duyiRenderResult(plan){
   var box = document.getElementById('duyiResult');
   box.style.display = 'block';
   var remHtml = plan.removed.length
-    ? plan.removed.map(function(r){ return '<div class="duyi-result-item"><span class="duyi-result-item-num">✂️</span><span class="duyi-result-item-text" style="text-decoration:line-through;color:#c99">'+escapeHtml(r.text)+' <span style="color:#d88;font-size:10px;text-decoration:none">('+r.issue+' · review_required)</span></span></div>'; }).join('')
+    ? plan.removed.map(function(r){ return '<div class="duyi-result-item"><span class="duyi-result-item-num">✂️</span><span class="duyi-result-item-text" style="text-decoration:line-through;color:#c99">'+escapeHtml(r.text)+' <span style="color:#d88;font-size:10px;text-decoration:none">('+r.issue+')</span></span></div>'; }).join('')
     : '<div class="duyi-result-item"><span class="duyi-result-item-num">✅</span><span class="duyi-result-item-text">无冗余，全保留</span></div>';
 
     // 保留优先级展示（高优先级勾子句/数字句 标记）
@@ -2969,16 +2963,16 @@ function duyiRenderResult(plan){
   }
 
 var cardHtml = plan.cards.length
-    ? '<div class="duyi-result-title">🎴 信息卡节奏（'+plan.cards.length+' 张）</div><div class="duyi-result-items">'+
+    ? '<div class="duyi-result-title">🎴 提示卡（'+plan.cards.length+' 张）</div><div class="duyi-result-items">'+
       plan.cards.map(function(c){ return '<div class="duyi-result-item"><span class="duyi-result-item-num">['+c.start+'s]</span><span class="duyi-result-item-text">'+escapeHtml(c.text)+'</span></div>'; }).join('')+'</div>'
     : '';
 
   box.innerHTML =
     '<div class="duyi-result">'+
-      '<div class="duyi-result-title">🎬 剪辑方案 · '+(plan.format==='lite'?'竖屏 Lite':'横屏 Wide')+' · 总时长 '+plan.totalDur+'s</div>'+
+      '<div class="duyi-result-title">🎬 剪辑方案 · '+(plan.format==='lite'?'竖屏（手机版）':'横屏（电脑版）')+' · 总时长 '+plan.totalDur+'s</div>'+
       '<div class="duyi-result-items">'+
         '<div class="duyi-result-item"><span class="duyi-result-item-num">📝</span><span class="duyi-result-item-text">原稿 '+ (plan.analysis.length) +' 句 → 保留 '+plan.kept.length+' 句 · 删除 '+plan.removed.length+' 句</span></div>'+
-        '<div class="duyi-result-item"><span class="duyi-result-item-num">✂️</span><span class="duyi-result-item-text">删除项均标记 <b>review_required</b>，可人工复核</span></div>'+
+        '<div class="duyi-result-item"><span class="duyi-result-item-num">✂️</span><span class="duyi-result-item-text">删掉的每一句都列在下面，觉得删多了可以改稿重新分析</span></div>'+
         prioHtml+
         '<div class="duyi-result-item"><span class="duyi-result-item-num">⏱️</span><span class="duyi-result-item-text">'+plan.timeline.length+' 个视频片段 · '+plan.subs.length+' 条字幕</span></div>'+
       '</div>'+
@@ -3035,26 +3029,26 @@ function duyiExportJianYing(){
   a.href = url; a.download = 'Lixiu_Duyi_Draft_draft_content.json';
   a.click(); URL.revokeObjectURL(url);
 
-  var readme = '= Lixiu AI + duyi Scripted Edit Draft =\n\n' +
-    '版式: ' + (plan.format==='lite' ? '竖屏 Lite (9:16)' : '横屏 Wide (16:9)') + '\n' +
+  var readme = '= 哩秀 · 口播精简剪映草稿 =\n\n' +
+    '版式: ' + (plan.format==='lite' ? '竖屏 9:16（手机版）' : '横屏 16:9（电脑版）') + '\n' +
     '总时长: ' + plan.totalDur + 's\n' +
-    '片段数: ' + plan.timeline.length + ' · 字幕: ' + plan.subs.length + ' 条' + (plan.cards.length ? ' · 信息卡: ' + plan.cards.length + ' 张' : '') + '\n\n' +
+    '片段数: ' + plan.timeline.length + ' · 字幕: ' + plan.subs.length + ' 条' + (plan.cards.length ? ' · 提示卡: ' + plan.cards.length + ' 张' : '') + '\n\n' +
     '使用方法:\n' +
     '1. 把此文件放入 ~/Documents/JianyingPro Drafts/Lixiu_Duyi_Draft/\n' +
     '2. 打开剪映专业版\n' +
     '3. 替换素材为你的口播视频\n' +
     '4. 按字幕时间轴校对\n' +
     '5. 导出\n\n' +
-    '剪辑原则（duyi 方法论）:\n' +
-    '- 只删不改：删除项均已标记 review_required，请人工复核\n' +
-    '- 逐句稿锁定当前源片，定稿后不再改字\n';
+    '剪辑说明:\n' +
+    '- 只删了重复、语气词、口误和停顿，没有改动你说的内容\n' +
+    '- 删掉的每一句都在网页的方案里列出来了，可以先核对再导出\n';
   var blob2 = new Blob([readme], {type:'text/plain'});
   var url2 = URL.createObjectURL(blob2);
   var a2 = document.createElement('a');
   a2.href = url2; a2.download = 'Lixiu_Duyi_Draft_README.txt';
   a2.click(); URL.revokeObjectURL(url2);
 
-  toast('🎬 剪映草稿已生成（' + (plan.format==='lite'?'Lite 竖屏':'Wide 横屏') + '）','ok');
+  toast('🎬 剪映草稿已生成（' + (plan.format==='lite'?'竖屏手机版':'横屏电脑版') + '）','ok');
 }
 
 // ---- 导出剪辑方案 JSON ----
