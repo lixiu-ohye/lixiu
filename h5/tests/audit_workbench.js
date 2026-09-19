@@ -1021,6 +1021,25 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   }));
   ok('T1 UI设计面板提供「本地 / AI」两种引擎', t0.opts === 2 && t0.engine === 'local', JSON.stringify(t0));
   ok('T2 AI 配置区默认收起(不打扰不用 AI 的人)', t0.box === 'none', t0.box);
+  // T2b: 「一句话生成 UI」区块必须在 UI设计 Tab 的**第一个子区块**。
+  // 用户实测反馈「切到 UI设计 找不到 AI 大模型」—— 根因是它原本排在第 6 位,
+  // 上面压着 1080x1080 设计画布, 右栏只有 ~345px 高, 入口被挤到滚动区最底。
+  // 用 DOM 顺序钉死(不依赖 rect/Tailwind, CDN 挂也不会假失败)。
+  const tOrd = await page.evaluate(() => {
+    const p = document.getElementById('rt-ui');
+    const prompt = document.getElementById('uiPrompt');
+    if (!p || !prompt) return null;
+    const sec = prompt.closest('.ui-sec');
+    const kids = Array.from(p.children);
+    return {
+      firstCls: (kids[0] && (kids[0].className.split(' ')[0] || kids[0].tagName)) || '',
+      promptSecIdx: sec ? kids.indexOf(sec) : -1,
+      promptSecTitle: (sec && sec.querySelector('h5') || {}).textContent || ''
+    };
+  });
+  ok('T2b 一句话生成UI 区块在 UI设计 Tab 首位(不被 1080 画布压到滚动区底部)',
+    tOrd && tOrd.firstCls === 'ui-sec' && tOrd.promptSecIdx === 0 && /一句话/.test(tOrd.promptSecTitle),
+    JSON.stringify(tOrd));
   ok('T3 API Key 输入框为密码型(不明文显示)', t0.keyType === 'password', t0.keyType);
   ok('T4 有密钥安全提示文案', /公共电脑别填/.test(t0.tip), t0.tip.slice(0, 30));
 

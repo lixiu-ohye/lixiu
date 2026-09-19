@@ -92,45 +92,6 @@
 
       <!-- ── Tab 3【UI设计】: 独立画布设计器(一句话生成 / 手动编辑 / 叠加到视频) ── -->
       <div class="rt-pane" id="rt-ui">
-        <!-- 添加组件 -->
-        <div class="ui-tools" id="uiTools">
-          <button data-add="rect">矩形</button>
-          <button data-add="text">文本</button>
-          <button data-add="image">图片</button>
-          <button data-add="button">按钮</button>
-          <button data-add="card">卡片容器</button>
-          <button data-add="icon">图标</button>
-        </div>
-
-        <!-- 设计画布(网格吸附 / 参考线 / 对齐 的绘制目标) -->
-        <div class="ui-cv-wrap" id="uiWrap">
-          <canvas id="uiCanvas" width="1080" height="1080"></canvas>
-        </div>
-        <div class="ui-cv-bar">
-          <span>画布</span>
-          <input type="number" id="uiCvW" value="1080" title="画布宽(px)"> ×
-          <input type="number" id="uiCvH" value="1080" title="画布高(px)">
-          <button id="uiCvApply">应用</button>
-          <span class="ed-sep"></span>
-          <button id="uiSnap" title="拖动时吸附到网格">网格吸附</button>
-          <button id="uiGrid" title="显示网格与参考线">网格/参考线</button>
-          <select id="uiGridSize" title="网格大小" style="background:#191c22;border:1px solid #333846;color:#dde1e8;border-radius:5px;padding:3px 5px;font-size:10.5px;outline:none;font-family:inherit">
-            <option value="4">网格 4</option><option value="8" selected>网格 8</option><option value="16">网格 16</option><option value="24">网格 24</option>
-          </select>
-        </div>
-
-        <!-- 图层列表: 显示/隐藏 · 锁定 · 层级排序 -->
-        <div class="ui-sec">
-          <h5>图层<span class="n" id="uiLayerCnt">0 个</span></h5>
-          <div class="ui-layers" id="uiLayers"></div>
-        </div>
-
-        <!-- 选中元素属性 -->
-        <div class="ui-sec">
-          <h5>元素属性<span class="n" id="uiPropName"></span></h5>
-          <div id="uiProps"></div>
-        </div>
-
         <!-- 一句话生成 UI: 两种引擎二选一(本地关键词解析 / AI 大模型), 生成的图层结构完全一致 -->
         <div class="ui-sec">
           <h5>一句话生成 UI</h5>
@@ -193,6 +154,47 @@
           </div>
           <div class="ui-hist" id="uiHist"></div>
         </div>
+
+        <!-- 添加组件 -->
+        <div class="ui-tools" id="uiTools">
+          <button data-add="rect">矩形</button>
+          <button data-add="text">文本</button>
+          <button data-add="image">图片</button>
+          <button data-add="button">按钮</button>
+          <button data-add="card">卡片容器</button>
+          <button data-add="icon">图标</button>
+        </div>
+
+        <!-- 设计画布(网格吸附 / 参考线 / 对齐 的绘制目标) -->
+        <div class="ui-cv-wrap" id="uiWrap">
+          <canvas id="uiCanvas" width="1080" height="1080"></canvas>
+        </div>
+        <div class="ui-cv-bar">
+          <span>画布</span>
+          <input type="number" id="uiCvW" value="1080" title="画布宽(px)"> ×
+          <input type="number" id="uiCvH" value="1080" title="画布高(px)">
+          <button id="uiCvApply">应用</button>
+          <span class="ed-sep"></span>
+          <button id="uiSnap" title="拖动时吸附到网格">网格吸附</button>
+          <button id="uiGrid" title="显示网格与参考线">网格/参考线</button>
+          <select id="uiGridSize" title="网格大小" style="background:#191c22;border:1px solid #333846;color:#dde1e8;border-radius:5px;padding:3px 5px;font-size:10.5px;outline:none;font-family:inherit">
+            <option value="4">网格 4</option><option value="8" selected>网格 8</option><option value="16">网格 16</option><option value="24">网格 24</option>
+          </select>
+        </div>
+
+        <!-- 图层列表: 显示/隐藏 · 锁定 · 层级排序 -->
+        <div class="ui-sec">
+          <h5>图层<span class="n" id="uiLayerCnt">0 个</span></h5>
+          <div class="ui-layers" id="uiLayers"></div>
+        </div>
+
+        <!-- 选中元素属性 -->
+        <div class="ui-sec">
+          <h5>元素属性<span class="n" id="uiPropName"></span></h5>
+          <div id="uiProps"></div>
+        </div>
+
+        
 
         <!-- 输出: 导出 PNG / 叠加到视频画布 -->
         <div class="ui-act" style="margin-top:10px">
