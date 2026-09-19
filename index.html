@@ -1191,14 +1191,20 @@ function _blockedStaticHost(){
   return onStatic && !_hasCustomBackend();
 }
 // 后端没连上时，注入一条大白话引导条，让用户填自己的后端地址（公网隧道 / 本机皆可）
-function showBackendSetter(msg){
+function showBackendSetter(msg, force){
+  // 用户主动关掉过就不再打扰；但从开发者后台主动打开时(force)必须放行
+  if(!force){ try{ if(localStorage.getItem('lixiu_be_hide')==='1') return; }catch(e){} }
   var bar = document.getElementById('beSetter');
   if(!bar){
     bar = document.createElement('div');
     bar.id = 'beSetter';
-    bar.style.cssText = 'position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9999;max-width:92vw;width:440px;background:#fff7f0;border:1.5px solid #e8a0bf;border-radius:14px;padding:12px 14px;box-shadow:0 8px 30px rgba(200,120,140,.25);font-size:13px;color:#5a3f42';
-    bar.innerHTML = '<div style="font-weight:700;margin-bottom:6px">🔌 还没连上「哩秀」的后端</div>'+
-      '<div style="color:#8a7b7e;margin-bottom:8px;line-height:1.6">本机跑着后端就填 <b>http://localhost:8700</b>；想在外面也能用，就填你的公网后端地址（形如 https://xxxx.serveousercontent.com）。</div>'+
+    // ⚠️ 原先是 position:fixed + bottom:14px 居中，实测会压住「下载」按钮：
+    // 下载按钮在 y 862~899，引导条在 y 821~936，elementFromPoint 命中的是引导条 →
+    // 用户滚到底点下载等于点在提示条上，完全没反应。改为挂在 header 下方，避开所有底部操作区。
+    bar.style.cssText = 'position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:9999;max-width:92vw;width:460px;background:#fff7f0;border:1.5px solid #e8a0bf;border-radius:14px;padding:12px 38px 12px 14px;box-shadow:0 8px 30px rgba(200,120,140,.25);font-size:13px;color:#5a3f42';
+    bar.innerHTML = '<button id="beClose" title="关掉这个提示（不再自动弹出）" style="position:absolute;right:6px;top:4px;border:none;background:transparent;font-size:17px;line-height:1;color:#b08a94;cursor:pointer;padding:4px 7px">×</button>'+
+      '<div style="font-weight:700;margin-bottom:6px">🔌 还没连上「哩秀」的后端</div>'+
+      '<div id="beMsg" style="color:#8a7b7e;margin-bottom:8px;line-height:1.6">本机跑着后端就填 <b>http://localhost:8700</b>；想在外面也能用，就填你的公网后端地址（形如 https://xxxx.serveousercontent.com）。</div>'+
       '<div style="display:flex;gap:8px"><input id="beInput" placeholder="粘贴后端地址，例如 http://localhost:8700" style="flex:1;padding:9px 10px;border:1px solid rgba(200,160,140,.5);border-radius:10px;font-size:13px;outline:none"><button id="beSave" style="padding:9px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,#e8a0bf,#d4a574);color:#fff;font-weight:700;cursor:pointer">连上</button></div>';
     document.body.appendChild(bar);
     document.getElementById('beSave').onclick = function(){
@@ -1211,8 +1217,14 @@ function showBackendSetter(msg){
       toast('✅ 已记住后端地址，正在重连…','ok');
       setTimeout(probeBackend, 400);
     };
+    // 让它可关: 有些用户只想安静修图, 不需要后端
+    document.getElementById('beClose').onclick = function(){
+      try{ localStorage.setItem('lixiu_be_hide','1'); }catch(e){}
+      bar.remove();
+      toast('好的，不再提示。要连后端时点右下角 🔐 里的「改地址」。','ok');
+    };
   }
-  if(msg){ var t = bar.querySelector('div:nth-child(2)'); if(t) t.textContent = msg; }
+  if(msg){ var t = document.getElementById('beMsg'); if(t) t.textContent = msg; }
   bar.style.display = 'block';
 }
 // 加载时探一下后端通不通；不通且是静态托管页，就弹出引导条
@@ -2905,8 +2917,27 @@ function showDash(){
     '<div class="dash-i" style="display:flex;justify-content:space-between;padding:8px;background:rgba(200,160,140,0.04);border-radius:8px;font-size:12px"><span>美图预设</span><span style="color:var(--success)">6款</span></div>'+
     '<div class="dash-i" style="display:flex;justify-content:space-between;padding:8px;background:rgba(200,160,140,0.04);border-radius:8px;font-size:12px"><span>剪映模板</span><span style="color:var(--info)">5款</span></div>'+
     '<div class="dash-i" style="display:flex;justify-content:space-between;padding:8px;background:rgba(200,160,140,0.04);border-radius:8px;font-size:12px"><span>蒸馏技能</span><span>'+S.distillSkills.length+'个</span></div>'+
-    '</div></div>';
+    '</div>'+
+    // 后端地址入口: 关掉过引导条的用户只能从这里改回来
+    '<div style="margin-top:14px;padding:10px;background:rgba(200,160,140,0.04);border-radius:8px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px">'+
+        '<span style="color:var(--text-muted)">后端地址</span>'+
+        '<span id="dashBase" style="color:var(--text-muted);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;text-align:right">'+((typeof API_BASE==="string")?API_BASE:"")+'</span>'+
+        '<button id="dashBaseBtn" style="padding:5px 12px;background:rgba(200,160,140,0.12);border:none;border-radius:8px;cursor:pointer;font-size:12px;white-space:nowrap">改地址</button>'+
+      '</div>'+
+      '<div id="dashBaseSt" style="font-size:11px;color:var(--text-muted);margin-top:6px">检测中…</div>'+
+    '</div>'+
+    '</div>';
   document.body.appendChild(m);
+  document.getElementById('dashBaseBtn').onclick=function(){ showBackendSetter('', true); };
+  // 顺手探一下当前后端通不通, 让用户知道到底连上没有
+  (function(){
+    var st=document.getElementById('dashBaseSt');
+    if(!st||typeof fetch!=='function') return;
+    fetch(API_BASE+'/health').then(function(r){ return r.ok?r.json():null; })
+      .then(function(j){ st.textContent = j ? '✅ 已连上' : '⚠️ 后端没有响应（可点「改地址」换一个）'; st.style.color = j ? 'var(--success)' : '#c0655f'; })
+      .catch(function(){ st.textContent='⚠️ 连不上后端（可点「改地址」换一个）'; st.style.color='#c0655f'; });
+  })();
 }
 
 // ===== 限流友好提示 (429 服务太火爆) =====
