@@ -529,8 +529,10 @@ header{padding:12px 14px}
             <span style="font-size:15px;font-weight:700;color:var(--text)">📦 我的素材库</span>
             <span id="matCnt" style="font-size:11px;padding:2px 9px;border-radius:10px;background:rgba(232,160,191,.12);color:#8a5a70;font-weight:600">0 个</span>
             <span id="matStore" style="font-size:10.5px;color:var(--text-muted)"></span>
+            <span id="matLimit" onclick="matSetLimit()" title="点一下改单轮最多用几个素材" style="font-size:10.5px;padding:2px 9px;border-radius:10px;background:rgba(192,160,220,.14);color:#6a5a8a;font-weight:600;cursor:pointer">⚙️ 单轮 30 个</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
+            <button id="matSyncUp" onclick="matSyncUp()" style="display:none;padding:5px 13px;border:1px solid rgba(192,160,220,.5);border-radius:13px;background:transparent;color:#6a5a8a;font-size:11px;cursor:pointer">⬆️ 上传本机旧素材</button>
             <button onclick="matClear()" style="padding:5px 13px;border:1px solid rgba(226,120,120,.5);border-radius:13px;background:transparent;color:#c0655f;font-size:11px;cursor:pointer">清空</button>
             <button onclick="document.getElementById('matFileInput').click()" style="padding:5px 13px;border:1px solid rgba(200,160,140,.4);border-radius:13px;background:transparent;color:var(--text-muted);font-size:11px;cursor:pointer">📁 继续添加</button>
             <input type="file" id="matFileInput" multiple accept=".mp4,.mov,.mkv,.avi,.webm,.flv,.jpg,.jpeg,.png,.webp" style="display:none">
@@ -3437,6 +3439,115 @@ var MAT={
   }
 };
 
+// ═══════ 素材库多端同步层 ═══════
+// 后端素材表优先(换设备/换浏览器也能看到同一批素材), 后端连不上时自动退回本机 IndexedDB
+var MATX = {
+  ready: false, mode: 'local',
+  items: [], total: 0, bytes: 0,
+  limits: { max_count: 200, max_per_job: 30 },
+  cache: {},          // id -> File (服务端素材拉下来后缓存, 避免重复下载)
+  pending: null,
+  fetch: function(url, opt){
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    if(ctrl){ setTimeout(function(){ try{ ctrl.abort(); }catch(e){} }, 8000); }
+    var o = opt || {};
+    o.cache = 'no-store';
+    if(ctrl) o.signal = ctrl.signal;
+    return fetch(url, o);
+  },
+  init: function(){
+    // 注意: 必须等请求真正结束才 resolve 模式, 否则会拿到默认的 local 就去渲染,
+    // 后端明明连着也会按本机库走(素材存本地、云端列表看不到)
+    if(MATX._done) return Promise.resolve(MATX.mode);
+    if(MATX.pending) return MATX.pending;
+    MATX.pending = MATX.fetch(API_BASE + '/materials').then(function(r){
+      if(!r.ok) throw 0;
+      return r.json();
+    }).then(function(d){ MATX.mode = 'server'; MATX.apply(d); })
+      .catch(function(){ MATX.mode = 'local'; })
+      .then(function(){ MATX.ready = true; MATX._done = true; MATX.pending = null; return MATX.mode; });
+    return MATX.pending;
+  },
+  apply: function(d){
+    if(!d) return;
+    MATX.items = d.items || [];
+    MATX.total = (typeof d.total === 'number') ? d.total : MATX.items.length;
+    MATX.bytes = d.total_bytes || 0;
+    if(d.limits) MATX.limits = d.limits;
+  },
+  refresh: function(){
+    if(MATX.mode !== 'server') return Promise.resolve(null);
+    return MATX.fetch(API_BASE + '/materials').then(function(r){
+      if(!r.ok) throw 0;
+      return r.json();
+    }).then(function(d){ MATX.apply(d); return d; }).catch(function(){ return null; });
+  },
+  // 服务端素材 → File 对象(保留原文件名, 交给成片接口时后缀才能被识别)
+  getBlob: function(id){
+    if(MATX.cache[id]) return Promise.resolve(MATX.cache[id]);
+    var meta = MATX.items.filter(function(x){ return x.id === id; })[0];
+    if(!meta) return Promise.resolve(null);
+    return MATX.fetch(API_BASE + '/materials/' + id + '/file').then(function(r){
+      if(!r.ok) throw 0;
+      return r.arrayBuffer();
+    }).then(function(buf){
+      var f = new File([buf], meta.name, { type: meta.type || 'application/octet-stream' });
+      MATX.cache[id] = f;
+      return f;
+    }).catch(function(){ return null; });
+  },
+  thumbUrl: function(meta){
+    if(!(meta && meta.thumb)) return '';
+    // 后端给的 thumb 已经是 '/api/materials/.../thumb' 这种站内路径,
+    // 再拼 API_BASE 会变成 /api/api/materials/...(真实联调实测出现)
+    var t = meta.thumb;
+    if(/^https?:\/\//.test(t) || t.indexOf('/api/') === 0 || t.indexOf('//') === 0) return t;
+    return API_BASE + t;
+  },
+  putServer: function(f, meta){
+    var fd = new FormData();
+    fd.append('files', f);
+    fd.append('thumb', (meta && meta.thumb) || '');
+    fd.append('dur', String((meta && meta.dur) || 0));
+    return MATX.fetch(API_BASE + '/materials/upload', { method: 'POST', body: fd }).then(function(r){
+      if(!r.ok) throw 0;
+      return r.json();
+    }).then(function(d){ MATX.apply(d); return d; }).catch(function(){ return null; });
+  },
+  delServer: function(id){
+    // 必须 apply: 后端已在响应里回传最新 items, 不接上它 matRemove 后
+    // MATX.items/total 会停在删除前(实测: 后端 total=0 但前端仍显示 1)
+    return MATX.fetch(API_BASE + '/materials/' + id, { method: 'DELETE' }).then(function(r){
+      if(!r.ok) throw 0;
+      return r.json();
+    }).then(function(d){ if(d) MATX.apply(d); return d; }).catch(function(){ return null; });
+  },
+  clearServer: function(){
+    return MATX.fetch(API_BASE + '/materials/clear', { method: 'POST' }).then(function(r){
+      if(!r.ok) throw 0;
+      return r.json();
+    }).then(function(d){ MATX.apply(d); return d; }).catch(function(){ return null; });
+  },
+  setLimit: function(n){
+    return MATX.fetch(API_BASE + '/materials/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ max_per_job: n })
+    }).then(function(r){
+      if(!r.ok) throw 0;
+      return r.json();
+    }).then(function(d){
+      if(d) MATX.apply(d);           // 后端已回传完整状态, 统一走 apply
+      if(d && d.limits) MATX.limits = d.limits;
+      else if(d && d.max_per_job) MATX.limits.max_per_job = d.max_per_job;
+      return d;
+    }).catch(function(){ return null; });
+  }
+};
+// 单轮成片最多用几个素材 / 素材库容量 —— 都由后端配置下发, 前端不再写死
+function aeMaxBatch(){ return (MATX.limits && MATX.limits.max_per_job) || 30; }
+function aeMaxLibrary(){ return (MATX.limits && MATX.limits.max_count) || 200; }
+
 function matFmtBytes(b){
   if(!b) return '';
   if(b < 1024) return b + 'B';
@@ -3498,71 +3609,157 @@ function matMakeThumb(f){
 
 // 素材库渲染 (卡片右上角红点 = 已加入本轮剪辑)
 function matRender(){
-  MAT.list().then(function(items){
-    items = (items || []).sort(function(a, b){ return b.ts - a.ts; });
-    var grid = document.getElementById('matGrid');
-    var empty = document.getElementById('matEmpty');
-    var cnt = document.getElementById('matCnt');
-    if(!grid) return;
-    if(cnt) cnt.textContent = items.length + ' 个';
-    if(!items.length){
-      grid.style.display = 'none';
-      if(empty) empty.style.display = 'block';
-      return;
+  if(!MATX.ready){ MATX.init().then(function(){ matRender(); }); return; }
+  if(MATX.mode === 'server'){
+    matRenderList(MATX.items.slice().sort(function(a, b){ return b.ts - a.ts; }), true);
+  } else {
+    MAT.list().then(function(items){ matRenderList(items || [], false); });
+  }
+}
+
+function matRenderList(items, isServer){
+  var grid = document.getElementById('matGrid');
+  var empty = document.getElementById('matEmpty');
+  var cnt = document.getElementById('matCnt');
+  if(!grid) return;
+  if(cnt) cnt.textContent = items.length + ' 个';
+  if(!items.length){
+    grid.style.display = 'none';
+    if(empty){
+      empty.style.display = 'block';
+      empty.textContent = isServer
+        ? '上传过一次的素材都会存在这里，换台电脑连同一个后端也能看到。点「加入」接着剪。'
+        : '素材会自动保存在这里。下次再来不用重新上传，点「加入」就能接着剪。';
     }
-    grid.style.display = 'grid';
-    if(empty) empty.style.display = 'none';
-    var html = '';
-    for(var i = 0; i < items.length; i++){
-      var it = items[i];
-      var inBatch = it.name && _aeFiles.some(function(f){ return f.name === it.name && f.size === it.size; });
-      html += '<div class="mat-card' + (inBatch ? ' mat-in' : '') + '" data-mid="' + it.id + '">' +
-        '<div class="mat-thumb">' +
-          (it.thumb ? '<img src="' + it.thumb + '" alt="">' : (it.kind === 'video' ? '🎬' : '🖼️')) +
-          '<button class="mat-del" title="从素材库删除" onclick="matRemove(\'' + it.id + '\')">🗑️</button>' +
-        '</div>' +
-        '<div class="mat-name" title="' + (it.name||'').replace(/"/g,'&quot;') + ' · 入库 ' + matFmtWhen(it.ts) + '">' + (it.name||'').substring(0,13) + '</div>' +
-        '<div class="mat-info">' + matFmtBytes(it.size) + (it.thumb && it.dur ? ' · ' + matFmtDur(it.dur) : '') + '</div>' +
-        '<button class="mat-use" onclick="matAddToBatch(\'' + it.id + '\')">' + (inBatch ? '✓ 已加入' : '加入') + '</button>' +
-      '</div>';
-    }
-    grid.innerHTML = html;
-    // 存储占用
+    return;
+  }
+  grid.style.display = 'grid';
+  if(empty) empty.style.display = 'none';
+  var html = '';
+  for(var i = 0; i < items.length; i++){
+    var it = items[i];
+    var inBatch = it.name && _aeFiles.some(function(f){ return f.name === it.name && f.size === it.size; });
+    var thumb = isServer ? MATX.thumbUrl(it) : (it.thumb || '');
+    var delTip = isServer ? '从素材库删除（其他设备也一起删）' : '从本机素材库删除';
+    html += '<div class="mat-card' + (inBatch ? ' mat-in' : '') + '" data-mid="' + it.id + '">' +
+      '<div class="mat-thumb">' +
+        (thumb ? '<img src="' + thumb + '" alt="">' : (it.kind === 'video' ? '🎬' : '🖼️')) +
+        '<button class="mat-del" title="' + delTip + '" onclick="matRemove(\'' + it.id + '\')">🗑️</button>' +
+      '</div>' +
+      '<div class="mat-name" title="' + (it.name||'').replace(/"/g,'&quot;') + ' · 入库 ' + matFmtWhen(it.ts) + '">' + (it.name||'').substring(0,13) + '</div>' +
+      '<div class="mat-info">' + matFmtBytes(it.size) + (thumb && it.dur ? ' · ' + matFmtDur(it.dur) : '') + '</div>' +
+      '<button class="mat-use" onclick="matAddToBatch(\'' + it.id + '\')">' + (inBatch ? '✓ 已加入' : '加入') + '</button>' +
+    '</div>';
+  }
+  grid.innerHTML = html;
+  // 存储占用 / 上限 / 待同步提示
+  var st = document.getElementById('matStore');
+  if(isServer){
+    if(st) st.textContent = '云端已存 ' + matFmtBytes(MATX.bytes) + (MATX.total >= aeMaxLibrary() ? ' · 已达上限' : '');
+    matCheckLocalPending();
+  } else {
     try{
       if(navigator.storage && navigator.storage.estimate){
         navigator.storage.estimate().then(function(est){
           var used = est.usage || 0, q = est.quota || 0;
           var el2 = document.getElementById('matStore');
-          if(el2 && q) el2.textContent = '已存 ' + matFmtBytes(used) + (used > q * 0.8 ? ' · 空间快满了' : '');
+          if(el2 && q) el2.textContent = '本机已存 ' + matFmtBytes(used) + (used > q * 0.8 ? ' · 空间快满了' : '');
         });
       }
     }catch(e){}
+    var su0 = document.getElementById('matSyncUp'); if(su0) su0.style.display = 'none';
+  }
+  var lc = document.getElementById('matLimit');
+  if(lc) lc.textContent = '⚙️ 单轮 ' + aeMaxBatch() + ' 个';
+}
+
+// 后端连上后, 看看本机旧素材有没有还没同步上去的
+function matCheckLocalPending(){
+  var su = document.getElementById('matSyncUp');
+  if(!su) return;
+  MAT.list().then(function(local){
+    local = local || [];
+    var pending = 0;
+    for(var i = 0; i < local.length; i++){
+      if(!MATX.items.some(function(x){ return x.name === local[i].name && x.size === local[i].size; })) pending++;
+    }
+    MATX._pendingCount = pending;
+    su.style.display = pending ? '' : 'none';
+    if(pending) su.textContent = '⬆️ 上传本机旧素材（' + pending + '）';
+  });
+}
+
+// 把本机 IndexedDB 里的旧素材逐个传到服务端, 实现跨设备同步
+function matSyncUp(){
+  MAT.list().then(function(local){
+    local = (local || []).filter(function(it){
+      return !MATX.items.some(function(x){ return x.name === it.name && x.size === it.size; });
+    });
+    if(!local.length){ toast('本机素材已经在云端了','info'); return; }
+    toast('正在把本机 ' + local.length + ' 个素材传到云端…','ok');
+    var i = 0, okCnt = 0;
+    function next(){
+      if(i >= local.length){
+        matRender();
+        toast(okCnt ? ('已同步 ' + okCnt + ' 个素材，其他设备也能看到了') : '同步没成功，再试一次', okCnt ? 'ok' : 'warn');
+        return;
+      }
+      var it = local[i++];
+      MATX.putServer(it.blob, it).then(function(d){
+        if(d && (d.created || []).length) okCnt++;
+        next();
+      });
+    }
+    next();
   });
 }
 
 // 上传的素材自动入库 (去重: 同名+同大小说明是同一个文件)
+// 后端连着 → 存到云端素材表(多端同步); 后端没连上 → 存本机 IndexedDB
 function matPutFile(f){
-  MAT.list().then(function(items){
-    for(var i = 0; i < items.length; i++){
-      if(items[i].name === f.name && items[i].size === f.size){
-        return Promise.resolve(true);
-      }
+  MATX.init().then(function(mode){
+    if(mode === 'server'){
+      if(MATX.items.some(function(x){ return x.name === f.name && x.size === f.size; })) return;
+      matMakeThumb(f).then(function(meta){
+        MATX.putServer(f, meta).then(function(d){
+          if(d && (d.created || []).length){
+            toast('素材已存到云端，换设备也能用','ok');
+            matRender();
+          } else if(d && (d.rejected || []).length){
+            toast(d.rejected[0].reason || '素材没存上','warn');
+          }
+        });
+      });
+      return;
     }
-    return matMakeThumb(f).then(function(meta){
-      var rec = {
-        id: 'm' + Date.now() + Math.random().toString(36).slice(2,7),
-        name: f.name,
-        size: f.size,
-        type: f.type,
-        ts: Date.now(),
-        blob: f
-      };
-      if(meta.kind) rec.kind = meta.kind;
-      if(meta.thumb) rec.thumb = meta.thumb;
-      if(meta.dur) rec.dur = meta.dur;
-      return MAT.put(rec).then(function(r){
-        if(r){ toast('素材已存入素材库，下次不用重新上传','ok'); }
-        return !!r;
+    MAT.list().then(function(items){
+      for(var i = 0; i < items.length; i++){
+        if(items[i].name === f.name && items[i].size === f.size){
+          return Promise.resolve(true);
+        }
+      }
+      return matMakeThumb(f).then(function(meta){
+        var rec = {
+          id: 'm' + Date.now() + Math.random().toString(36).slice(2,7),
+          name: f.name,
+          size: f.size,
+          type: f.type,
+          ts: Date.now(),
+          blob: f
+        };
+        if(meta.kind) rec.kind = meta.kind;
+        if(meta.thumb) rec.thumb = meta.thumb;
+        if(meta.dur) rec.dur = meta.dur;
+        return MAT.put(rec).then(function(r){
+          if(r){
+            // 关键: 本机模式没有服务端列表可拉, 必须自己把记录写进缓存,
+            // 否则 matAddToBatch 从 MATX.cache 拿不到 blob, 点「加入」会报「素材不见了」
+            MATX.cache[rec.id] = rec;
+            toast('素材已存到本机，下次不用重新上传','ok');
+            matRender();
+          }
+          return !!r;
+        });
       });
     });
   });
@@ -3587,37 +3784,112 @@ function aeRefreshTags(){
 }
 
 function matAddToBatch(id){
-  MAT.get(id).then(function(it){
-    if(!it || !it.blob){ toast('找不到这个素材了','warn'); return; }
-    if(_aeFiles.length >= 10){ toast('最多 10 个素材','warn'); return; }
-    if(_aeFiles.some(function(f){ return f.name === it.name && f.size === it.size; })){
+  if(!MATX.ready){ MATX.init().then(function(){ matAddToBatch(id); }); return; }
+  var mx = aeMaxBatch();
+  if(_aeFiles.length >= mx){ toast('单轮最多 ' + mx + ' 个素材（点「⚙️ 单轮」可以调）','warn'); return; }
+  if(MATX.mode === 'server'){
+    var meta = MATX.items.filter(function(x){ return x.id === id; })[0];
+    if(!meta){ toast('找不到这个素材了','warn'); return; }
+    if(_aeFiles.some(function(f){ return f.name === meta.name && f.size === meta.size; })){
       toast('这个素材已经在本轮里了','info'); return;
     }
-    _aeFiles.push(it.blob);
-    aeRefreshTags();
-    toast('已加入本轮剪辑：' + it.name.substring(0,12), 'ok');
-    matRender();
-  });
+    MATX.getBlob(id).then(function(f){
+      if(!f){ toast('素材没取到，再点一次试试','warn'); return; }
+      _aeFiles.push(f);
+      aeRefreshTags();
+      toast('已加入本轮剪辑：' + meta.name.substring(0,12), 'ok');
+      matRender();
+    });
+  } else {
+    MAT.get(id).then(function(it){
+      if(!it || !it.blob){ toast('找不到这个素材了','warn'); return; }
+      if(_aeFiles.some(function(f){ return f.name === it.name && f.size === it.size; })){
+        toast('这个素材已经在本轮里了','info'); return;
+      }
+      _aeFiles.push(it.blob);
+      aeRefreshTags();
+      toast('已加入本轮剪辑：' + it.name.substring(0,12), 'ok');
+      matRender();
+    });
+  }
 }
 
 function matRemove(id){
-  if(!confirm('要从素材库删掉这个素材吗？以后就不能直接复用了。')) return;
-  MAT.del(id).then(function(){
-    matRender();
-    toast('已从素材库删除','ok');
-  });
+  var isServer = (MATX.ready && MATX.mode === 'server');
+  if(!confirm(isServer ? '要从素材库删掉这个素材吗？其他设备上也会一起删掉。'
+                       : '要从本机素材库删掉这个素材吗？以后就不能直接复用了。')) return Promise.resolve(false);
+  if(isServer){
+    var gone = MATX.items.filter(function(x){ return x.id === id; })[0];
+    // 返回 Promise: 删除是异步的, 调用方要能等到真正删完再判断状态
+    return MATX.delServer(id).then(function(d){
+      if(!d){ toast('没删掉，再试一次','warn'); return false; }
+      delete MATX.cache[id];
+      // 素材本体已经没了, 本轮里还在引用它的必须一并移除, 否则提交剪辑会拿到失效引用
+      if(gone && gone.name){
+        _aeFiles = _aeFiles.filter(function(f){ return !(f.name === gone.name && f.size === gone.size); });
+        aeRefreshTags();
+      }
+      // 后端已在响应里回传最新列表, apply 后 items 就是准的, 不用再拉一次
+      matRender();
+      toast('已删除','ok');
+      return true;
+    });
+  } else {
+    return MAT.del(id).then(function(){
+      matRender();
+      toast('已从素材库删除','ok');
+      return true;
+    });
+  }
 }
 
 function matClear(){
   var grid = document.getElementById('matGrid');
   if(!grid || grid.style.display === 'none'){ toast('素材库已经是空的','info'); return; }
-  if(!confirm('确定清空素材库？删掉的素材以后要重新上传才能用。')) return;
-  MAT.list().then(function(items){
-    var chain = Promise.resolve();
-    for(var i = 0; i < items.length; i++){
-      (function(it){ chain = chain.then(function(){ return MAT.del(it.id); }); })(items[i]);
-    }
-    chain.then(function(){ matRender(); toast('素材库已清空','ok'); });
+  var isServer = (MATX.ready && MATX.mode === 'server');
+  if(!confirm(isServer ? '确定清空素材库？其他设备上的素材也会一起清空。'
+                       : '确定清空素材库？删掉的素材以后要重新上传才能用。')) return Promise.resolve(false);
+  if(isServer){
+    // 返回 Promise: 清空是异步的, 不返回调用方会拿清空前的状态做判断
+    return MATX.clearServer().then(function(d){
+      if(!d){ toast('没清掉，再试一次','warn'); return false; }
+      MATX.cache = {};
+      // 素材库已空, 本轮引用的全是失效引用, 必须一并清空
+      _aeFiles = [];
+      aeRefreshTags();
+      matRender();
+      toast('素材库已清空','ok');
+      return true;
+    });
+  } else {
+    return MAT.list().then(function(items){
+      var chain = Promise.resolve();
+      for(var i = 0; i < items.length; i++){
+        (function(it){ chain = chain.then(function(){ return MAT.del(it.id); }); })(items[i]);
+      }
+      return chain.then(function(){
+        MATX.cache = {};
+        _aeFiles = [];
+        aeRefreshTags();
+        matRender();
+        toast('素材库已清空','ok');
+        return true;
+      });
+    });
+  }
+}
+
+// 改单轮素材上限(存后端, 立即生效, 不用重启)
+function matSetLimit(){
+  var cur = aeMaxBatch();
+  var v = prompt('一轮成片最多用几个素材？现在是 ' + cur + ' 个。', String(cur));
+  if(v === null) return;
+  var n = parseInt(v, 10);
+  if(!(n >= 1 && n <= 200)){ toast('填 1 到 200 之间的数字','warn'); return; }
+  MATX.setLimit(n).then(function(d){
+    if(d && d.max_per_job){ toast('已改成单轮最多 ' + d.max_per_job + ' 个素材','ok'); }
+    else { toast('没改成功，后端好像没连上','warn'); }
+    matRender();
   });
 }
 
@@ -3639,9 +3911,10 @@ function initAutoEdit(){
 }
 function aeAddFiles(fileList){
   var added = 0;
+  var mx = aeMaxBatch();
   for(var i=0;i<fileList.length;i++){
     var f = fileList[i];
-    if(_aeFiles.length>=10){ toast('最多 10 个素材','warn'); break; }
+    if(_aeFiles.length>=mx){ toast('单轮最多 ' + mx + ' 个素材','warn'); break; }
     // 同名同大小视为同一个文件, 不重复加入本轮
     if(_aeFiles.some(function(x){ return x.name===f.name && x.size===f.size; })){
       toast('这个素材已经加过了','info'); continue;
