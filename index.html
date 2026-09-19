@@ -376,37 +376,43 @@ header{padding:12px 14px}
         <div class="hint">JPG / PNG / WebP  ≤ 50MB</div>
         <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" style="display:none">
       </div>
-      <!-- 精修工作台（PS级）: 不选滤镜也能修 -->
+      <!-- 精修工作台（PS级）: 不选滤镜也能修 · 参数默认收起, 一键出图 -->
       <div class="beauty-panel" id="retouchPanel">
-        <h4>✨ 精修工作台 <span style="font-size:11px;color:var(--text-muted);font-weight:400">拖动滑条自动重新出图，不选滤镜也能修</span></h4>
-        <div style="font-size:12px;font-weight:600;color:var(--rose-dark);margin:2px 0 6px">💄 美颜</div>
-        <div class="beauty-grid">
-          <div class="slider-group"><label>磨皮 <span id="pj_smooth_val">0</span></label><input type="range" id="pj_smooth" min="0" max="100" value="0" oninput="document.getElementById('pj_smooth_val').textContent=this.value;BE.touch()"></div>
-          <div class="slider-group"><label>美白 <span id="pj_whiten_val">0</span></label><input type="range" id="pj_whiten" min="0" max="100" value="0" oninput="document.getElementById('pj_whiten_val').textContent=this.value;BE.touch()"></div>
-          <div class="slider-group"><label>红润气色 <span id="pj_blush_val">0</span></label><input type="range" id="pj_blush" min="0" max="100" value="0" oninput="document.getElementById('pj_blush_val').textContent=this.value;BE.touch()"></div>
+        <h4>✨ 精修工作台 <span style="font-size:11px;color:var(--text-muted);font-weight:400">点一下自动帮你修好，不用自己调参数</span></h4>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="act-btn" onclick="BE.natural()" style="flex:1;padding:8px 14px;font-size:12px">💄 一键自然美颜</button>
+          <button class="act-btn" onclick="BE.enhance()" style="flex:1;padding:8px 14px;font-size:12px">📸 一键提亮清透</button>
+          <button class="act-btn ghost" onclick="BE.reset()" style="flex:1;padding:8px 14px;font-size:12px;background:#fff;border:1.5px solid var(--rose)">↺ 全部重置</button>
         </div>
-        <div style="font-size:12px;font-weight:600;color:var(--lavender-dark);margin:10px 0 6px">🎛 调整（相当于 PS 的调整图层）</div>
-        <div class="beauty-grid">
-          <div class="slider-group"><label>亮度 <span id="pj_bright_val">0</span></label><input type="range" id="pj_bright" min="-50" max="50" value="0" oninput="document.getElementById('pj_bright_val').textContent=this.value;BE.touch()"></div>
-          <div class="slider-group"><label>对比度 <span id="pj_contrast_val">0</span></label><input type="range" id="pj_contrast" min="-50" max="50" value="0" oninput="document.getElementById('pj_contrast_val').textContent=this.value;BE.touch()"></div>
-          <div class="slider-group"><label>饱和度 <span id="pj_satur_val">0</span></label><input type="range" id="pj_satur" min="-50" max="50" value="0" oninput="document.getElementById('pj_satur_val').textContent=this.value;BE.touch()"></div>
-          <div class="slider-group"><label>色温(冷↔暖) <span id="pj_temp_val">0</span></label><input type="range" id="pj_temp" min="-50" max="50" value="0" oninput="document.getElementById('pj_temp_val').textContent=this.value;BE.touch()"></div>
-          <div class="slider-group"><label>锐化 <span id="pj_sharp_val">0</span></label><input type="range" id="pj_sharp" min="0" max="100" value="0" oninput="document.getElementById('pj_sharp_val').textContent=this.value;BE.touch()"></div>
-          <div class="slider-group"><label>暗角 <span id="pj_vig_val">0</span></label><input type="range" id="pj_vig" min="0" max="100" value="0" oninput="document.getElementById('pj_vig_val').textContent=this.value;BE.touch()"></div>
+        <div style="text-align:center;margin-top:10px">
+          <a href="javascript:void(0)" onclick="toggleFine('pj')" id="pjFineToggle" style="font-size:11px;color:var(--text-muted);text-decoration:none">✦ 我想自己微调参数（展开）</a>
         </div>
-        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-          <button class="act-btn" onclick="BE.natural()" style="padding:7px 14px;font-size:12px">💄 一键自然美颜</button>
-          <button class="act-btn ghost" onclick="BE.reset()" style="padding:7px 14px;font-size:12px;background:#fff;border:1.5px solid var(--rose)">↺ 全部重置</button>
+        <div id="pjFine" style="display:none">
+          <div style="font-size:12px;font-weight:600;color:var(--rose-dark);margin:2px 0 6px">💄 美颜</div>
+          <div class="beauty-grid">
+            <div class="slider-group"><label>磨皮 <span id="pj_smooth_val">0</span></label><input type="range" id="pj_smooth" min="0" max="100" value="0" oninput="document.getElementById('pj_smooth_val').textContent=this.value;BE.touch()"></div>
+            <div class="slider-group"><label>美白 <span id="pj_whiten_val">0</span></label><input type="range" id="pj_whiten" min="0" max="100" value="0" oninput="document.getElementById('pj_whiten_val').textContent=this.value;BE.touch()"></div>
+            <div class="slider-group"><label>红润气色 <span id="pj_blush_val">0</span></label><input type="range" id="pj_blush" min="0" max="100" value="0" oninput="document.getElementById('pj_blush_val').textContent=this.value;BE.touch()"></div>
+          </div>
+          <div style="font-size:12px;font-weight:600;color:var(--lavender-dark);margin:10px 0 6px">🎛 光影色彩调整</div>
+          <div class="beauty-grid">
+            <div class="slider-group"><label>亮度 <span id="pj_bright_val">0</span></label><input type="range" id="pj_bright" min="-50" max="50" value="0" oninput="document.getElementById('pj_bright_val').textContent=this.value;BE.touch()"></div>
+            <div class="slider-group"><label>对比度 <span id="pj_contrast_val">0</span></label><input type="range" id="pj_contrast" min="-50" max="50" value="0" oninput="document.getElementById('pj_contrast_val').textContent=this.value;BE.touch()"></div>
+            <div class="slider-group"><label>饱和度 <span id="pj_satur_val">0</span></label><input type="range" id="pj_satur" min="-50" max="50" value="0" oninput="document.getElementById('pj_satur_val').textContent=this.value;BE.touch()"></div>
+            <div class="slider-group"><label>色温(冷↔暖) <span id="pj_temp_val">0</span></label><input type="range" id="pj_temp" min="-50" max="50" value="0" oninput="document.getElementById('pj_temp_val').textContent=this.value;BE.touch()"></div>
+            <div class="slider-group"><label>锐化 <span id="pj_sharp_val">0</span></label><input type="range" id="pj_sharp" min="0" max="100" value="0" oninput="document.getElementById('pj_sharp_val').textContent=this.value;BE.touch()"></div>
+            <div class="slider-group"><label>暗角 <span id="pj_vig_val">0</span></label><input type="range" id="pj_vig" min="0" max="100" value="0" oninput="document.getElementById('pj_vig_val').textContent=this.value;BE.touch()"></div>
+          </div>
         </div>
       </div>
       <!-- 滤镜微调（原面板收窄为只管滤镜强度） -->
       <div class="beauty-panel" id="beautyPanel" style="display:none">
-        <h4>🎛 滤镜强度微调</h4>
+        <h4>🎛 滤镜浓度</h4>
         <div class="beauty-grid">
           <div class="slider-group" style="display:none"><label>磨皮 <span id="bs_val">30</span></label><input type="range" id="bs" min="0" max="100" value="30" oninput="document.getElementById('bs_val').textContent=this.value"></div>
           <div class="slider-group" style="display:none"><label>瘦脸 <span id="sf_val">10</span></label><input type="range" id="sf" min="0" max="100" value="10" oninput="document.getElementById('sf_val').textContent=this.value"></div>
-          <div class="slider-group"><label>滤镜强度 <span id="fs_val">50</span></label><input type="range" id="fs" min="0" max="100" value="50" oninput="document.getElementById('fs_val').textContent=this.value;BE.touch()"></div>
-          <div class="slider-group" style="display:flex;align-items:center;gap:8px">
+          <div class="slider-group"><label>滤镜浓度 <span id="fs_val">50</span></label><input type="range" id="fs" min="0" max="100" value="50" oninput="document.getElementById('fs_val').textContent=this.value;BE.touch()"></div>
+          <div class="slider-group" style="display:none;align-items:center;gap:8px">
             <label style="margin:0;display:flex;align-items:center;gap:4px"><input type="checkbox" id="eyeB"> 亮眼</label>
             <label style="margin:0;display:flex;align-items:center;gap:4px"><input type="checkbox" id="useMeitu" checked> 美图API</label>
           </div>
@@ -757,22 +763,28 @@ header{padding:12px 14px}
         </div>
         <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
           <button class="act-btn" onclick="xjNatural()" style="flex:1">💄 一键自然美颜</button>
+          <button class="act-btn" onclick="xjEnhance()" style="flex:1">📸 一键提亮清透</button>
           <button class="act-btn" onclick="xjReset()" style="flex:1;background:#fff;color:var(--text-main)">↺ 全部重置</button>
         </div>
         <div style="font-size:12px;font-weight:600;color:var(--rose-dark);margin-bottom:6px">✨ 一键套风格</div>
         <div id="xjPresetGrid"></div>
-        <div style="font-size:12px;font-weight:600;color:var(--rose-dark);margin:14px 0 6px">💆 美颜</div>
-        <div class="slider-group"><label>磨皮 <span id="xj_smooth_val">0</span></label><input type="range" id="xj_smooth" min="0" max="100" value="0" oninput="document.getElementById('xj_smooth_val').textContent=this.value;XJ.touch()"></div>
-        <div class="slider-group"><label>美白 <span id="xj_whiten_val">0</span></label><input type="range" id="xj_whiten" min="0" max="100" value="0" oninput="document.getElementById('xj_whiten_val').textContent=this.value;XJ.touch()"></div>
-        <div class="slider-group"><label>红润气色 <span id="xj_blush_val">0</span></label><input type="range" id="xj_blush" min="0" max="100" value="0" oninput="document.getElementById('xj_blush_val').textContent=this.value;XJ.touch()"></div>
-        <div style="font-size:12px;font-weight:600;color:var(--rose-dark);margin:14px 0 6px">🎨 调整光影色彩</div>
-        <div class="slider-group"><label>亮度 <span id="xj_bright_val">0</span></label><input type="range" id="xj_bright" min="-50" max="50" value="0" oninput="document.getElementById('xj_bright_val').textContent=this.value;XJ.touch()"></div>
-        <div class="slider-group"><label>对比度 <span id="xj_contrast_val">0</span></label><input type="range" id="xj_contrast" min="-50" max="50" value="0" oninput="document.getElementById('xj_contrast_val').textContent=this.value;XJ.touch()"></div>
-        <div class="slider-group"><label>饱和度 <span id="xj_satur_val">0</span></label><input type="range" id="xj_satur" min="-50" max="50" value="0" oninput="document.getElementById('xj_satur_val').textContent=this.value;XJ.touch()"></div>
-        <div class="slider-group"><label>色温(冷↔暖) <span id="xj_temp_val">0</span></label><input type="range" id="xj_temp" min="-50" max="50" value="0" oninput="document.getElementById('xj_temp_val').textContent=this.value;XJ.touch()"></div>
-        <div class="slider-group"><label>清晰度 <span id="xj_sharp_val">0</span></label><input type="range" id="xj_sharp" min="0" max="100" value="0" oninput="document.getElementById('xj_sharp_val').textContent=this.value;XJ.touch()"></div>
-        <div class="slider-group"><label>暗角氛围 <span id="xj_vig_val">0</span></label><input type="range" id="xj_vig" min="0" max="100" value="0" oninput="document.getElementById('xj_vig_val').textContent=this.value;XJ.touch()"></div>
-        <button class="act-btn" onclick="xjSave()" style="width:100%;margin-top:10px">💾 保存这张图</button>
+        <button class="act-btn" onclick="xjSave()" style="width:100%;margin-top:14px">💾 保存这张图</button>
+        <div style="text-align:center;margin-top:10px">
+          <a href="javascript:void(0)" onclick="toggleFine('xj')" id="xjFineToggle" style="font-size:11px;color:var(--text-muted);text-decoration:none">✦ 我想自己微调参数（展开）</a>
+        </div>
+        <div id="xjFine" style="display:none">
+          <div style="font-size:12px;font-weight:600;color:var(--rose-dark);margin:12px 0 6px">💆 美颜</div>
+          <div class="slider-group"><label>磨皮 <span id="xj_smooth_val">0</span></label><input type="range" id="xj_smooth" min="0" max="100" value="0" oninput="document.getElementById('xj_smooth_val').textContent=this.value;XJ.touch()"></div>
+          <div class="slider-group"><label>美白 <span id="xj_whiten_val">0</span></label><input type="range" id="xj_whiten" min="0" max="100" value="0" oninput="document.getElementById('xj_whiten_val').textContent=this.value;XJ.touch()"></div>
+          <div class="slider-group"><label>红润气色 <span id="xj_blush_val">0</span></label><input type="range" id="xj_blush" min="0" max="100" value="0" oninput="document.getElementById('xj_blush_val').textContent=this.value;XJ.touch()"></div>
+          <div style="font-size:12px;font-weight:600;color:var(--rose-dark);margin:14px 0 6px">🎨 调整光影色彩</div>
+          <div class="slider-group"><label>亮度 <span id="xj_bright_val">0</span></label><input type="range" id="xj_bright" min="-50" max="50" value="0" oninput="document.getElementById('xj_bright_val').textContent=this.value;XJ.touch()"></div>
+          <div class="slider-group"><label>对比度 <span id="xj_contrast_val">0</span></label><input type="range" id="xj_contrast" min="-50" max="50" value="0" oninput="document.getElementById('xj_contrast_val').textContent=this.value;XJ.touch()"></div>
+          <div class="slider-group"><label>饱和度 <span id="xj_satur_val">0</span></label><input type="range" id="xj_satur" min="-50" max="50" value="0" oninput="document.getElementById('xj_satur_val').textContent=this.value;XJ.touch()"></div>
+          <div class="slider-group"><label>色温(冷↔暖) <span id="xj_temp_val">0</span></label><input type="range" id="xj_temp" min="-50" max="50" value="0" oninput="document.getElementById('xj_temp_val').textContent=this.value;XJ.touch()"></div>
+          <div class="slider-group"><label>清晰度 <span id="xj_sharp_val">0</span></label><input type="range" id="xj_sharp" min="0" max="100" value="0" oninput="document.getElementById('xj_sharp_val').textContent=this.value;XJ.touch()"></div>
+          <div class="slider-group"><label>暗角氛围 <span id="xj_vig_val">0</span></label><input type="range" id="xj_vig" min="0" max="100" value="0" oninput="document.getElementById('xj_vig_val').textContent=this.value;XJ.touch()"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1010,17 +1022,17 @@ function selectFilter(id){
   if(el)el.classList.add('active');
   var f=filters.find(function(x){return x.id===id;});
   
-  // 美图预设 → 显示调节面板
+  // 美图预设 → 显示浓度调节
   if(f&&f.meituPreset){
     document.getElementById('beautyPanel').style.display='block';
-    studioAddBubble('ai','🌟 已选「'+f.name+'」美图云修预设！可以拖动滑条进一步微调~');
+    studioAddBubble('ai','🌟 已选「'+f.name+'」预设！觉得太浓或太淡，调一下「滤镜浓度」就行~');
   } else if(f&&f.xingtu){
     document.getElementById('retouchPanel').style.display='block';
-    // 醒图平替 → 直接写入精修工作台滑条，真实像素生效
+    // 醒图平替 → 直接写入精修台参数，真实像素生效
     var en=(f.id||'').replace('xingtu_','');
     var xn=Object.keys(XINGTU_MAP).find(function(k){return XINGTU_MAP[k].en===en;});
-    if(xn){ xjApplyLook('pj_',XINGTU_MAP[xn].look); studioAddBubble('ai','🌸 已套用「'+f.name+'」到精修工作台，可直接出图或继续微调~'); }
-    else { studioAddBubble('ai','🌸 已选醒图平替「'+f.name+'」，可在精修工作台微调~'); }
+    if(xn){ xjApplyLook('pj_',XINGTU_MAP[xn].look); studioAddBubble('ai','🌸 已套用「'+f.name+'」醒图风格，直接出图看效果~'); }
+    else { studioAddBubble('ai','🌸 已选「'+f.name+'」醒图风格~'); }
   } else if(f&&f.learned){
     document.getElementById('beautyPanel').style.display='block';
     var sl=f.learned.shifts||{};
@@ -2102,7 +2114,7 @@ function xjPick(evt){
       document.getElementById('xjUploadArea').style.display='none';
       document.getElementById('xjEditArea').style.display='block';
       xjRender();
-      toast('图片已就绪，套风格或拖滑条开修！','ok');
+      toast('图片已就绪，点「一键自然美颜」或套个风格就开修！','ok');
     };
     im.src=XS.fileUrl;
   };
@@ -2142,7 +2154,7 @@ function xjPreset(name){
     var lv=document.getElementById('xj_'+k+'_val');if(lv)lv.textContent=L[k]||0;
   });
   xjRender();
-  toast('🌸 已套用「'+name+'」，可继续拖滑条微调','ok');
+  toast('🌸 已套用「'+name+'」，想再叠美颜就点「一键自然美颜」~','ok');
 }
 
 function xjNatural(){
@@ -2150,7 +2162,15 @@ function xjNatural(){
   var set={xj_smooth:45,xj_whiten:25,xj_blush:15,xj_bright:0,xj_contrast:0,xj_satur:0,xj_temp:0,xj_sharp:20,xj_vig:0};
   for(var id in set){var e=document.getElementById(id);if(e){e.value=set[id];var lv=document.getElementById(id+'_val');if(lv)lv.textContent=set[id];}}
   xjRender();
-  toast('💄 已按「自然美颜」配好，可继续微调','ok');
+  toast('💄 已按「自然美颜」帮你修好~','ok');
+}
+
+function xjEnhance(){
+  if(!XS.img){document.getElementById('xjFileInput').click();return;}
+  var set={xj_smooth:15,xj_whiten:0,xj_blush:0,xj_bright:10,xj_contrast:8,xj_satur:6,xj_temp:5,xj_sharp:25,xj_vig:15};
+  for(var id in set){var e=document.getElementById(id);if(e){e.value=set[id];var lv=document.getElementById(id+'_val');if(lv)lv.textContent=set[id];}}
+  xjRender();
+  toast('📸 已一键提亮清透：更亮更清晰，有氛围感~','ok');
 }
 
 function xjReset(){
@@ -2426,9 +2446,16 @@ var BE={
   active:function(){var p=BE.read();for(var k in p){if(p[k])return true;}return false;},
   touch:function(){clearTimeout(BE._t);BE._t=setTimeout(function(){procNow();},350);},
   natural:function(){
+    if(!S.fileUrl){toast('先选一张图片，我再帮你修~','warn');return;}
     var set={pj_smooth:45,pj_whiten:25,pj_blush:15,pj_bright:0,pj_contrast:0,pj_satur:0,pj_temp:0,pj_sharp:20,pj_vig:0};
     for(var id in set){var e=document.getElementById(id);if(e){e.value=set[id];var lv=document.getElementById(id+'_val');if(lv)lv.textContent=set[id];}}
-    studioAddBubble('ai','💄 已按「自然美颜」配好：磨皮45·美白25·红润15·锐化20。想更白/更磨就继续拖滑条~');
+    studioAddBubble('ai','💄 已按「自然美颜」帮你修好，效果不满意可点「全部重置」重来~');
+    procNow();
+  },
+  enhance:function(){
+    var set={pj_smooth:15,pj_whiten:0,pj_blush:0,pj_bright:10,pj_contrast:8,pj_satur:6,pj_temp:5,pj_sharp:25,pj_vig:15};
+    for(var id in set){var e=document.getElementById(id);if(e){e.value=set[id];var lv=document.getElementById(id+'_val');if(lv)lv.textContent=set[id];}}
+    studioAddBubble('ai','📸 已一键提亮清透：亮一点、更清晰、有氛围感~');
     procNow();
   },
   reset:function(){
@@ -2471,6 +2498,15 @@ var BE={
     }
   }
 };
+// 参数微调区折叠开关: 默认收起, 用户主动要才展开
+function toggleFine(prefix){
+  var box=document.getElementById(prefix+'Fine');
+  if(!box) return;
+  var on=(box.style.display==='none');
+  box.style.display=on?'block':'none';
+  var tg=document.getElementById(prefix+'FineToggle');
+  if(tg) tg.textContent=on?'✦ 收起参数（我已经会自己调了）':'✦ 我想自己微调参数（展开）';
+}
 var M=Math.min;
 function Clamp(v){return v<0?0:(v>255?255:v);}
 function Clamp(v){return v<0?0:(v>255?255:v);}
@@ -2478,7 +2514,7 @@ function Clamp(v){return v<0?0:(v>255?255:v);}
 // ========== 处理引擎 ==========
 function startProc(){
   if(S.processing||!S.fileUrl)return;
-  if(!S.selFilter&&!BE.active()){toast('选一个滤镜，或直接拖下面「精修工作台」的滑条','warn');return;}
+  if(!S.selFilter&&!BE.active()){toast('先选个滤镜，或点「一键自然美颜」~','warn');return;}
   S.processing=true;
   var ps=document.getElementById('progressSection');
   ps.style.display='block';
