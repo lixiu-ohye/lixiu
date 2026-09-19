@@ -2760,6 +2760,61 @@ function renderArchive() {
   box.classList.toggle('hide', AR_FOLD);
   var fb = $id('arFold');
   if (fb) fb.textContent = AR_FOLD ? '▴ 展开' : '▾ 收起';
+  bindArchive();              // DOM 是 innerHTML 重建的, 必须在重建后立刻重绑
+}
+
+/* 【底部·工程档案】事件绑定。
+   renderArchive() 用 innerHTML 重建整块 DOM, 旧节点上的事件全丢。
+   所以 renderArchive() 自己负责重绑, 而不是依赖调用方再调 bindProgress ——
+   否则「折叠档案区」「展开/收起进度日志」之后, 备注输入、里程碑标记/删除、
+   日志清空 会**静默失效**(点了没反应, 不报错, 极难查)。
+   这个坑此前是潜伏的: 点一次「收起」档案区, 上面这些控件就全死了。 */
+function bindArchive() {
+  // 备注(实时写入工程)
+  var nt = $id('pgNotes');
+  if (nt) nt.oninput = function () { ensureProgress(); PRJ.progress.notes = this.value; };
+  // 里程碑
+  var bMsAdd = $id('pgMsAdd'), iMs = $id('pgMsName');
+  if (bMsAdd) bMsAdd.onclick = function () {
+    var name = (iMs.value || '').trim();
+    if (!name) return toast('先填里程碑名称');
+    ensureProgress();
+    var msB = calcProgress().total;                            // 变更前百分比
+    PRJ.progress.milestones.push({ t: +cur.toFixed(2), name: name, at: tsNow() });
+    PRJ.progress.milestones.sort(function (a, b) { return a.t - b.t; });
+    pushLog('manual', '新增里程碑「' + name + '」@ ' + fmt(cur), msB, calcProgress().total);
+    renderProgress(); toast('已标记里程碑: ' + name);
+  };
+  if (iMs) iMs.onkeydown = function (e) { if (e.key === 'Enter') bMsAdd.click(); };
+  Array.prototype.forEach.call(document.querySelectorAll('#arBody [data-msdel]'), function (el) {
+    el.onclick = function () {
+      ensureProgress();
+      var i = +this.getAttribute('data-msdel'), m = PRJ.progress.milestones[i];
+      var msB2 = calcProgress().total;                         // 变更前百分比
+      PRJ.progress.milestones.splice(i, 1);
+      if (m) pushLog('manual', '删除里程碑「' + m.name + '」', msB2, calcProgress().total);
+      renderProgress();
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#arBody [data-msgo]'), function (el) {
+    el.onclick = function () {
+      cur = clamp(+this.getAttribute('data-msgo') || 0, 0, PRJ.duration);
+      updateTime(); renderRuler(); drawFrame();
+    };
+  });
+  // 进度变更日志: 默认折叠, 点「展开/收起」切换明细可见性
+  var lg = $id('pgLogToggle');
+  if (lg) lg.onclick = function () { PG_HIST_OPEN = !PG_HIST_OPEN; renderArchive(); };
+  var lc = $id('pgLogClear');
+  if (lc) lc.onclick = function () {
+    ensureProgress();
+    if (!PRJ.progress.log.length) return toast('日志已为空');
+    if (!confirm('清空全部 ' + PRJ.progress.log.length + ' 条进度日志?')) return;
+    PRJ.progress.log.length = 0;
+    var clrT = calcProgress().total;                           // 清空日志不改变进度, 前后一致
+    pushLog('reset', '清空进度日志', clrT, clrT);
+    renderProgress(); toast('日志已清空');
+  };
 }
 
 /* 【右侧编辑面板】整体收起/展开: .fold 直接 display:none,
@@ -2829,51 +2884,8 @@ function bindProgress(r) {
     pushLog('reset', '重置全部人工锁定(' + n + ' 项) → 全部恢复自动检测', before, after);
     renderProgress(); toast('已重置 ' + n + ' 项人工锁定');
   };
-  // 备注(实时写入工程)
-  var nt = $id('pgNotes');
-  if (nt) nt.oninput = function () { ensureProgress(); PRJ.progress.notes = this.value; };
-  // 里程碑
-  var bMsAdd = $id('pgMsAdd'), iMs = $id('pgMsName');
-  if (bMsAdd) bMsAdd.onclick = function () {
-    var name = (iMs.value || '').trim();
-    if (!name) return toast('先填里程碑名称');
-    ensureProgress();
-    var msB = calcProgress().total;                            // 变更前百分比
-    PRJ.progress.milestones.push({ t: +cur.toFixed(2), name: name, at: tsNow() });
-    PRJ.progress.milestones.sort(function (a, b) { return a.t - b.t; });
-    pushLog('manual', '新增里程碑「' + name + '」@ ' + fmt(cur), msB, calcProgress().total);
-    renderProgress(); toast('已标记里程碑: ' + name);
-  };
-  if (iMs) iMs.onkeydown = function (e) { if (e.key === 'Enter') bMsAdd.click(); };
-  Array.prototype.forEach.call(document.querySelectorAll('#arBody [data-msdel]'), function (el) {
-    el.onclick = function () {
-      ensureProgress();
-      var i = +this.getAttribute('data-msdel'), m = PRJ.progress.milestones[i];
-      var msB2 = calcProgress().total;                         // 变更前百分比
-      PRJ.progress.milestones.splice(i, 1);
-      if (m) pushLog('manual', '删除里程碑「' + m.name + '」', msB2, calcProgress().total);
-      renderProgress();
-    };
-  });
-  Array.prototype.forEach.call(document.querySelectorAll('#arBody [data-msgo]'), function (el) {
-    el.onclick = function () {
-      cur = clamp(+this.getAttribute('data-msgo') || 0, 0, PRJ.duration);
-      updateTime(); renderRuler(); drawFrame();
-    };
-  });
-  // 日志: 底部「工程档案」区可折叠(默认收起), 点「展开/收起」切换明细可见性
-  var lg = $id('pgLogToggle');
-  if (lg) lg.onclick = function () { PG_HIST_OPEN = !PG_HIST_OPEN; renderArchive(); };
-  var lc = $id('pgLogClear');
-  if (lc) lc.onclick = function () {
-    ensureProgress();
-    if (!PRJ.progress.log.length) return toast('日志已为空');
-    if (!confirm('清空全部 ' + PRJ.progress.log.length + ' 条进度日志?')) return;
-    PRJ.progress.log.length = 0;
-    var clrT = calcProgress().total;                           // 清空日志不改变进度, 前后一致
-    pushLog('reset', '清空进度日志', clrT, clrT);
-    renderProgress(); toast('日志已清空');
-  };
+  // 底部「工程档案」区的控件(备注/里程碑/日志)由 bindArchive() 负责,
+  // 它在 renderArchive() 末尾调用 —— 那里才是 DOM 重建的确切位置。
   // 悬浮 tooltip: 展示本项检测依据
   Array.prototype.forEach.call(document.querySelectorAll('#pgBody .pg-task'), function (el) {
     el.addEventListener('mouseenter', function () {

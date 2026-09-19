@@ -1209,7 +1209,34 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   }));
   ok('U5 点「展开」后日志明细可见, 按钮文字切换为「收起」',
     uLog1.disp !== 'none' && !/hide/.test(uLog1.cls) && /收起/.test(uLog1.toggle), JSON.stringify(uLog1));
-  await page.click('#pgLogToggle');              // 恢复默认折叠态
+  // 必须再点一次验证「收起」也真生效。renderArchive() 用 innerHTML 重建整块 DOM,
+  // 若事件没重绑, 第二次点击会**静默失效**(点了没反应, 不报错)。
+  // 这正是本次修的真 bug: 展开可用、收起失灵。
+  await page.click('#pgLogToggle');
+  await page.waitForTimeout(180);
+  const uLog2 = await page.evaluate(() => ({
+    disp: getComputedStyle(document.getElementById('pgLog')).display,
+    toggle: (document.getElementById('pgLogToggle') || {}).textContent || ''
+  }));
+  ok('U5b 再点一次「收起」真正折叠(不是静默失效)',
+    uLog2.disp === 'none' && /展开/.test(uLog2.toggle), JSON.stringify(uLog2));
+
+  // U7: 折叠档案区再展开后, 备注输入仍写入工程。
+  // renderArchive() 重建 DOM 后必须重绑事件, 否则 arFold 点一次「收起」,
+  // 备注输入 / 里程碑标记 / 日志清空 全部静默失效(点此前的潜伏 bug)。
+  await page.click('#arFold');
+  await page.waitForTimeout(150);
+  await page.click('#arFold');
+  await page.waitForTimeout(150);
+  await page.fill('#pgNotes', '审计写入的备注');
+  await page.waitForTimeout(150);
+  const uNotes = await page.evaluate(() => ({
+    saved: window.__ed.prj().progress.notes,
+    msAdd: !!document.getElementById('pgMsAdd')
+  }));
+  ok('U7 档案区折叠/展开后备注仍写入工程、里程碑按钮仍在(事件重绑未丢)',
+    uNotes.saved === '审计写入的备注' && uNotes.msAdd === true, JSON.stringify(uNotes));
+  await page.fill('#pgNotes', '');               // 还原, 别污染后续导出断言
   await page.waitForTimeout(120);
 
   // U6: AI 请求进行中 → 状态栏 loading 转圈 + 生成/修改按钮置灰(AI_BUSY 已拦重复点击, 这是视觉反馈)
