@@ -66,7 +66,7 @@ REM would sweep up other people's half-finished work.
 REM *.bat is a wildcard on purpose - this file itself has a non-ASCII
 REM name, and cmd would mangle that literal through the code page.
 REM cmd does not expand wildcards for external programs, git does.
-"%GIT%" add -- workbench.html h5\workbench.html h5\index.html h5\editor h5\tests h5\build_editor.py h5\build_workbench.py .gitignore *.bat
+"%GIT%" add -- workbench.html h5\workbench.html h5\index.html h5\editor h5\tests h5\build_editor.py h5\build_workbench.py .gitignore .gitattributes *.bat
 "%GIT%" status --short
 "%GIT%" commit -m "%MSG%"
 if errorlevel 1 echo [i] commit skipped (nothing new to commit), continue.

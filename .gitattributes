@@ -1,0 +1,21 @@
+# ── 行尾策略 ─────────────────────────────────────────────────────────
+#
+# 为什么需要这个文件:
+#   本机 core.autocrlf=true, 新鲜 clone 会把所有文本文件检出成 CRLF;
+#   而 h5/build_editor.py 是用 newline='\n' 写出产物的(LF)。
+#   两者不一致的后果: clone 之后第一次构建就会产生一份「整文件差异」,
+#   内容只是行尾不同 —— 提交历史被这种噪音污染, 一键部署每次都要多提一次。
+#   (h5/tests/verify_live.js 已在比对前做 CRLF→LF 归一, 所以线上校验看不出来,
+#    但 git status 会一直脏。)
+#
+# .bat 是唯一例外: cmd.exe 需要 CRLF, 否则某些语法(标签/续行)会出问题。
+*.bat text eol=crlf
+
+# 部署产物 + 编辑器的全部源文件: 固定 LF, 保证工作区永远等于构建脚本的写出结果。
+workbench.html      text eol=lf
+h5/workbench.html   text eol=lf
+h5/index.html       text eol=lf
+h5/editor/*         text eol=lf
+h5/tests/*          text eol=lf
+h5/build_editor.py  text eol=lf
+h5/build_workbench.py text eol=lf

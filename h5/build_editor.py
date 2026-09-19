@@ -339,8 +339,13 @@ if '--no-root' not in sys.argv:
 def sha(p):
     return hashlib.md5(io.open(p, 'rb').read()).hexdigest()[:8]
 
-print('OK  ->', OUT, len(out), 'bytes  md5:' + sha(OUT))
+def nb(s):
+    # UTF-8 字节数。直接 len(s) 是字符数 —— 中文 1 字符占 3 字节,
+    # 拿它冒充 "bytes" 会让日志少报三分之一, 与线上校验的字节数对不上。
+    return len(s.encode('utf-8'))
+
+print('OK  ->', OUT, nb(out), 'bytes  md5:' + sha(OUT))
 if '--no-root' not in sys.argv:
     print('SYNC->', OUT_ROOT, 'md5:' + sha(OUT_ROOT), '(两者一致)' if sha(OUT) == sha(OUT_ROOT) else '(⚠ 不一致)')
 print('组成: 智能成片 body %d B / script %d B / 原样式收窄 %d B / 编辑器 css %d B html %d B js %d B'
-      % (len(orig_body), len(orig_script), len(scoped_css), len(ed_css), len(ed_html), len(ed_js)))
+      % (nb(orig_body), nb(orig_script), nb(scoped_css), nb(ed_css), nb(ed_html), nb(ed_js)))
