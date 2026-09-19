@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#fdf6f0">
+<title>哩秀 · AI 智能成片</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --rose:#e8a0bf;--rose-dark:#d485a8;--gold:#d4a574;--cream:#fdf6f0;
+  --lavender:#c9b6d9;--bg:#fdf6f0;--card:#fffcf8;--ink:#4a3f42;--ink-2:#8a7b7e;
+  --line:rgba(200,160,140,0.22);--ok:#1D9E75;--warn:#BA7517;--err:#E24B4A;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.6;padding-bottom:env(safe-area-inset-bottom)}
+.wrap{max-width:520px;margin:0 auto;padding:16px 16px 40px}
+h1{font-size:19px;font-weight:600;letter-spacing:.5px}
+.sub{font-size:12px;color:var(--ink-2);margin-top:2px}
+header{padding:14px 0 18px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.card-t{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--rose)}
+label{font-size:12px;color:var(--ink-2);display:block;margin-bottom:6px}
+textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;
+  font-size:14px;font-family:inherit;background:#fff;color:var(--ink);outline:none}
+textarea{min-height:78px;resize:none}
+textarea:focus,input:focus{border-color:var(--rose)}
+.btn{display:block;width:100%;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:600;
+  font-family:inherit;background:linear-gradient(135deg,var(--rose),var(--rose-dark));color:#fff;cursor:pointer}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:500}
+.btn.small{padding:10px;font-size:14px}
+.pick{display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--rose);
+  border-radius:12px;padding:22px;color:var(--rose-dark);font-size:14px;background:rgba(232,160,191,.06)}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.thumb{position:relative;width:64px;height:64px;border-radius:9px;overflow:hidden;background:#f0e6e0}
+.thumb img,.thumb video{width:100%;height:100%;object-fit:cover}
+.thumb span{position:absolute;left:0;right:0;bottom:0;font-size:9px;background:rgba(0,0,0,.5);color:#fff;
+  text-align:center;padding:1px;overflow:hidden;white-space:nowrap}
+.steps{display:flex;gap:6px;margin:14px 0 6px}
+.step{flex:1;text-align:center;font-size:11px;color:var(--ink-2);padding-top:6px;border-top:2px solid var(--line)}
+.step.on{color:var(--rose-dark);border-top-color:var(--rose)}
+.step.done{color:var(--ok);border-top-color:var(--ok)}
+.bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--rose),var(--gold));width:0;transition:width .4s}
+.msg{font-size:12px;color:var(--ink-2);margin-top:8px;min-height:18px}
+video{width:100%;border-radius:12px;background:#000;margin-top:8px}
+.hidden{display:none}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(232,160,191,.16);
+  color:var(--rose-dark);margin-left:6px}
+.note{font-size:11px;color:var(--ink-2);margin-top:10px;line-height:1.7}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>哩秀 · AI 智能成片<span class="tag">H5</span></h1>
+    <div class="sub">丢素材 + 一句话 → 自动剪出成片</div>
+  </header>
+
+  <div class="card">
+    <div class="card-t"><i class="dot"></i>1 · 选素材</div>
+    <div class="pick" onclick="fileEl.click()">＋ 选择视频 / 图片</div>
+    <input type="file" id="file" class="hidden" multiple accept="video/*,image/*" onchange="onPick(event)">
+    <div class="thumbs" id="thumbs"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-t"><i class="dot"></i>2 · 一句话说清要什么</div>
+    <textarea id="ins" placeholder="例：把说话的片段保留，去掉静音和卡顿，加中文字幕，节奏紧凑一点"></textarea>
+  </div>
+
+  <div class="card hidden" id="runCard">
+    <div class="card-t"><i class="dot"></i>3 · 生成中</div>
+    <div class="steps" id="steps"></div>
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="msg" id="msg">准备中…</div>
+  </div>
+
+  <div class="card hidden" id="doneCard">
+    <div class="card-t"><i class="dot"></i>成片</div>
+    <video id="vid" controls playsinline></video>
+    <div class="row" style="margin-top:10px">
+      <button class="btn small ghost" onclick="reset()">再做一条</button>
+      <a id="dl" class="btn small" style="text-align:center;text-decoration:none;line-height:1.2;padding-top:13px" download>下载</a>
+    </div>
+  </div>
+
+  <button class="btn" id="go" onclick="run()" disabled>开始生成</button>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-t"><i class="dot"></i>后端地址</div>
+    <input type="text" id="base" placeholder="https://你的后端域名">
+    <div class="note">
+      · 手机访问必须填 <b>https</b> 的公网地址，http 会被浏览器拦截<br>
+      · 用 <b>?api=地址</b> 打开本页可免手动填写（链接里带好就行）<br>
+      · ⚠️ 公网地址由本机隧道提供，<b>重启后会变</b>；若提示连不上，
+        去 <b>D:\lixiu-backend\deploy\PUBLIC_URL.txt</b> 取最新地址
+    </div>
+    <button class="btn ghost small" style="margin-top:10px" onclick="saveBase()">保存地址</button>
+  </div>
+</div>
+
+<script>
+var fileEl = document.getElementById('file');
+var files = [];
+// 固定域名: 注册过 SSH 公钥后 serveo 会给这个永久地址, 不再每次重连都变
+var FIXED = 'https://lixiu.serveo.net';
+// 支持 ?api=https://后端域名 通过链接直接指定后端(隧道域名会变时最省事, 优先级最高)
+var _qp = new URLSearchParams(location.search).get('api');
+if (_qp) { localStorage.setItem('lixiu_base', _qp.replace(/\/+$/, '')); }
+var BASE = localStorage.getItem('lixiu_base') || FIXED;
+document.getElementById('base').value = BASE;
+
+// ── 后端地址自动发现 ────────────────────────────────────────────────────────
+// 免费隧道的域名每隔一段时间就会换一个(serveo 约 10 分钟过期重建), 所以「把地址
+// 写死在链接里」必然会失效。根治办法: 守护进程每次拿到新地址就写进仓库里的
+// backend.json 并 push, 页面启动时从下面这两个固定入口把最新地址取回来。
+// 用户因此永远只需要记住一个链接, 地址换了页面自己会跟上。
+var DISCOVER = [
+  'https://raw.githubusercontent.com/lixiu-ohye/lixiu/main/backend.json',
+  'https://ghproxy.net/https://raw.githubusercontent.com/lixiu-ohye/lixiu/main/backend.json',
+  'https://fastly.jsdelivr.net/gh/lixiu-ohye/lixiu@main/backend.json',
+  'https://cdn.jsdelivr.net/gh/lixiu-ohye/lixiu@main/backend.json'
+];
+
+function ping(base){
+  return new Promise(function(resolve){
+    var ctl = (typeof AbortController === 'function') ? new AbortController() : null;
+    var timer = setTimeout(function(){ ctl && ctl.abort(); }, 5000);
+    fetch(base.replace(/\/+$/, '') + '/api/health', {signal: ctl && ctl.signal, cache:'no-store'})
+      .then(function(r){ clearTimeout(timer); resolve(r.ok); })
+      .catch(function(){ clearTimeout(timer); resolve(false); });
+  });
+}
+
+// 逐个试固定入口, 拿到地址后必须真的 ping 通才采用(拒绝不可达的僵尸地址)
+async function discover(){
+  for (var i = 0; i < DISCOVER.length; i++){
+    try {
+      var r = await fetch(DISCOVER[i] + '?t=' + Date.now(), {cache:'no-store'});
+      if (!r.ok) continue;
+      var j = await r.json();
+      var b = (j.base || '').replace(/\/+$/, '');
+      if (!b) continue;
+      if (await ping(b)) return b;
+    } catch (e) { /* 换下一个入口 */ }
+  }
+  return null;
+}
+
+function useBase(b){
+  BASE = b;
+  localStorage.setItem('lixiu_base', BASE);
+  document.getElementById('base').value = BASE;
+}
+
+// 启动时探测固定域名是否可用; 一旦可用就自动切过去,
+// 这样「注册公钥」这件一次性操作生效后, 用户不用改任何东西
+(function tryFixed(){
+  if (BASE === FIXED) return;                 // 已经在用固定域名
+  ping(FIXED).then(function(ok){
+    if (!ok) return;
+    useBase(FIXED);
+    toast('已自动切换到固定后端地址 ' + FIXED);
+  });
+})();
+
+// 当前地址不通 -> 自动找回最新地址。这样即使隧道重建过, 页面也是直接可用
+(async function initBackend(){
+  if (await ping(BASE)) return;
+  var found = await discover();
+  if (found) {
+    useBase(found);
+    toast('已自动更新后端地址');
+  } else {
+    toast('⚠️ 连不上后端，请在下方「后端地址」填入最新地址');
+  }
+})();
+
+// 阶段序列: 注意 queued 不在里面, 需单独兜底(小程序端踩过 indexOf=-1 导致步骤条全灰)
+var STAGES = ['uploading','parsing','transcribing','rendering','done'];
+var LABEL  = {uploading:'上传', parsing:'解析', transcribing:'转写', rendering:'渲染', done:'完成'};
+
+function saveBase(){
+  BASE = document.getElementById('base').value.trim().replace(/\/+$/,'');
+  localStorage.setItem('lixiu_base', BASE);
+  toast('已保存: ' + BASE);
+}
+function toast(t){ var m=document.getElementById('msg'); if(m) m.textContent=t; }
+
+function onPick(e){
+  for (var i=0;i<e.target.files.length;i++) files.push(e.target.files[i]);
+  renderThumbs(); updateGo();
+}
+function renderThumbs(){
+  var box = document.getElementById('thumbs'); box.innerHTML='';
+  files.forEach(function(f, i){
+    var d = document.createElement('div'); d.className='thumb';
+    var url = URL.createObjectURL(f);
+    if (f.type.indexOf('video')===0){
+      var v=document.createElement('video'); v.src=url; v.muted=true; d.appendChild(v);
+    } else {
+      var im=document.createElement('img'); im.src=url; d.appendChild(im);
+    }
+    var s=document.createElement('span'); s.textContent=f.name.slice(0,10); d.appendChild(s);
+    box.appendChild(d);
+  });
+}
+function updateGo(){ document.getElementById('go').disabled = files.length===0; }
+
+function renderSteps(stage){
+  var known = STAGES.indexOf(stage);
+  var ui = ['解析','转写','渲染'];
+  var uiStage = ['parsing','transcribing','rendering'];
+  var html='';
+  ui.forEach(function(label, i){
+    var cls='step';
+    if (stage==='done') cls+=' done';
+    else if (stage==='failed') cls+='';
+    else if (known>=0 && STAGES.indexOf(uiStage[i])<=known) cls+= (STAGES.indexOf(uiStage[i])===known ? ' on' : ' done');
+    html += '<div class="'+cls+'">'+label+'</div>';
+  });
+  document.getElementById('steps').innerHTML = html;
+}
+
+// 免费隧道(serveo/pinggy)会偶发 502/503/504 —— 实测出现过 health 200 但上传 502,
+// 重试一次即成功。所以对 5xx + 网络错误自动重试, 4xx 是业务错误不重试(重试无意义)。
+// optFactory 用函数形式: FormData body 重试时要重新构造, 直接复用有风险。
+async function fetchRetry(url, optFactory, tries){
+  tries = tries || 3;
+  var lastErr = null;
+  for (var i = 0; i < tries; i++){
+    try {
+      var r = await fetch(url, optFactory());
+      if (r.ok) return r;
+      if (r.status < 500) return r;       // 4xx: 业务错误, 交给调用方处理
+      lastErr = new Error('HTTP ' + r.status);
+    } catch (e) {
+      lastErr = e;
+    }
+    if (i < tries - 1) {
+      await new Promise(function(res){ setTimeout(res, 800 * (i + 1)); });
+    }
+  }
+  throw lastErr || new Error('请求失败');
+}
+
+async function run(){
+  if (!files.length) return;
+  var ins = document.getElementById('ins').value.trim();
+  var go = document.getElementById('go');
+  go.disabled = true; go.textContent = '校准后端…';
+  document.getElementById('runCard').classList.remove('hidden');
+  // 隧道地址随时可能变过, 每次开始前先校准一次再干活
+  if (!(await ping(BASE))){
+    var _f = await discover();
+    if (_f) {
+      useBase(_f);
+    } else {
+      go.disabled = false; go.textContent = '重试';
+      toast('❌ 连不上后端，请在下方「后端地址」填入最新地址');
+      return;
+    }
+  }
+  go.textContent = '创建任务…';
+  document.getElementById('doneCard').classList.add('hidden');
+
+  try {
+    // 1) 建任务(不自动跑, 等素材传完)
+    var r = await fetchRetry(BASE + '/api/jobs', function(){
+      var fd = new FormData();
+      fd.append('instruction', ins);
+      fd.append('auto_start', 'false');
+      return {method:'POST', body:fd};
+    });
+    if (!r.ok) throw new Error('建任务失败 HTTP ' + r.status);
+    var j = await r.json();
+    var jobId = j.job_id || j.id;
+    if (!jobId) throw new Error('返回里没有 job_id');
+
+    // 2) 传素材(multipart, 字段名 files)
+    go.textContent = '上传素材…';
+    for (var i=0;i<files.length;i++){
+      var fi = files[i];
+      var r2 = await fetchRetry(BASE + '/api/jobs/' + jobId + '/files', function(){
+        var f2 = new FormData(); f2.append('files', fi);
+        return {method:'POST', body:f2};
+      });
+      if (!r2.ok) throw new Error('第 ' + (i+1) + ' 个素材上传失败 HTTP ' + r2.status);
+      renderSteps('uploading'); toast('上传中 ' + (i+1) + '/' + files.length);
+    }
+
+    // 3) 开跑 —— instruction 走 query(不是 multipart! 走 body 会静默丢失)
+    go.textContent = '生成中…';
+    var qs = '?instruction=' + encodeURIComponent(ins);
+    var r3 = await fetchRetry(BASE + '/api/jobs/' + jobId + '/start' + qs, function(){
+      return {method:'POST'};
+    });
+    if (!r3.ok) throw new Error('启动失败 HTTP ' + r3.status);
+
+    poll(jobId);
+  } catch (err) {
+    go.disabled=false; go.textContent='重试';
+    toast('❌ ' + err.message);
+  }
+}
+
+async function poll(jobId){
+  var go = document.getElementById('go');
+  var dead = 0;
+  var t = setInterval(async function(){
+    try {
+      var r = await fetch(BASE + '/api/jobs/' + jobId);
+      if (!r.ok) throw new Error('poll HTTP ' + r.status);
+      var st = await r.json();
+      var stage = st.stage || '';
+      renderSteps(stage);
+      document.getElementById('barFill').style.width = (st.progress || 0) + '%';
+      toast(st.message || (stage==='queued' ? '排队中…' : ''));
+
+      if (stage === 'done'){
+        clearInterval(t);
+        var url = BASE + '/api/jobs/' + jobId + '/result';
+        var v = document.getElementById('vid'); v.src = url;
+        document.getElementById('dl').href = url;
+        document.getElementById('doneCard').classList.remove('hidden');
+        go.disabled=false; go.textContent='再生成一次';
+      } else if (stage === 'failed' || stage === 'canceled'){
+        clearInterval(t);
+        toast('❌ 生成失败: ' + (st.message || st.error || '未知原因'));
+        go.disabled=false; go.textContent='重试';
+      }
+    } catch (e){
+      if (++dead > 3){
+        clearInterval(t);
+        // 先试自动找回最新地址, 找不回才让用户手工填
+        var _f2 = await discover();
+        if (_f2) {
+          useBase(_f2);
+          toast('后端地址已更新，请再点一次');
+        } else {
+          toast('❌ 连不上后端（隧道可能已重启、地址变了）。请到 D:\\lixiu-backend\\deploy\\PUBLIC_URL.txt 取最新地址填入下方');
+        }
+        go.disabled=false; go.textContent='重试';
+      }
+    }
+  }, 1500);
+}
+
+function reset(){
+  files = []; fileEl.value=''; renderThumbs(); updateGo();
+  document.getElementById('doneCard').classList.add('hidden');
+  document.getElementById('runCard').classList.add('hidden');
+  document.getElementById('barFill').style.width='0';
+}
+</script>
+</body>
+</html>
