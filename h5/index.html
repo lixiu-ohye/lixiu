@@ -115,20 +115,70 @@ if (_qp) { localStorage.setItem('lixiu_base', _qp.replace(/\/+$/, '')); }
 var BASE = localStorage.getItem('lixiu_base') || FIXED;
 document.getElementById('base').value = BASE;
 
+// ── 后端地址自动发现 ────────────────────────────────────────────────────────
+// 免费隧道的域名每隔一段时间就会换一个(serveo 约 10 分钟过期重建), 所以「把地址
+// 写死在链接里」必然会失效。根治办法: 守护进程每次拿到新地址就写进仓库里的
+// backend.json 并 push, 页面启动时从下面这两个固定入口把最新地址取回来。
+// 用户因此永远只需要记住一个链接, 地址换了页面自己会跟上。
+var DISCOVER = [
+  'https://raw.githubusercontent.com/lixiu-ohye/lixiu/main/backend.json',
+  'https://ghproxy.net/https://raw.githubusercontent.com/lixiu-ohye/lixiu/main/backend.json',
+  'https://fastly.jsdelivr.net/gh/lixiu-ohye/lixiu@main/backend.json',
+  'https://cdn.jsdelivr.net/gh/lixiu-ohye/lixiu@main/backend.json'
+];
+
+function ping(base){
+  return new Promise(function(resolve){
+    var ctl = (typeof AbortController === 'function') ? new AbortController() : null;
+    var timer = setTimeout(function(){ ctl && ctl.abort(); }, 5000);
+    fetch(base.replace(/\/+$/, '') + '/api/health', {signal: ctl && ctl.signal, cache:'no-store'})
+      .then(function(r){ clearTimeout(timer); resolve(r.ok); })
+      .catch(function(){ clearTimeout(timer); resolve(false); });
+  });
+}
+
+// 逐个试固定入口, 拿到地址后必须真的 ping 通才采用(拒绝不可达的僵尸地址)
+async function discover(){
+  for (var i = 0; i < DISCOVER.length; i++){
+    try {
+      var r = await fetch(DISCOVER[i] + '?t=' + Date.now(), {cache:'no-store'});
+      if (!r.ok) continue;
+      var j = await r.json();
+      var b = (j.base || '').replace(/\/+$/, '');
+      if (!b) continue;
+      if (await ping(b)) return b;
+    } catch (e) { /* 换下一个入口 */ }
+  }
+  return null;
+}
+
+function useBase(b){
+  BASE = b;
+  localStorage.setItem('lixiu_base', BASE);
+  document.getElementById('base').value = BASE;
+}
+
 // 启动时探测固定域名是否可用; 一旦可用就自动切过去,
 // 这样「注册公钥」这件一次性操作生效后, 用户不用改任何东西
 (function tryFixed(){
   if (BASE === FIXED) return;                 // 已经在用固定域名
-  var ctl = (typeof AbortController === 'function') ? new AbortController() : null;
-  var timer = setTimeout(function(){ ctl && ctl.abort(); }, 4000);
-  fetch(FIXED + '/api/health', {signal: ctl && ctl.signal}).then(function(r){
-    clearTimeout(timer);
-    if (!r.ok) return;
-    BASE = FIXED;
-    localStorage.setItem('lixiu_base', BASE);
-    document.getElementById('base').value = BASE;
+  ping(FIXED).then(function(ok){
+    if (!ok) return;
+    useBase(FIXED);
     toast('已自动切换到固定后端地址 ' + FIXED);
-  }).catch(function(){ clearTimeout(timer); }); // 未注册时会失败, 静默沿用原地址
+  });
+})();
+
+// 当前地址不通 -> 自动找回最新地址。这样即使隧道重建过, 页面也是直接可用
+(async function initBackend(){
+  if (await ping(BASE)) return;
+  var found = await discover();
+  if (found) {
+    useBase(found);
+    toast('已自动更新后端地址');
+  } else {
+    toast('⚠️ 连不上后端，请在下方「后端地址」填入最新地址');
+  }
 })();
 
 // 阶段序列: 注意 queued 不在里面, 需单独兜底(小程序端踩过 indexOf=-1 导致步骤条全灰)
@@ -203,8 +253,20 @@ async function run(){
   if (!files.length) return;
   var ins = document.getElementById('ins').value.trim();
   var go = document.getElementById('go');
-  go.disabled = true; go.textContent = '创建任务…';
+  go.disabled = true; go.textContent = '校准后端…';
   document.getElementById('runCard').classList.remove('hidden');
+  // 隧道地址随时可能变过, 每次开始前先校准一次再干活
+  if (!(await ping(BASE))){
+    var _f = await discover();
+    if (_f) {
+      useBase(_f);
+    } else {
+      go.disabled = false; go.textContent = '重试';
+      toast('❌ 连不上后端，请在下方「后端地址」填入最新地址');
+      return;
+    }
+  }
+  go.textContent = '创建任务…';
   document.getElementById('doneCard').classList.add('hidden');
 
   try {
@@ -275,7 +337,14 @@ async function poll(jobId){
     } catch (e){
       if (++dead > 3){
         clearInterval(t);
-        toast('❌ 连不上后端（隧道可能已重启、地址变了）。请到 D:\\lixiu-backend\\deploy\\PUBLIC_URL.txt 取最新地址填入下方');
+        // 先试自动找回最新地址, 找不回才让用户手工填
+        var _f2 = await discover();
+        if (_f2) {
+          useBase(_f2);
+          toast('后端地址已更新，请再点一次');
+        } else {
+          toast('❌ 连不上后端（隧道可能已重启、地址变了）。请到 D:\\lixiu-backend\\deploy\\PUBLIC_URL.txt 取最新地址填入下方');
+        }
         go.disabled=false; go.textContent='重试';
       }
     }
