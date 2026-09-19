@@ -55,6 +55,20 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   await page.goto(PAGE, { waitUntil: 'domcontentloaded', timeout: 45000 });
   await page.waitForFunction(() => window.__ed && document.getElementById('pgBody'), null, { timeout: 15000 });
   await page.waitForTimeout(700);
+  // 【环境探测】Tailwind 走 CDN 阻塞加载。本机网络抖动时拉不到 → 所有 flex/尺寸/定位类失效,
+  // 布局类断言(时间轴高度/贴底/视口范围)会集体假失败, 与产品是否真坏无关。
+  // 探测一次并走 okL: CDN 挂时降级为「提醒」而非「失败」, 避免环境噪声阻塞部署。
+  // 判定用全局 tailwind 对象, 不用 networkidle —— 后者会把离线探后端也算进去。
+  const CDN_DOWN = await page.evaluate(() => typeof window.tailwind === 'undefined');
+  if (CDN_DOWN) {
+    step('CDN_DOWN=true (tailwind 未加载, 布局断言本轮降级)');
+    warn('ENV Tailwind CDN 未加载', '布局类断言(A6/A8/P6/P10/P13/P14)本轮降级为提醒, 不计失败');
+  }
+  // 布局类断言入口: 依赖 Tailwind 类生效; CDN 不可达时只提醒, 不当产品失败
+  function okL(name, cond, extra) {
+    if (CDN_DOWN) { warn(name + ' (跳过: Tailwind CDN 未加载)', extra); return false; }
+    return ok(name, cond, extra);
+  }
   // 【创作台】顶部标签页: 默认视图是「AI 智能成片」, 剪辑台需点标签切过去
   const cb0 = await page.evaluate(() => ({
     hasTabs: !!document.getElementById('cbTabs'),
@@ -109,7 +123,7 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
       hide: l.classList.contains('hide'), parent: l.parentElement.className };
   });
   R.data.lib0 = lib0;
-  ok('A6 素材栏默认可见且落在编辑器内(不再是被隐藏的抽屉)',
+  okL('A6 素材栏默认可见且落在编辑器内(不再是被隐藏的抽屉)',
     lib0.display !== 'none' && !lib0.hide && lib0.w > 100 && lib0.x >= 240, JSON.stringify(lib0));
   const guide0 = await page.evaluate(() => { const g = document.getElementById('edLanesEmpty'); return g ? g.textContent : ''; });
   ok('A7 轨道空状态有三步上手引导(新用户知道下一步干什么)', /三步/.test(guide0), guide0.slice(0, 60));
@@ -118,7 +132,7 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
     const r = document.querySelector('.ed-timeline').getBoundingClientRect();
     return { bottom: Math.round(r.bottom), h: Math.round(r.height), vh: window.innerHeight };
   });
-  ok('A8 时间轴完整落在视口内', fit.h > 100 && fit.bottom <= fit.vh + 2, JSON.stringify(fit));
+  okL('A8 时间轴完整落在视口内', fit.h > 100 && fit.bottom <= fit.vh + 2, JSON.stringify(fit));
 
   // ── B 初始进度态 ──
   const base = await page.evaluate(() => {
@@ -874,11 +888,11 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   ok('P3 工具栏: 工程名可编辑(带留空提示)', pz.nameVis && pz.namePh.length > 0, pz.namePh);
   ok('P4 工具栏: 保存 / 另存为 两个动作齐备', pz.saveVis && /保存/.test(pz.saveTxt) && /另存为/.test(pz.asTxt), pz.saveTxt + ' | ' + pz.asTxt);
   ok('P5 右侧面板有分区标题「编辑面板」', /编辑面板/.test(pz.pt), pz.pt.replace(/\s+/g, ' '));
-  ok('P6 时间轴有分区标题且高度 236 未被压缩', /时间轴/.test(pz.tlZone) && pz.tlH === 236, pz.tlZone + ' h=' + pz.tlH);
+  okL('P6 时间轴有分区标题且高度 236 未被压缩', /时间轴/.test(pz.tlZone) && pz.tlH === 236, pz.tlZone + ' h=' + pz.tlH);
   ok('P7 时间轴底边不出视口(不溢出)', pz.tlBottom < pz.vh, 'bottom=' + pz.tlBottom + ' vh=' + pz.vh);
   ok('P8 备注/里程碑/进度历史已移出右侧进度Tab', !pz.notesInPgTab && !pz.msInPgTab, JSON.stringify({ n: pz.notesInPgTab, m: pz.msInPgTab }));
   ok('P9 底部工程档案三列齐备(备注/里程碑/进度历史)', pz.arCols.length === 3 && pz.notesInAr && pz.msInAr && pz.logInAr, pz.arCols.join(' | '));
-  ok('P10 工程档案贴在页面最底部', Math.abs(pz.arBottom - pz.vh) <= 2, 'bottom=' + pz.arBottom + ' vh=' + pz.vh);
+  okL('P10 工程档案贴在页面最底部', Math.abs(pz.arBottom - pz.vh) <= 2, 'bottom=' + pz.arBottom + ' vh=' + pz.vh);
   ok('P11 悬浮 tooltip 为 fixed 定位', pz.tipPos === 'fixed', pz.tipPos);
 
   // 收起档案区 → 空间还给画布, 时间轴不受影响
@@ -892,8 +906,8 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
     btn: document.getElementById('arFold').innerText.trim()
   }));
   ok('P12 工程档案可收起(画布变高)', pz2.hidden && pz2.cvH > pz.cvH && /展开/.test(pz2.btn), pz.cvH + ' -> ' + pz2.cvH);
-  ok('P13 收起后时间轴高度不变', pz2.tlH === 236, 'h=' + pz2.tlH);
-  ok('P14 收起后档案区仍贴底', Math.abs(pz2.arBottom - pz.vh) <= 2, 'bottom=' + pz2.arBottom);
+  okL('P13 收起后时间轴高度不变', pz2.tlH === 236, 'h=' + pz2.tlH);
+  okL('P14 收起后档案区仍贴底', Math.abs(pz2.arBottom - pz.vh) <= 2, 'bottom=' + pz2.arBottom);
   await page.click('#arFold');
   await page.waitForTimeout(350);
 
@@ -1002,7 +1016,8 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
     engine: (document.querySelector('input[name=uiEngine]:checked') || {}).value,
     box: getComputedStyle(document.getElementById('uiAiBox')).display,
     keyType: (document.getElementById('uiApiKey') || {}).type,
-    tip: ((document.querySelector('.ui-ai-tip') || {}).textContent || '')
+    // 取全部 .ui-ai-tip 拼接: 新增的「中转说明」也用了这个类, 单取第一个会命中错误节点
+    tip: Array.from(document.querySelectorAll('.ui-ai-tip')).map(e => e.textContent).join('')
   }));
   ok('T1 UI设计面板提供「本地 / AI」两种引擎', t0.opts === 2 && t0.engine === 'local', JSON.stringify(t0));
   ok('T2 AI 配置区默认收起(不打扰不用 AI 的人)', t0.box === 'none', t0.box);
@@ -1100,7 +1115,10 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   // 把 45 秒超时临时缩到 400ms, 才能在合理时间内验证这条路径。
   // 注意: 测试完必须还原, 且 hang 模式会让所有方舟请求延迟 10s, 结束前必须切回 ok。
   await page.check('input[name=uiEngine][value=ai]');
-  await page.evaluate(() => window.__ed.aiTimeout(400));
+  // T15/T16 是「用户主动中止」, 超时必须够长 —— 否则 400ms 超时先触发 abort、
+  // 按钮被 aiDone 隐藏, Playwright 的 click actionability 检查就找不到可见元素(时序竞争)。
+  // 400ms 的短超时留给 T17 单独验证「无人操作时超时自动中止」那条路径。
+  await page.evaluate(() => window.__ed.aiTimeout(3000));
   arkMode = 'hang';
   const tBefore = await page.evaluate(() => ({
     n: window.__ed.ui().layers.length,
@@ -1133,7 +1151,8 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
     tAb.n === tBefore.n && tAb.u === tBefore.u && tAb.busy === false && tAb.ab === 'none'
       && /已中止/.test(tAb.st), JSON.stringify(tAb));
 
-  // 超时自动中止(无人点按钮)
+  // 超时自动中止(无人点按钮) —— 这里才把超时缩到 400ms, 让断言在合理时间内跑完
+  await page.evaluate(() => window.__ed.aiTimeout(400));
   await page.waitForTimeout(200);
   await page.fill('#uiPrompt', '再来一个封面');
   await page.click('#uiGen');
@@ -1402,7 +1421,7 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
       && /on/.test(mDef.boxOn),
     JSON.stringify(mDef));
 
-  // M4: 切到 DeepSeek, 模型下拉换成 DeepSeek 的模型, 端点输入框仍隐藏
+  // M4: 切到 DeepSeek, 模型下拉换成 DeepSeek 的模型, 端点输入框常显并预填官方地址
   await page.selectOption('#uiAiProvider', 'deepseek');
   await page.waitForTimeout(140);
   const mDk = await page.evaluate(() => {
@@ -1412,12 +1431,14 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
       mTag: m ? m.tagName : 'MISSING',
       mVal: m ? m.value : '',
       mOpts: m && m.tagName === 'SELECT' ? Array.from(m.options).map(o => o.value) : [],
-      eDisp: e ? e.style.display : 'no-el'
+      eDisp: e ? e.style.display : 'no-el',
+      eVal: e ? e.value : ''
     };
   });
-  ok('M4 切到 DeepSeek 后模型下拉换成 deepseek-chat/deepseek-reasoner, 端点输入仍隐藏',
+  ok('M4 切到 DeepSeek 后模型下拉换成 deepseek-chat/deepseek-reasoner, 端点框常显且预填官方地址',
     mDk.mTag === 'SELECT' && mDk.mOpts.indexOf('deepseek-chat') > -1
-      && mDk.mVal === 'deepseek-chat' && mDk.eDisp === 'none',
+      && mDk.mVal === 'deepseek-chat' && mDk.eDisp !== 'none'
+      && /api\.deepseek\.com/.test(mDk.eVal),
     JSON.stringify(mDk));
 
   // M5: 切到「自定义」, 模型变成手输 input, 端点输入框出现
@@ -1497,13 +1518,142 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
     mLink.hasArkUrl === true && /免费注册/.test(mLink.html),
     mLink.html.slice(0, 120));
 
+  // ── N: AI 配置升级(实时trim / 眼睛 / 手填模型 / 省token测试 / 错误分类 / 中转) ──
+  // 恢复 AI 模式 + 方舟
+  await page.evaluate(() => {
+    const r = document.querySelector('input[name=uiEngine][value=ai]');
+    if (r && !r.checked) r.checked = true;
+    if (r) r.dispatchEvent(new Event('change', { bubbles: true }));
+    const p = document.getElementById('uiAiProvider');
+    p.value = 'ark'; p.dispatchEvent(new Event('change', { bubbles: true }));
+    localStorage.removeItem('lixiu_ai_model_manual');
+  });
+  await page.waitForTimeout(160);
+
+  // N1: Key 输入实时去首尾空格(oninput)
+  const nTrim = await page.evaluate(() => {
+    const el = document.getElementById('uiApiKey');
+    const before = el.value;
+    el.value = '  sk-trim-test  ';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    const after = el.value;
+    el.value = before;
+    return { after, trimmed: after === 'sk-trim-test' };
+  });
+  ok('N1 Key 输入 oninput 实时去首尾空格',
+    nTrim.trimmed === true, JSON.stringify(nTrim));
+
+  // N2: 眼睛按钮切换 Key 明文/密文
+  const nEye = await page.evaluate(() => {
+    const el = document.getElementById('uiApiKey');
+    const btn = document.getElementById('uiKeyEye');
+    const t0 = el.type;
+    btn.click();
+    const t1 = el.type;
+    btn.click();
+    const t2 = el.type;
+    return { t0, t1, t2, ok: t0 === 'password' && t1 === 'text' && t2 === 'password' };
+  });
+  ok('N2 👁 眼睛按钮: password→text→password 往返切换',
+    nEye.ok === true, JSON.stringify(nEye));
+
+  // N3: ✏️ 手填模型: select→input 切换, 值保留, 且写进 LS
+  const nManual = await page.evaluate(() => {
+    const sel0 = document.getElementById('uiAiModel');
+    const tag0 = sel0.tagName;
+    document.getElementById('uiModelManual').click();
+    const inp = document.getElementById('uiAiModel');
+    inp.value = 'ep-20260919-test';
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+    const lsVal = localStorage.getItem('lixiu_ai_model_manual');
+    const tag1 = inp.tagName;
+    // 切回下拉验证手填值保留为选项
+    document.getElementById('uiModelManual').click();
+    const sel2 = document.getElementById('uiAiModel');
+    const keep = sel2.value;
+    localStorage.removeItem('lixiu_ai_model_manual');
+    return { tag0, tag1, lsVal, keep, sel2Tag: sel2.tagName };
+  });
+  ok('N3 ✏️ 手填模型ID: select↔input 互切, 手填值进 LS 且切回下拉不丢',
+    nManual.tag0 === 'SELECT' && nManual.tag1 === 'INPUT'
+      && nManual.lsVal === 'ep-20260919-test'
+      && nManual.keep === 'ep-20260919-test' && nManual.sel2Tag === 'SELECT',
+    JSON.stringify(nManual));
+
+  // N4: 连通测试请求体带 max_tokens=8(省 token)
+  const nTest = await page.evaluate(() => {
+    let captured = null;
+    window.fetch = function (url, opt) {
+      captured = { url: String(url), body: JSON.parse(opt.body) };
+      return Promise.reject(new DOMException('stub', 'AbortError'));
+    };
+    localStorage.setItem('lixiu_ark_key', 'sk-stub-key');
+    return window.__ed.aiCall('测试', '只回ok', true).then(() => captured);
+  });
+  await page.waitForTimeout(200);
+  ok('N4 连通测试请求体带 max_tokens=8, 走方舟端点',
+    nTest && nTest.body.max_tokens === 8 && /ark\.cn-beijing\.volces\.com/.test(nTest.url),
+    JSON.stringify(nTest && { u: nTest.url, mt: nTest && nTest.body.max_tokens }));
+  // 清理桩
+  await page.waitForTimeout(200);
+  await page.evaluate(() => {
+    localStorage.removeItem('lixiu_ark_key');
+  });
+
+  // N5: 端点覆盖: 用户改地址后请求走用户地址(填了即用)
+  const nEp = await page.evaluate(() => {
+    let captured = null;
+    window.fetch = function (url, opt) {
+      captured = { url: String(url) };
+      return Promise.reject(new DOMException('stub', 'AbortError'));
+    };
+    localStorage.setItem('lixiu_ark_key', 'sk-stub-key');
+    const e = document.getElementById('uiAiEndpoint');
+    e.value = 'https://api.deepseek.com';
+    e.dispatchEvent(new Event('input', { bubbles: true }));
+    return window.__ed.aiCall('测试').then(() => {
+      localStorage.removeItem('lixiu_ark_key');
+      e.value = 'https://ark.cn-beijing.volces.com/api/v3';
+      return captured;
+    });
+  });
+  await page.waitForTimeout(200);
+  ok('N5 端点覆盖填了即用: 预设方舟+填 DeepSeek 地址 → 请求发往 deepseek.com/v1/chat/completions',
+    nEp && /api\.deepseek\.com\/v1\/chat\/completions/.test(nEp.url),
+    JSON.stringify(nEp && nEp.url));
+
+  // N6: aiHttpErr 错误分类文案(401/404/429)
+  const nErr = await page.evaluate(() => {
+    const t = (s) => {
+      try { return window.__ed.aiHttpErr(s, ''); } catch (e) { return 'FN_MISSING'; }
+    };
+    return {
+      e401: t(401), e404: t(404), e429: t(429),
+      ok: t(401) !== 'FN_MISSING' && /Key/.test(t(401)) && /模型|地址/.test(t(404)) && /限流|余额/.test(t(429))
+    };
+  });
+  ok('N6 aiHttpErr 错误分类: 401→Key无效 / 404→模型或地址 / 429→限流或余额',
+    nErr.ok === true, JSON.stringify(nErr).slice(0, 200));
+
+  // N7: 恢复现场(端点预填回方舟, 移除桩 key)
+  await page.evaluate(() => {
+    localStorage.removeItem('lixiu_ark_key');
+    localStorage.removeItem('lixiu_ai_model_manual');
+    const e = document.getElementById('uiAiEndpoint');
+    if (e) e.value = 'https://ark.cn-beijing.volces.com/api/v3';
+  });
+
+
 
   // ── 全页截图 + 错误汇总 ──
   await page.screenshot({ path: SHOT + '/full.png', fullPage: false });
 
 
   R.data.errors = { pageErrors: errs, consoleErrors: consoleErrs.slice(0, 6), netFails: [...new Set(netFails)].slice(0, 4) };
-  ok('L1 无 JS 未捕获异常', errs.length === 0, errs.join(' | ').slice(0, 500));
+  // CDN 未加载时 head 里的 tailwind.config 内联脚本会抛 ReferenceError, 那是环境问题, 不算产品异常
+  const errsReal = CDN_DOWN ? errs.filter(e => !/tailwind is not defined/i.test(e)) : errs;
+  ok('L1 无 JS 未捕获异常' + (CDN_DOWN ? '(已排除 CDN 未加载引起的 tailwind 引用错误)' : ''),
+    errsReal.length === 0, errsReal.join(' | ').slice(0, 500));
   if (netFails.length) warn('存在网络请求失败(离线打开时访问后端属预期)', [...new Set(netFails)].join(' '));
 
   await browser.close();

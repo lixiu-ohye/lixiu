@@ -153,13 +153,22 @@
               <option value="siliconflow">硅基流动</option>
               <option value="custom">自定义 · OpenAI 兼容</option>
             </select>
-            <select id="uiAiModel" title="模型名(留空用该服务商的默认模型)"></select>
-            <input type="text" id="uiAiEndpoint" placeholder="自定义端点 URL（仅「自定义」模式用）" autocomplete="off" spellcheck="false" style="display:none">
+            <div class="ui-model-row">
+              <select id="uiAiModel" title="下拉选预设模型, 或点右侧✏️手填任意模型ID"></select>
+              <button type="button" id="uiModelManual" class="ui-eye" title="切换为手动填写模型ID(任何 OpenAI 兼容模型都行, 不限于列表里这些)">✏️</button>
+            </div>
+            <input type="text" id="uiAiEndpoint" placeholder="API 地址（预填当前服务商, 可改成任何 OpenAI 兼容地址）" autocomplete="off" spellcheck="false">
             <div class="ui-act">
               <button id="uiKeySave">保存到本机</button>
               <button id="uiKeyClear">清空</button>
               <button id="uiKeyTest" title="发一个最小请求, 验证 Key 和模型能不能用">测试连接</button>
             </div>
+            <details class="ui-relay" id="uiRelayBox">
+              <summary>高级：中转 / 代理（一般不用动）</summary>
+              <label class="ui-relay-row"><input type="checkbox" id="uiRelayOn"> 启用中转（服务商拦截跨域时才需要）</label>
+              <input type="text" id="uiRelayUrl" placeholder="中转地址, 例 https://你的中转/api/relay" autocomplete="off" spellcheck="false">
+              <div class="ui-relay-tip">启用后 AI 请求会先发到这个中转，再由它转发到上面的 API 地址。Key 只经手不存储，token 仍消耗你自己的账号。</div>
+            </details>
             <div class="ui-ai-tip">🔒 Key 只存在你自己浏览器里，不会上传到哩秀服务器。连通测试会消耗你自己的少量 token。公共电脑别填。</div><div class="ui-ai-key" id="uiAiKeyLink"></div>
             <div class="ui-ai-st" id="uiAiSt"></div>
             <!-- 中止按钮: AI_BUSY 期间才显示。没有它的话请求挂起只能刷新页面 -->

@@ -2114,6 +2114,9 @@ function renderUiHist() {
 //   通义兼容模式 / 硅基流动 200/`*`, 401 也 `*`
 //   OpenAI 官方从本机不可达 -> 只能作为「自定义端点」入口给用户自己填代理
 var AI_LS_KEY = 'lixiu_ark_key', AI_LS_MODEL = 'lixiu_ark_model', AI_LS_PROVIDER = 'lixiu_ark_provider';
+// 中转(可选): 填了中转地址且开关打开时, AI 请求经中转发往目标端点(CORS 兜底 / 企业网关)
+var AI_LS_RELAY = 'lixiu_ai_relay', AI_LS_RELAY_URL = 'lixiu_ai_relay_url';
+var AI_EP_OVERRIDE = false;   // 是否允许端点输入框覆盖预设家的地址(默认关; 开后任何家都可用自定义地址)
 var AI_BUSY = false;
 // ── provider 注册表 ── 每家模型一条: 端点 + 默认模型列表 + 请求体差异
 //   opts.thinking   是否附 thinking:{type:'disabled'}(仅方舟 seed 系列需要, 否则推理轨迹混正文)
@@ -2246,6 +2249,50 @@ function aiSyncBox() {
   if (box) box.className = 'ui-ai' + (aiEngine() === 'ai' ? ' on' : '');
   aiRefreshModelList();
 }
+// 【模型手填/下拉互切】✏️ 按钮: select -> input(手填任意模型ID); 再点 -> 回 select
+//   手填的值存 LS(lixiu_ai_model_manual), 切 provider 不丢(自定义模型名各家通用)
+function aiModelManualLS(v) { return aiLS('lixiu_ai_model_manual', v); }
+function aiModelSwapToInput() {
+  var sel = $id('uiAiModel');
+  if (!sel) return;
+  var w = document.createElement('input');
+  w.type = 'text'; w.id = 'uiAiModel';
+  w.setAttribute('placeholder', '任意模型ID, 例 ep-xxx / gpt-4o / deepseek-chat');
+  w.setAttribute('autocomplete', 'off'); w.setAttribute('spellcheck', 'false');
+  w.value = sel.value || aiModelManualLS() || '';
+  sel.parentNode.replaceChild(w, sel);
+  aiModelManualLS(w.value);
+  var b = $id('uiModelManual'); if (b) b.classList.add('on');
+  aiTrimBind();   // 新建的 input 也要挂实时去空格
+}
+function aiModelSwapToSelect() {
+  var w = $id('uiAiModel');
+  if (!w) return;
+  var p = aiProvider();
+  var s = document.createElement('select');
+  s.id = 'uiAiModel';
+  if (p.models && p.models.length) {
+    s.innerHTML = p.models.map(function (m) { return '<option value="' + m + '">' + m + '</option>'; }).join('');
+    if (w.value && p.models.indexOf(w.value) > -1) s.value = w.value;
+    else if (p.defaultModel) s.value = p.defaultModel;
+  }
+  w.parentNode.replaceChild(s, w);
+  var b = $id('uiModelManual'); if (b) b.classList.remove('on');
+  // 手填保留: 用户手填的模型 ID 加进下拉第一个选项, 刷新/切换后不丢
+  var manual = aiModelManualLS();
+  if (manual && p.models && p.models.indexOf(manual) === -1) {
+    var o = document.createElement('option');
+    o.value = manual; o.textContent = manual + '（手填）';
+    s.insertBefore(o, s.firstChild);
+    s.value = manual;
+  }
+}
+function aiModelToggleManual() {
+  var el = $id('uiAiModel');
+  if (!el) return;
+  if (el.tagName === 'SELECT') aiModelSwapToInput();
+  else aiModelSwapToSelect();
+}
 // provider 下拉变化时: 刷新模型下拉 + 更新 Key 获取链接 + 保存 provider
 function aiRefreshModelList() {
   var p = aiProvider();
@@ -2257,10 +2304,12 @@ function aiRefreshModelList() {
       var keep = sel.value;
       var w = document.createElement('input');
       w.type = 'text'; w.id = 'uiAiModel';
-      w.setAttribute('placeholder', '模型名, 例如 gpt-4o-mini / deepseek-chat');
+      w.setAttribute('placeholder', '任意模型ID, 例 ep-xxx / gpt-4o / deepseek-chat');
       w.setAttribute('autocomplete', 'off'); w.setAttribute('spellcheck', 'false');
-      w.value = keep || '';
+      w.value = keep || aiModelManualLS() || '';
       sel.parentNode.replaceChild(w, sel);
+      var mb = $id('uiModelManual'); if (mb) mb.classList.add('on');
+      aiTrimBind();
       aiRefreshKeyLink();
       return;
     }
@@ -2287,11 +2336,19 @@ function aiRefreshModelList() {
   else if (p.defaultModel) sel.value = p.defaultModel;
   aiRefreshKeyLink();
 }
+// 【端点预填】切 provider 时把 API 地址刷成当前家的官方地址;
+//   用户改过想保留? 切回来重填一次即可 —— 预填值和预设一致时 aiCall 不会重复拼接
+function aiPrefillEndpoint(p) {
+  var e = $id('uiAiEndpoint');
+  if (!e) return;
+  e.style.display = '';
+  var v = p.urlCustom ? (p.baseHint || '') : (p.url || '');
+  e.value = v;
+}
 // 【Key 获取链接】告诉用户去哪里拿密钥, 没有它新用户会卡在第一步
 function aiRefreshKeyLink() {
   var p = aiProvider();
-  var e = $id('uiAiEndpoint');
-  if (e) e.style.display = p.urlCustom ? '' : 'none';
+  aiPrefillEndpoint(p);
   var el = $id('uiAiKeyLink');
   if (!el) return;
   if (!p.keyHint) { el.innerHTML = ''; return; }
@@ -2310,7 +2367,7 @@ function aiSaveKey() {
   if (!k) return toast('先把 API Key 粘进来再保存');
   aiLS(AI_LS_KEY, k); aiLS(AI_LS_MODEL, m); aiLS(AI_LS_PROVIDER, p.id);
   // 端点覆盖开关状态一并保存(重开页面后保持)
-  aiLS('lixiu_ai_ep_override', AI_EP_OVERRIDE ? '1' : '');
+
   aiSay('已存到本机浏览器，下次打开自动带上', 'ok');
   toast('AI 配置已保存到本机（Key 不会上传到任何服务器）');
 }
@@ -2394,11 +2451,12 @@ function aiBuildBody(userText, extraSys, isTest) {
   if (isTest) body.max_tokens = 8;   // 连通测试只回一个词, 最大限度省 token
   return body;
 }
-// 端点拼接: 用户给 base(可能带 /chat/completions 也可能只有 base), 统一拼出完整地址
+// 端点拼接: 用户给 base(可能带 /chat/completions 也可能只有 base), 统一拼出完整地址。
+//   版本段判定: /v1 /v3 /compatible-mode/v1 /api/v3 等只补 /chat/completions, 裸域名才补 /v1
 function aiEndpointJoin(base) {
-  var b = String(base || '').trim().replace(/\/$/, '');
+  var b = String(base || '').trim().replace(/\/+$/, '');
   if (/\/chat\/completions$/.test(b)) return b;
-  if (/\/v[0-9]+$/.test(b)) return b + '/chat/completions';
+  if (/\/(v[0-9]+|compatible-mode\/v[0-9]+|api\/v[0-9]+)$/.test(b)) return b + '/chat/completions';
   return b + '/v1/chat/completions';
 }
 // 统一出口: 成功返回解析后的对象, 任何失败返回 null 并已提示用户
@@ -2411,16 +2469,17 @@ function aiCall(userText, extraSys, isTest) {
     var ue = $id('uiAiEndpoint');
     url = (((ue && ue.value) || '').trim()) || 'https://api.openai.com/v1/chat/completions';
   }
-  // 用户填了自定义端点 URL: 任何 provider 都允许覆盖预设地址(填了就用, 没填用预设)
+  // 端点覆盖: 用户改过地址就以用户为准(预填值与预设一致时拼接结果相同, 无副作用)
   var ueAll = $id('uiAiEndpoint');
   var ueAllV = ((ueAll && ueAll.value) || '').trim();
-  if (ueAllV && /^https?:\/\//.test(ueAllV) && ueAllV !== url) {
-    // 端点输入框对非 custom 家默认隐藏; 只有用户显式填了才覆盖(见 aiEndpointShow)
-    if (AI_EP_OVERRIDE) url = aiEndpointJoin(ueAllV);
+  if (ueAllV && /^https?:\/\//.test(ueAllV)) {
+    var _joined = aiEndpointJoin(ueAllV);
+    if (_joined !== url) url = _joined;
   }
   // 中转开关(可选): 填了中转地址就走中转 —— 专给 CORS 被拦的服务商或企业网关用
   var relayOn = (aiLS(AI_LS_RELAY) === '1') && aiLS(AI_LS_RELAY_URL);
   if (relayOn) {
+    // 透明中转: 请求体/鉴权头原样保留, 目标地址放 ?target= 查询参数
     url = aiLS(AI_LS_RELAY_URL).replace(/\/$/, '') + '?target=' + encodeURIComponent(url);
   }
   if (!aiModel()) { aiSay('模型名不能为空', 'err'); return Promise.resolve(null); }
@@ -2469,9 +2528,14 @@ function aiTrimBind() {
   ['uiApiKey', 'uiAiModel', 'uiAiEndpoint'].forEach(function (id) {
     var el = $id(id);
     if (!el) return;
-    el.oninput = function () {
+    var origTrim = function () {
       var v = el.value, t = v.replace(/^\s+|\s+$/g, '');
       if (t !== v) { el.value = t; }
+    };
+    el.oninput = function () {
+      origTrim();
+      // 模型手填框: 值实时存 LS(切换 select/input 或刷新都不丢)
+      if (el.id === 'uiAiModel' && el.tagName === 'INPUT') aiModelManualLS(el.value);
     };
     el.onblur = function () { el.value = el.value.trim(); };   // blur 再兜底一次
     el.onpaste = function (e) {
@@ -2481,6 +2545,7 @@ function aiTrimBind() {
         if (txt !== txt.trim()) {
           e.preventDefault();
           el.value = txt.trim();
+          if (el.id === 'uiAiModel' && el.tagName === 'INPUT') aiModelManualLS(el.value);
         }
       } catch (err) {}
     };
@@ -2496,6 +2561,21 @@ function aiBindEye() {
     el.type = el.type === 'password' ? 'text' : 'password';
     b.classList.toggle('on', el.type === 'text');
   };
+}
+// 【中转配置】开关+地址绑定; 状态存 LS(AI_LS_RELAY / AI_LS_RELAY_URL)
+function aiRelayBind() {
+  var cb = $id('uiRelayOn'), url = $id('uiRelayUrl');
+  if (cb) cb.onchange = function () {
+    aiLS(AI_LS_RELAY, cb.checked ? '1' : '');
+    if (cb.checked && url && !url.value.trim()) { url.focus(); toast('填一下中转地址, 否则开关不生效'); }
+  };
+  if (url) {
+    url.onblur = function () { aiLS(AI_LS_RELAY_URL, url.value.trim()); };
+  }
+  // 回填
+  var on = aiLS(AI_LS_RELAY) === '1', u = aiLS(AI_LS_RELAY_URL);
+  if (cb) cb.checked = on;
+  if (url && u) url.value = u;
 }
 // 【HTTP 错误分类】把服务商状态码翻成用户能懂的话(401/404/429/403/5xx)
 function aiHttpErr(status, msg) {
@@ -2784,7 +2864,7 @@ function bindUi() {
   var _k = aiLS(AI_LS_KEY), _m = aiLS(AI_LS_MODEL), _pv = aiLS(AI_LS_PROVIDER);
   if (_k && $id('uiApiKey')) $id('uiApiKey').value = _k;
   if (_pv && $id('uiAiProvider')) $id('uiAiProvider').value = _pv;
-  AI_EP_OVERRIDE = aiLS('lixiu_ai_ep_override') === '1';
+  // (端点覆盖已改为「填了即用」, 不再需要开关回填)
   aiSyncBox();
   if (_m && $id('uiAiModel')) $id('uiAiModel').value = _m;
   Array.prototype.forEach.call(document.querySelectorAll('input[name=uiEngine]'), function (r) {
@@ -2798,6 +2878,16 @@ function bindUi() {
   var _ka = $id('uiAbort'); if (_ka) _ka.onclick = aiAbortNow;   // 中止当前 AI 请求
   aiTrimBind();                                                 // Key/模型/端点 oninput 实时去首尾空格
   aiBindEye();                                                  // Key 眼睛按钮: 明文/密文切换
+  aiRelayBind();                                                // 中转开关+地址(高级折叠区)
+  var _mm = $id('uiModelManual'); if (_mm) _mm.onclick = aiModelToggleManual;  // ✏️ 模型手填/下拉切换
+  // 上次会话手填过模型 → 自动进手填模式(值从 LS 回填)
+  if (aiModelManualLS()) {
+    var _mEl = $id('uiAiModel');
+    if (_mEl && _mEl.tagName === 'SELECT') {
+      var _p = aiProvider();
+      if (!(_p.models && _p.models.indexOf(aiModelManualLS()) > -1)) aiModelSwapToInput();
+    }
+  }
   Array.prototype.forEach.call(document.querySelectorAll('#uiTpl [data-tpl]'), function (b) {
     b.onclick = function () { uiApplyTemplate(this.getAttribute('data-tpl')); };
   });
@@ -3025,6 +3115,8 @@ window.__ed = {
   // 测试钩子: 把 45 秒超时临时缩短, 才能在不等 45 秒的前提下验证超时/中止路径。
   //   生产代码里只有一个 AI_TIMEOUT 变量, 没有专门的测试分支。
   aiTimeout: function (ms) { AI_TIMEOUT = ms > 0 ? ms : 45000; return AI_TIMEOUT; },
+  // 【AI配置升级】错误分类函数(供审计断言: 401/404/429 文案可测)
+  aiHttpErr: aiHttpErr,
   // 撤销栈快照(供测试断言: 剪辑与 UI设计 共用同一套栈)
   history: function () {
     return { undo: HISTORY.undo.map(function (x) { return x.name; }),
