@@ -509,6 +509,37 @@ header{padding:12px 14px}
       </div>
       <div id="aeFileList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
 
+      <style>
+      .mat-card{position:relative;background:#fff;border:1px solid rgba(200,160,140,.22);border-radius:12px;overflow:hidden;transition:box-shadow .2s,border-color .2s}
+      .mat-card:hover{border-color:rgba(232,160,191,.55);box-shadow:0 4px 14px rgba(180,140,120,.13)}
+      .mat-card.mat-in{border-color:#e8a0bf;background:rgba(232,160,191,.07)}
+      .mat-thumb{position:relative;height:78px;background:rgba(200,160,140,.1);display:flex;align-items:center;justify-content:center;font-size:26px}
+      .mat-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+      .mat-del{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(0,0,0,.45);color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+      .mat-del:hover{background:rgba(192,70,70,.95)}
+      .mat-name{padding:5px 8px 0;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+      .mat-info{padding:1px 8px 5px;font-size:9.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden}
+      .mat-use{width:calc(100% - 8px);margin:0 4px 5px;padding:4px 0;border:none;border-radius:9px;background:rgba(232,160,191,.15);color:#8a5a70;font-size:11px;font-weight:700;cursor:pointer;transition:background .15s}
+      .mat-use:hover{background:rgba(232,160,191,.32)}
+      .mat-in .mat-use{background:rgba(184,217,176,.4);color:#3d7c43}
+      </style>
+      <div style="margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:9px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:15px;font-weight:700;color:var(--text)">📦 我的素材库</span>
+            <span id="matCnt" style="font-size:11px;padding:2px 9px;border-radius:10px;background:rgba(232,160,191,.12);color:#8a5a70;font-weight:600">0 个</span>
+            <span id="matStore" style="font-size:10.5px;color:var(--text-muted)"></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button onclick="matClear()" style="padding:5px 13px;border:1px solid rgba(226,120,120,.5);border-radius:13px;background:transparent;color:#c0655f;font-size:11px;cursor:pointer">清空</button>
+            <button onclick="document.getElementById('matFileInput').click()" style="padding:5px 13px;border:1px solid rgba(200,160,140,.4);border-radius:13px;background:transparent;color:var(--text-muted);font-size:11px;cursor:pointer">📁 继续添加</button>
+            <input type="file" id="matFileInput" multiple accept=".mp4,.mov,.mkv,.avi,.webm,.flv,.jpg,.jpeg,.png,.webp" style="display:none">
+          </div>
+        </div>
+        <div id="matGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:9px"></div>
+        <div id="matEmpty" style="padding:16px 12px;text-align:center;font-size:11.5px;color:var(--text-muted);background:rgba(200,160,140,.06);border-radius:12px">素材会自动保存在这里。下次再来不用重新上传，点「加入」就能接着剪。</div>
+      </div>
+
       <div class="duyi-script-area">
         <textarea id="aeInstruction" placeholder="说一句话告诉 AI 怎么剪，例如：&#10;• 把这些素材剪成一条 60 秒的探店 vlog，加字幕&#10;• 剪掉所有停顿和废话，口播节奏紧凑一点&#10;• 前 3 秒放最精彩的镜头，配上字幕和轻快 BGM" style="min-height:90px">把这些素材剪成一条 60 秒的短视频，加上字幕，剪掉停顿废话</textarea>
         <div class="duyi-script-hint">💡 支持：时长控制 / 加字幕 / 剪停顿 / 风格(口播·vlog·混剪·教程)</div>
@@ -3342,6 +3373,254 @@ var lixiuDownload = (function(){
 })();
 
 
+// ═══════ 素材库 (IndexedDB 本地持久化: 上传即入库, 下次免重复上传) ═══════
+var MAT={
+  _db:null, _ready:false,
+  _op:function(mode, store, fn){
+    // 注意: indexedDB.open 是异步的, 必须等 onsuccess 拿到句柄再执行 fn, 否则首次调用必然拿不到 db
+    var p = new Promise(function(res, rej){
+      var run = function(db){
+        try{
+          var r = fn(db);
+          // fn 可能返回内部 Promise, 必须接上, 否则外层 Promise 永久 pending
+          if(r && typeof r.then === 'function'){ r.then(res, rej); } else { res(r); }
+        }catch(err){ rej(err); }
+      };
+      if(typeof indexedDB === 'undefined'){ rej(new Error('no indexedDB')); return; }
+      if(MAT._db){ run(MAT._db); return; }
+      var rq = indexedDB.open('lixiu_mat', 1);
+      rq.onupgradeneeded = function(e){
+        var d = e.target.result;
+        if(!d.objectStoreNames.contains('materials')) d.createObjectStore('materials', {keyPath:'id'});
+      };
+      rq.onsuccess = function(){ MAT._db = rq.result; run(MAT._db); };
+      rq.onerror = function(){ rej(rq.error); };
+      rq.onblocked = function(){ rej(new Error('db blocked')); };
+    });
+    return p.then(function(r){ return r; }, function(){ return null; });
+  },
+  list:function(){
+    return MAT._op('readonly','materials', function(db){
+      return new Promise(function(res){
+        var r = db.transaction('materials','readonly').objectStore('materials').getAll();
+        r.onsuccess = function(){ res(r.result||[]); };
+        r.onerror = function(){ res([]); };
+      });
+    });
+  },
+  get:function(id){
+    return MAT._op('readonly','materials', function(db){
+      return new Promise(function(res){
+        var r = db.transaction('materials','readonly').objectStore('materials').get(id);
+        r.onsuccess = function(){ res(r.result||null); };
+        r.onerror = function(){ res(null); };
+      });
+    });
+  },
+  put:function(item){
+    return MAT._op('readwrite','materials', function(db){
+      return new Promise(function(res){
+        var r = db.transaction('materials','readwrite').objectStore('materials').put(item);
+        r.onsuccess = function(){ res(true); };
+        r.onerror = function(){ res(false); };
+      });
+    });
+  },
+  del:function(id){
+    return MAT._op('readwrite','materials', function(db){
+      return new Promise(function(res){
+        var r = db.transaction('materials','readwrite').objectStore('materials').delete(id);
+        r.onsuccess = function(){ res(true); };
+        r.onerror = function(){ res(false); };
+      });
+    });
+  }
+};
+
+function matFmtBytes(b){
+  if(!b) return '';
+  if(b < 1024) return b + 'B';
+  if(b < 1048576) return (b/1024).toFixed(0) + 'KB';
+  return (b/1048576).toFixed(1) + 'MB';
+}
+function matFmtDur(s){
+  if(!s || !isFinite(s)) return '';
+  s = Math.round(s);
+  var m = Math.floor(s/60), r = s%60;
+  return m + ':' + (''+r).padStart(2,'0');
+}
+function matFmtWhen(ts){
+  if(!ts) return '';
+  var d = new Date(ts);
+  if(d.getFullYear() === new Date().getFullYear()){
+    return (''+(d.getMonth()+1)).padStart(2,'0') + '/' + (''+d.getDate()).padStart(2,'0') + ' ' + (''+d.getHours()).padStart(2,'0') + ':' + (''+d.getMinutes()).padStart(2,'0');
+  }
+  return d.getFullYear() + '/' + (''+(d.getMonth()+1)).padStart(2,'0') + '/' + (''+d.getDate()).padStart(2,'0');
+}
+
+// 素材文件 → 缩略图 + 时长 (video: seek 第 1 帧截图; image: canvas 缩放)
+function matMakeThumb(f){
+  return new Promise(function(res){
+    var url = URL.createObjectURL(f), done = false, timer;
+    function ok(v){ if(!done){ done = true; try{ URL.revokeObjectURL(url); }catch(e){} clearTimeout(timer); res(v); } }
+    var isVideo = (f.type||'').indexOf('video') === 0;
+    var el = isVideo ? document.createElement('video') : document.createElement('img');
+    el.onerror = function(){ ok({kind: isVideo?'video':'image'}); };
+    if(isVideo){
+      el.muted = true; el.playsInline = true; el.preload = 'metadata'; el.crossOrigin = 'anonymous';
+      el.src = url;
+      var dur = 0;
+      el.onloadedmetadata = function(){ dur = el.duration || 0; el.currentTime = Math.min(1, dur/3 || 0.5); };
+      el.onseeked = function(){
+        try{
+          var c = document.createElement('canvas');
+          var w = 160, h = Math.max(1, Math.round(w * (el.videoHeight || 9) / (el.videoWidth || 16)));
+          c.width = w; c.height = h;
+          c.getContext('2d').drawImage(el, 0, 0, w, h);
+          ok({kind:'video', dur:dur, thumb:c.toDataURL('image/jpeg', 0.6)});
+        }catch(e){ ok({kind:'video', dur:dur}); }
+      };
+    } else {
+      el.onload = function(){
+        try{
+          var c2 = document.createElement('canvas');
+          var w2 = 160, h2 = Math.max(1, Math.round(w2 * el.naturalHeight / el.naturalWidth));
+          c2.width = w2; c2.height = h2;
+          c2.getContext('2d').drawImage(el, 0, 0, w2, h2);
+          ok({kind:'image', thumb:c2.toDataURL('image/jpeg', 0.6)});
+        }catch(e){ ok({kind:'image'}); }
+      };
+      el.src = url;
+    }
+    timer = setTimeout(function(){ ok({kind: isVideo?'video':'image'}); }, 5000);
+  });
+}
+
+// 素材库渲染 (卡片右上角红点 = 已加入本轮剪辑)
+function matRender(){
+  MAT.list().then(function(items){
+    items = (items || []).sort(function(a, b){ return b.ts - a.ts; });
+    var grid = document.getElementById('matGrid');
+    var empty = document.getElementById('matEmpty');
+    var cnt = document.getElementById('matCnt');
+    if(!grid) return;
+    if(cnt) cnt.textContent = items.length + ' 个';
+    if(!items.length){
+      grid.style.display = 'none';
+      if(empty) empty.style.display = 'block';
+      return;
+    }
+    grid.style.display = 'grid';
+    if(empty) empty.style.display = 'none';
+    var html = '';
+    for(var i = 0; i < items.length; i++){
+      var it = items[i];
+      var inBatch = it.name && _aeFiles.some(function(f){ return f.name === it.name && f.size === it.size; });
+      html += '<div class="mat-card' + (inBatch ? ' mat-in' : '') + '" data-mid="' + it.id + '">' +
+        '<div class="mat-thumb">' +
+          (it.thumb ? '<img src="' + it.thumb + '" alt="">' : (it.kind === 'video' ? '🎬' : '🖼️')) +
+          '<button class="mat-del" title="从素材库删除" onclick="matRemove(\'' + it.id + '\')">🗑️</button>' +
+        '</div>' +
+        '<div class="mat-name" title="' + (it.name||'').replace(/"/g,'&quot;') + ' · 入库 ' + matFmtWhen(it.ts) + '">' + (it.name||'').substring(0,13) + '</div>' +
+        '<div class="mat-info">' + matFmtBytes(it.size) + (it.thumb && it.dur ? ' · ' + matFmtDur(it.dur) : '') + '</div>' +
+        '<button class="mat-use" onclick="matAddToBatch(\'' + it.id + '\')">' + (inBatch ? '✓ 已加入' : '加入') + '</button>' +
+      '</div>';
+    }
+    grid.innerHTML = html;
+    // 存储占用
+    try{
+      if(navigator.storage && navigator.storage.estimate){
+        navigator.storage.estimate().then(function(est){
+          var used = est.usage || 0, q = est.quota || 0;
+          var el2 = document.getElementById('matStore');
+          if(el2 && q) el2.textContent = '已存 ' + matFmtBytes(used) + (used > q * 0.8 ? ' · 空间快满了' : '');
+        });
+      }
+    }catch(e){}
+  });
+}
+
+// 上传的素材自动入库 (去重: 同名+同大小说明是同一个文件)
+function matPutFile(f){
+  MAT.list().then(function(items){
+    for(var i = 0; i < items.length; i++){
+      if(items[i].name === f.name && items[i].size === f.size){
+        return Promise.resolve(true);
+      }
+    }
+    return matMakeThumb(f).then(function(meta){
+      var rec = {
+        id: 'm' + Date.now() + Math.random().toString(36).slice(2,7),
+        name: f.name,
+        size: f.size,
+        type: f.type,
+        ts: Date.now(),
+        blob: f
+      };
+      if(meta.kind) rec.kind = meta.kind;
+      if(meta.thumb) rec.thumb = meta.thumb;
+      if(meta.dur) rec.dur = meta.dur;
+      return MAT.put(rec).then(function(r){
+        if(r){ toast('素材已存入素材库，下次不用重新上传','ok'); }
+        return !!r;
+      });
+    });
+  });
+}
+
+function aeRefreshTags(){
+  var box = document.getElementById('aeFileList');
+  if(!box) return;
+  box.innerHTML = '';
+  for(var i = 0; i < _aeFiles.length; i++){
+    var f = _aeFiles[i];
+    var tag = document.createElement('span');
+    tag.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1.5px solid rgba(200,160,140,0.25);border-radius:14px;font-size:12px';
+    var label = f.name.length > 18 ? f.name.substring(0,18) : f.name;
+    tag.innerHTML = (f.type.indexOf('video') > -1 ? '🎬' : '🖼️') + ' ' + label + ' <span style="cursor:pointer;color:#e8a0a0;font-weight:700" onclick="aeRemoveFile(this)">×</span>';
+    tag.setAttribute('data-fname', f.name);
+    tag.setAttribute('data-fsize', f.size);
+    box.appendChild(tag);
+  }
+  var st = document.getElementById('aeStatus');
+  if(st) st.textContent = _aeFiles.length ? ('已选 ' + _aeFiles.length + ' 个素材') : '';
+}
+
+function matAddToBatch(id){
+  MAT.get(id).then(function(it){
+    if(!it || !it.blob){ toast('找不到这个素材了','warn'); return; }
+    if(_aeFiles.length >= 10){ toast('最多 10 个素材','warn'); return; }
+    if(_aeFiles.some(function(f){ return f.name === it.name && f.size === it.size; })){
+      toast('这个素材已经在本轮里了','info'); return;
+    }
+    _aeFiles.push(it.blob);
+    aeRefreshTags();
+    toast('已加入本轮剪辑：' + it.name.substring(0,12), 'ok');
+    matRender();
+  });
+}
+
+function matRemove(id){
+  if(!confirm('要从素材库删掉这个素材吗？以后就不能直接复用了。')) return;
+  MAT.del(id).then(function(){
+    matRender();
+    toast('已从素材库删除','ok');
+  });
+}
+
+function matClear(){
+  var grid = document.getElementById('matGrid');
+  if(!grid || grid.style.display === 'none'){ toast('素材库已经是空的','info'); return; }
+  if(!confirm('确定清空素材库？删掉的素材以后要重新上传才能用。')) return;
+  MAT.list().then(function(items){
+    var chain = Promise.resolve();
+    for(var i = 0; i < items.length; i++){
+      (function(it){ chain = chain.then(function(){ return MAT.del(it.id); }); })(items[i]);
+    }
+    chain.then(function(){ matRender(); toast('素材库已清空','ok'); });
+  });
+}
+
 // ═══════ 智能成片 (autoedit) ═══════
 var _aeFiles = [];
 function initAutoEdit(){
@@ -3353,26 +3632,34 @@ function initAutoEdit(){
   dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.style.borderColor='#e8a0bf'; dz.style.background='rgba(232,160,191,0.08)'; });
   dz.addEventListener('dragleave', function(){ dz.style.borderColor='rgba(200,160,140,0.4)'; dz.style.background='rgba(255,252,248,0.6)'; });
   dz.addEventListener('drop', function(e){ e.preventDefault(); dz.style.borderColor='rgba(200,160,140,0.4)'; dz.style.background='rgba(255,252,248,0.6)'; aeAddFiles(e.dataTransfer.files); });
+  // 素材库: 从库里继续添加素材 + 首次渲染
+  var mi = document.getElementById('matFileInput');
+  if(mi){ mi.addEventListener('change', function(){ aeAddFiles(mi.files); mi.value=''; }); }
+  matRender();
 }
 function aeAddFiles(fileList){
+  var added = 0;
   for(var i=0;i<fileList.length;i++){
     var f = fileList[i];
     if(_aeFiles.length>=10){ toast('最多 10 个素材','warn'); break; }
+    // 同名同大小视为同一个文件, 不重复加入本轮
+    if(_aeFiles.some(function(x){ return x.name===f.name && x.size===f.size; })){
+      toast('这个素材已经加过了','info'); continue;
+    }
     _aeFiles.push(f);
-    var tag = document.createElement('span');
-    tag.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1.5px solid rgba(200,160,140,0.25);border-radius:14px;font-size:12px';
-    tag.innerHTML = (f.type.indexOf('video')>-1?'🎬':'🖼️') + ' ' + f.name.substring(0,18) + ' <span style="cursor:pointer;color:#e8a0a0;font-weight:700" onclick="aeRemoveFile(this)">×</span>';
-    tag.setAttribute('data-fname', f.name);
-    document.getElementById('aeFileList').appendChild(tag);
+    added++;
+    // 顺便存进素材库, 下次不用重新上传
+    matPutFile(f);
   }
-  var cnt = document.getElementById('aeFileList').children.length;
-  document.getElementById('aeStatus').textContent = '已选 ' + _aeFiles.length + ' 个素材';
+  aeRefreshTags();
+  if(added>0){ matRender(); }
 }
 function aeRemoveFile(el){
   var name = el.getAttribute('data-fname');
   _aeFiles = _aeFiles.filter(function(f){ return f.name!==name; });
-  el.parentElement.remove();
-  document.getElementById('aeStatus').textContent = '已选 ' + _aeFiles.length + ' 个素材';
+  aeRefreshTags();
+  // 素材本体还留在素材库, 这里只是取消本轮选用
+  matRender();
 }
 
 // ---------- 气泡对话流 (旁白气泡: 用户右·AI 左·虚线高亮框=进行中) ----------
@@ -3718,11 +4005,12 @@ function autoEditRenderResume(){
 
 function autoEditReset(){
   /* 气泡模式: 成片卡留在对话流里作历史, 不再整体隐藏 */
-  document.getElementById('aeFileList').innerHTML='';
   _aeFiles=[];
-  document.getElementById('aeStatus').textContent='';
+  aeRefreshTags();
   var _refEl = document.getElementById('aeReference'); if(_refEl) _refEl.value='';
   document.getElementById('aeInstruction').value='把这些素材剪成一条 60 秒的短视频，加上字幕，剪掉停顿废话';
+  // 素材库不动, 只取消本轮勾选状态
+  matRender();
 }
 // Tab 切换时初始化
 setTimeout(initAutoEdit, 800);
