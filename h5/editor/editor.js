@@ -83,6 +83,15 @@ function toast(msg, ms) {
   Array.prototype.forEach.call(old, function (o) { o.remove(); });
   var t = document.createElement('div'); t.className = 'ed-toast'; t.textContent = msg;
   document.body.appendChild(t);
+  // 【定位】顶部这一排控件(创作台标签页 / 编辑器工具栏)高度会随窗口宽度换行变化,
+  // 写死 top 会盖住按钮(实测截图里「📁 另存为」被提示条压掉一半)。
+  // 所以量它们此刻的真实底边, 把提示条放到最下面那一条之下。
+  var y = 0;
+  var tabs = document.getElementById('cbTabs');
+  if (tabs && tabs.getBoundingClientRect().height > 1) y = Math.max(y, tabs.getBoundingClientRect().bottom);
+  var tb = document.querySelector('.ed-toolbar');
+  if (tb && tb.getBoundingClientRect().height > 1) y = Math.max(y, tb.getBoundingClientRect().bottom);
+  if (y > 0) t.style.top = Math.round(y + 10) + 'px';
   setTimeout(function () { t.remove(); }, ms || 2200);
 }
 function $id(x) { return document.getElementById(x); }
@@ -196,6 +205,41 @@ function trackIcon(tr) {
   var muteBtn = tr.kind === 'audio' ? '<button class="ic' + (tr.muted ? ' warn' : '') + '" data-act="mute" data-t="' + tr.id + '" title="静音">' + (tr.muted ? '🔇' : '🔊') + '</button>' : '';
   var delBtn = '<button class="ic" data-act="deltrack" data-t="' + tr.id + '" title="删除轨道(清空片段)">✕</button>';
   return lockBtn + muteBtn + delBtn;
+}
+
+// ═══════════ 【轨道滚动同步】左列轨道名 ⇄ 右侧泳道 ═══════════
+// 左右两列是各自独立的滚动容器(左列不横向滚动)。不同步的话, 竖向滚动之后
+// 「轨道名」会和「片段」错位, 用户会把素材放进错误的轨道 —— 这是正确性问题。
+// 实测: 左列比泳道少一条 26px 标尺(内容与可视区各少 26px), 可滚动高度恰好相等, 故 1:1 同步即可。
+var _trackSyncLock = false;
+function syncTrackScroll(lanes, names) {
+  if (!lanes || !names) return;
+  function pair(src, dst) {
+    src.addEventListener('scroll', function () {
+      if (_trackSyncLock) return;          // 防回环: 互相触发会抖
+      _trackSyncLock = true;
+      dst.scrollTop = src.scrollTop;
+      _trackSyncLock = false;
+    });
+  }
+  pair(lanes, names); pair(names, lanes);
+}
+function scrollTracksToEnd() {
+  var lc = $id('edLanesCol'), nr = $id('edTrackRows');
+  if (lc) lc.scrollTop = lc.scrollHeight;
+  if (nr) nr.scrollTop = nr.scrollHeight;
+}
+
+// 【新增轨道】三个「＋轨道」按钮共用。轨道是追加到最下面的, 而时间轴高度固定,
+// 不主动滚过去的话用户点完看不到任何变化(实测: 加到 6 条时新轨全在可视区外) —— 会被当成「点了没反应」。
+function addTrack(kind) {
+  var label = { video: '视频轨', audio: '音频轨', subtitle: '字幕轨' }[kind] || '轨道';
+  var pre = { video: 'v', audio: 'a', subtitle: 'sub' }[kind] || 'tr';
+  pushUndo('添加' + label);
+  PRJ.tracks.push({ id: uid(pre), kind: kind, locked: false, muted: false, clips: [] });
+  renderTracks();
+  scrollTracksToEnd();
+  toast('已加' + label + '（左侧列表底部）');
 }
 
 function renderTracks() {
@@ -2303,11 +2347,14 @@ function bind() {
   };
   $id('edLibClose').onclick = function () { $id('edLib').classList.add('hide'); toast('素材栏已收起（点「📦 素材」再展开）'); };
 
-  $id('edAddVTrack').onclick = function () { pushUndo('添加视频轨'); PRJ.tracks.push({ id: uid('v'), kind: 'video', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加视频轨'); };
-  $id('edAddATrack').onclick = function () { pushUndo('添加音频轨'); PRJ.tracks.push({ id: uid('a'), kind: 'audio', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加音频轨'); };
-  $id('edAddSTrack').onclick = function () { pushUndo('添加字幕轨'); PRJ.tracks.push({ id: uid('sub'), kind: 'subtitle', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加字幕轨'); };
+  $id('edAddVTrack').onclick = function () { addTrack('video'); };
+  $id('edAddATrack').onclick = function () { addTrack('audio'); };
+  $id('edAddSTrack').onclick = function () { addTrack('subtitle'); };
   // 【底部·工程档案】折叠开关(收起后画布变高)
   $id('arFold').onclick = function () { AR_FOLD = !AR_FOLD; renderArchive(); };
+
+  // 轨道名列表 ⇄ 泳道 竖向滚动同步(否则轨道多起来后名字与片段错位)
+  syncTrackScroll($id('edLanesCol'), $id('edTrackRows'));
 
   // 轨道图标(锁定/静音/删轨) 事件委托
   $id('edTrackRows').addEventListener('click', function (e) {

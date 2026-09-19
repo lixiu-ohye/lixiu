@@ -795,7 +795,7 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   ok('P16 💾保存 写入本机且为合法工程结构', sv.magic === 'lixiu-project' && sv.hasTracks, 'magic=' + sv.magic);
   ok('P17 有存档后「↺ 恢复存档」按钮出现', sv.vis !== 'none', 'display=' + sv.vis);
 
-  // 悬浮提示: 连续两条不重叠, 且不被创作台标签页遮挡
+  // 悬浮提示: 连续两条不重叠, 且不被创作台标签页 / 编辑器工具栏遮挡
   await page.click('#edAddVTrack');
   await page.click('#edAddSTrack');
   await page.waitForTimeout(200);
@@ -803,10 +803,48 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
     const ts = [...document.querySelectorAll('.ed-toast')];
     const r = ts.length ? ts[0].getBoundingClientRect() : null;
     const tabs = document.getElementById('cbTabs').getBoundingClientRect();
-    return { n: ts.length, top: r ? Math.round(r.top) : -1, tabsBottom: Math.round(tabs.bottom) };
+    const tb = document.querySelector('.ed-toolbar').getBoundingClientRect();
+    return { n: ts.length, top: r ? Math.round(r.top) : -1,
+      tabsBottom: Math.round(tabs.bottom), tbBottom: Math.round(tb.bottom) };
   });
   ok('P18 连续提示只保留一条(不重叠糊字)', tst.n <= 1, 'n=' + tst.n);
-  ok('P19 悬浮提示不被创作台标签页遮挡', tst.n === 0 || tst.top >= tst.tabsBottom, JSON.stringify(tst));
+  ok('P19 提示条不被标签页遮挡', tst.n === 0 || tst.top >= tst.tabsBottom, JSON.stringify(tst));
+  ok('P19b 提示条不被编辑器工具栏遮挡(不压按钮)', tst.n === 0 || tst.top >= tst.tbBottom,
+    'toastTop=' + tst.top + ' tbBottom=' + tst.tbBottom);
+
+  // ── S 轨道滚动的正确性(轨道名 ⇄ 泳道必须同步; 新增轨道必须可见) ──
+  // 加到 6 条轨, 让轨道区真正出现纵向滚动(3 条时不触发)
+  for (let i = 0; i < 3; i++) { await page.click('#edAddSTrack'); await page.waitForTimeout(200); }
+  await page.waitForTimeout(400);
+  const sc1 = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll('#edTrackRows > *')];
+    const last = rows[rows.length - 1];
+    const col = document.querySelector('#edLanesCol');
+    const box = col.getBoundingClientRect();
+    const lb = last ? last.getBoundingClientRect() : null;
+    return { n: rows.length, scrollable: col.scrollHeight - col.clientHeight,
+      lastVisible: lb ? (lb.bottom <= box.bottom + 2 && lb.top >= box.top - 2) : null };
+  });
+  ok('S1 轨道多到需要纵向滚动(前置条件成立)', sc1.scrollable > 20 && sc1.n >= 6, JSON.stringify(sc1));
+  ok('S2 新增轨道自动滚入可视区(点完能看见)', sc1.lastVisible === true, JSON.stringify(sc1));
+
+  // 滚泳道 → 轨道名必须跟随, 否则名字与片段错位
+  await page.evaluate(() => { document.querySelector('#edLanesCol').scrollTop = 40; });
+  await page.waitForTimeout(250);
+  const sc2 = await page.evaluate(() => ({
+    lanes: Math.round(document.querySelector('#edLanesCol').scrollTop),
+    names: Math.round(document.querySelector('#edTrackRows').scrollTop)
+  }));
+  ok('S3 滚动泳道时轨道名跟随(不错位)', Math.abs(sc2.names - sc2.lanes) <= 1, JSON.stringify(sc2));
+
+  // 反向: 滚轨道名 → 泳道跟随
+  await page.evaluate(() => { document.querySelector('#edTrackRows').scrollTop = 8; });
+  await page.waitForTimeout(250);
+  const sc3 = await page.evaluate(() => ({
+    lanes: Math.round(document.querySelector('#edLanesCol').scrollTop),
+    names: Math.round(document.querySelector('#edTrackRows').scrollTop)
+  }));
+  ok('S4 反向滚动轨道名时泳道跟随', Math.abs(sc3.lanes - sc3.names) <= 1, JSON.stringify(sc3));
 
   // ── 全页截图 + 错误汇总 ──
   await page.screenshot({ path: SHOT + '/full.png', fullPage: false });

@@ -42,6 +42,14 @@
 .ed-track-row.subtitle{border-left:3px solid #e8c068}
 .ed-track-row.audio{border-left:3px solid #63c98d}
 .ed-lanes-col{flex:1;overflow:auto;position:relative}
+/* 轨道区是可滚动的: 给一条常显细滚动条 + 明显滑块。
+   否则窗口里滚动的默认是一层看不见的浮层, 用户不知道下面还有轨道
+   (实测: 轨道加到 6 条时多出来的全在可视区外, 界面看着像没反应)。 */
+.ed-lanes-col::-webkit-scrollbar,.ed-tracks-scroll::-webkit-scrollbar{width:9px;height:9px}
+.ed-lanes-col::-webkit-scrollbar-thumb,.ed-tracks-scroll::-webkit-scrollbar-thumb{background:#3d4453;border-radius:5px}
+.ed-lanes-col::-webkit-scrollbar-thumb:hover,.ed-tracks-scroll::-webkit-scrollbar-thumb:hover{background:#4e566a}
+.ed-lanes-col::-webkit-scrollbar-track,.ed-tracks-scroll::-webkit-scrollbar-track{background:#15171e}
+.ed-lanes-col::-webkit-scrollbar-corner{background:#15171e}
 #edRuler{height:26px;position:sticky;top:0;background:#1f2229;border-bottom:1px solid #2c303a;z-index:5;cursor:pointer}
 .ed-lane{height:52px;border-bottom:1px solid #242832;position:relative;background:repeating-linear-gradient(90deg,#1b1e25 0,#1b1e25 59px,#21242d 59px,#21242d 60px)}
 .ed-lane.locked{background:repeating-linear-gradient(90deg,#1d1e22 0,#1d1e22 59px,#232428 59px,#232428 60px)}
@@ -61,7 +69,9 @@
 .ed-marker{position:absolute;top:26px;width:1px;height:10px;background:#e8c068;z-index:6}
 .ed-marker::after{content:'🚩';position:absolute;top:-2px;left:-6px;font-size:9px}
 /* 悬浮提示: 定位在"页头 + 创作台标签页"下方, 不遮挡标签页; 同时只保留一条(见 toast()) */
-.ed-toast{position:fixed;top:calc(var(--wb-chrome,105px) + 8px);left:50%;transform:translateX(-50%);background:#2c303a;color:#e8eaee;padding:8px 18px;border-radius:8px;border:1px solid #3d4350;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.4);font-size:13px;max-width:70vw;text-align:center}
+/* 提示条默认落在「页头+标签页+工具栏」之下; 实际位置由 toast() 按量到的真实底边覆盖写入,
+   避免窄屏工具栏换行变高后被盖住。+58 = --wb-chrome(105) + 工具栏(49) 再留 4px 间隙 */
+.ed-toast{position:fixed;top:calc(var(--wb-chrome,105px) + 58px);left:50%;transform:translateX(-50%);background:#2c303a;color:#e8eaee;padding:8px 18px;border-radius:8px;border:1px solid #3d4350;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.4);font-size:13px;max-width:70vw;text-align:center}
 /* 素材库(编辑器内, 左侧壳层导航切换) */
 /* 【素材栏】常驻左栏(默认可见): 上传 / 缩略图列表 / 拖入时间轴
    ⚠ 原实现是 position:absolute 的抽屉且默认 display:none —— 既糊在侧边栏上又看不见,
