@@ -52,6 +52,21 @@ video{width:100%;border-radius:12px;background:#000;margin-top:8px}
 .note{font-size:11px;color:var(--ink-2);margin-top:10px;line-height:1.7}
 .row{display:flex;gap:8px}
 .row>*{flex:1}
+/* 我的任务列表 */
+.job{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px dashed var(--line)}
+.job:first-of-type{border-top:none}
+.job .st{font-size:11px;padding:2px 8px;border-radius:20px;flex-shrink:0;white-space:nowrap}
+.st.run{background:rgba(232,160,191,.16);color:var(--rose-dark)}
+.st.done{background:rgba(29,158,117,.12);color:var(--ok)}
+.st.fail{background:rgba(226,75,74,.12);color:var(--err)}
+.job .meta{flex:1;min-width:0}
+.job .meta b{display:block;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.job .meta small{font-size:11px;color:var(--ink-2);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.job button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;font-size:12px;color:var(--ink);cursor:pointer;flex-shrink:0;font-family:inherit}
+.job button:hover{border-color:var(--rose);color:var(--rose-dark)}
+.eta{font-size:12px;color:var(--gold);margin-top:4px;min-height:16px}
+.link{font-size:11px;color:var(--ink-2);cursor:pointer;margin-left:auto}
+.link:hover{color:var(--rose-dark)}
 </style>
 </head>
 <body>
@@ -77,6 +92,7 @@ video{width:100%;border-radius:12px;background:#000;margin-top:8px}
     <div class="card-t"><i class="dot"></i>3 · 生成中</div>
     <div class="steps" id="steps"></div>
     <div class="bar"><i id="barFill"></i></div>
+    <div class="eta" id="eta"></div>
     <div class="msg" id="msg">准备中…</div>
   </div>
 
@@ -90,6 +106,12 @@ video{width:100%;border-radius:12px;background:#000;margin-top:8px}
   </div>
 
   <button class="btn" id="go" onclick="run()" disabled>开始生成</button>
+
+  <div class="card" id="jobsCard" style="margin-top:16px">
+    <div class="card-t"><i class="dot"></i>我的任务<span class="tag" id="jobsCount">0</span>
+      <span class="link" onclick="clearJobs()">清空</span></div>
+    <div id="jobsList"><div class="note">暂无任务。生成过的成片会留在这里，退出页面再进来也能继续看进度/重新下载。</div></div>
+  </div>
 
   <div class="card" style="margin-top:16px">
     <div class="card-t"><i class="dot"></i>后端地址</div>
@@ -184,6 +206,69 @@ function useBase(b){
 // 阶段序列: 注意 queued 不在里面, 需单独兜底(小程序端踩过 indexOf=-1 导致步骤条全灰)
 var STAGES = ['uploading','parsing','transcribing','rendering','done'];
 var LABEL  = {uploading:'上传', parsing:'解析', transcribing:'转写', rendering:'渲染', done:'完成'};
+// 各阶段的经验耗时(秒): 用于给用户一个「大概还要多久」的预期
+var STAGE_SEC = {uploading:8, parsing:10, transcribing:30, rendering:20, done:0};
+
+// ── 我的任务(localStorage 持久化, 刷新/退出再进都能看到) ─────────────────
+var JOBS_KEY = 'lixiu_jobs_v1';
+function loadJobs(){ try { return JSON.parse(localStorage.getItem(JOBS_KEY)) || []; } catch(e){ return []; } }
+function saveJobs(a){ try { localStorage.setItem(JOBS_KEY, JSON.stringify(a.slice(0,30))); } catch(e){} }
+function upsertJob(job){
+  var a = loadJobs().filter(function(x){ return x.id !== job.id; });
+  a.unshift(job); saveJobs(a); renderJobs();
+}
+function clearJobs(){ if(!confirm('清空本地任务记录？（不影响后端已生成的成片）')) return; localStorage.removeItem(JOBS_KEY); renderJobs(); }
+
+function fmtAgo(ts){
+  var s = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (s < 60) return '刚刚';
+  if (s < 3600) return Math.floor(s/60) + ' 分钟前';
+  if (s < 86400) return Math.floor(s/3600) + ' 小时前';
+  return Math.floor(s/86400) + ' 天前';
+}
+
+function renderJobs(){
+  var a = loadJobs();
+  var box = document.getElementById('jobsList');
+  if (!box) return;
+  document.getElementById('jobsCount').textContent = a.length;
+  if (!a.length){ box.innerHTML = '<div class="note">暂无任务。生成过的成片会留在这里，退出页面再进来也能继续看进度/重新下载。</div>'; return; }
+  var html = '';
+  a.forEach(function(j){
+    var st = j.status || 'running';
+    var cls = st==='done' ? 'done' : (st==='failed' ? 'fail' : 'run');
+    var stTxt = st==='done' ? '✅ 完成' : (st==='failed' ? '❌ 失败' : '⏳ ' + (LABEL[j.stage] || '进行中'));
+    var meta2 = (j.ins ? '「' + String(j.ins).slice(0,18) + (String(j.ins).length>18?'…':'') + '」' : '(无指令)');
+    var btn = '';
+    if (st==='done') btn = '<button onclick="openJob(\'' + j.id + '\')">看片</button>';
+    else if (st==='failed') btn = '<button onclick="retryHint()">重试</button>';
+    html += '<div class="job">'
+      + '<span class="st ' + cls + '">' + stTxt + '</span>'
+      + '<div class="meta"><b>' + meta2 + '</b><small>' + fmtAgo(j.ts) + ' · ' + String(j.id).slice(-6) + '</small></div>'
+      + btn + '</div>';
+  });
+  box.innerHTML = html;
+}
+function openJob(id){ resumeJob(id); }
+function retryHint(){ toast('请用上方素材区重新提交即可'); }
+
+// 恢复跟踪: 页面一打开, 若有「进行中」任务就自动继续轮询(用户什么都不用点)
+function resumeJob(id){
+  var go = document.getElementById('go');
+  document.getElementById('runCard').classList.remove('hidden');
+  document.getElementById('doneCard').classList.add('hidden');
+  go.disabled = true; go.textContent = '跟踪中…';
+  poll(id);
+}
+(function resumeAll(){
+  var a = loadJobs();
+  var running = a.filter(function(j){ return (j.status||'running') !== 'done' && j.status !== 'failed'; });
+  if (running.length){
+    resumeJob(running[0].id);
+    toast('检测到任务进行中，已自动恢复跟踪');
+  }
+})();
+renderJobs();
 
 function saveBase(){
   BASE = document.getElementById('base').value.trim().replace(/\/+$/,'');
@@ -281,6 +366,8 @@ async function run(){
     var j = await r.json();
     var jobId = j.job_id || j.id;
     if (!jobId) throw new Error('返回里没有 job_id');
+    // 记入「我的任务」——刷新/退出后再进来, 依然能看到并自动恢复跟踪
+    upsertJob({id: jobId, ins: ins || '(无指令)', ts: Date.now(), status: 'running', stage: 'uploading'});
 
     // 2) 传素材(multipart, 字段名 files)
     go.textContent = '上传素材…';
@@ -312,15 +399,61 @@ async function run(){
 async function poll(jobId){
   var go = document.getElementById('go');
   var dead = 0;
+  var etaSamples = [];   // [{t, prog}] 进度采样, 用于估「大概还要多久」
+  var lastStage = '';
+  var stageStart = Date.now();
   var t = setInterval(async function(){
     try {
       var r = await fetch(BASE + '/api/jobs/' + jobId);
       if (!r.ok) throw new Error('poll HTTP ' + r.status);
       var st = await r.json();
       var stage = st.stage || '';
+      // 阶段变化时重置采样窗口
+      if (stage !== lastStage){ lastStage = stage; stageStart = Date.now(); etaSamples = []; }
       renderSteps(stage);
-      document.getElementById('barFill').style.width = (st.progress || 0) + '%';
+      var prog = st.progress || 0;
+      document.getElementById('barFill').style.width = prog + '%';
+
+      // ── ETA: 两种来源, 取更可信的 ─────────────────────────────
+      // 1) 后端显式给了 eta_seconds 就直接用
+      // 2) 否则用本阶段进度速度外推: 已走进度/耗时 -> 剩余进度还要多久
+      var etaTxt = '';
+      if (stage === 'queued'){
+        etaTxt = '排队中，通常 1 分钟内开始';
+      } else if (stage !== 'done' && stage !== 'failed' && stage !== 'canceled'){
+        etaSamples.push({t: Date.now(), p: prog});
+        if (etaSamples.length > 30) etaSamples.shift();
+        if (typeof st.eta_seconds === 'number' && st.eta_seconds > 0){
+          etaTxt = '预计还要 ' + fmtEta(st.eta_seconds);
+        } else if (etaSamples.length >= 3){
+          var first = etaSamples[0], lastS = etaSamples[etaSamples.length-1];
+          var dt = (lastS.t - first.t) / 1000, dp = lastS.p - first.p;
+          if (dp > 0){
+            var remain = Math.round((100 - lastS.p) / (dp / dt));
+            // 外推值荒谬(>20min)时改用阶段经验值, 避免吓到用户
+            etaTxt = remain > 1200 ? '预计还需几分钟' : '预计还要 ' + fmtEta(remain);
+          }
+        }
+        if (!etaTxt){
+          // 无样本时用阶段经验值兜底
+          var exp = STAGE_SEC[stage];
+          if (exp) etaTxt = '「' + (LABEL[stage]||stage) + '」阶段通常约 ' + fmtEta(exp);
+        }
+      }
+      var etaEl = document.getElementById('eta');
+      if (etaEl) etaEl.textContent = etaTxt;
+
       toast(st.message || (stage==='queued' ? '排队中…' : ''));
+
+      // 同步任务状态到「我的任务」
+      if (stage === 'done' || stage === 'failed' || stage === 'canceled'){
+        var job = loadJobs().find(function(x){ return x.id === jobId; });
+        if (job && job.status !== (stage==='done'?'done':'failed')){
+          job.status = stage==='done' ? 'done' : 'failed';
+          job.stage = stage;
+          upsertJob(job);
+        }
+      }
 
       if (stage === 'done'){
         clearInterval(t);
@@ -329,6 +462,7 @@ async function poll(jobId){
         document.getElementById('dl').href = url;
         document.getElementById('doneCard').classList.remove('hidden');
         go.disabled=false; go.textContent='再生成一次';
+        if (etaEl) etaEl.textContent = '本次耗时 ' + fmtEta(Math.round((Date.now() - ((loadJobs().find(function(x){return x.id===jobId})||{}).ts || Date.now()))/1000));
       } else if (stage === 'failed' || stage === 'canceled'){
         clearInterval(t);
         toast('❌ 生成失败: ' + (st.message || st.error || '未知原因'));
@@ -349,6 +483,12 @@ async function poll(jobId){
       }
     }
   }, 1500);
+}
+
+function fmtEta(sec){
+  if (sec < 60) return sec + ' 秒';
+  if (sec < 3600) return Math.round(sec/60) + ' 分钟';
+  return (sec/3600).toFixed(1) + ' 小时';
 }
 
 function reset(){
