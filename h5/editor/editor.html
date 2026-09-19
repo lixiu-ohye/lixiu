@@ -67,6 +67,7 @@
         <button data-rtab="props" class="on">属性</button>
         <button data-rtab="progress">进度</button>
         <button data-rtab="ui">UI设计</button>
+        <button data-rtab="aivideo">AI视频</button>
       </div>
 
       <!-- ── Tab 1【属性】: 选中片段/工程属性(renderProps() 渲染) ── -->
@@ -130,7 +131,6 @@
               <input type="text" id="uiRelayUrl" placeholder="中转地址, 例 https://你的中转/api/relay" autocomplete="off" spellcheck="false">
               <div class="ui-relay-tip">启用后 AI 请求会先发到这个中转，再由它转发到上面的 API 地址。Key 只经手不存储，token 仍消耗你自己的账号。</div>
             </details>
-            <div class="ui-ai-tip">🔒 Key 只存在你自己浏览器里，不会上传到哩秀服务器。连通测试会消耗你自己的少量 token。公共电脑别填。</div><div class="ui-ai-key" id="uiAiKeyLink"></div>
             <div class="ui-ai-st" id="uiAiSt"></div>
             <!-- 中止按钮: AI_BUSY 期间才显示。没有它的话请求挂起只能刷新页面 -->
             <button class="ui-ab" id="uiAbort" style="display:none">⏹ 中止这次生成</button>
@@ -200,6 +200,89 @@
         <div class="ui-act" style="margin-top:10px">
           <button class="ui-out" id="uiExportPng">导出 PNG</button>
           <button class="ui-out" id="uiToVideo" title="把当前设计作为贴纸/字幕卡片叠加到时间轴播放头处">叠加到视频画布</button>
+        </div>
+      </div>
+
+      <!-- ── Tab 4【AI视频】: 视频大模型(火山方舟 Seedance 等)生成, 产物直接进素材栏 ── -->
+      <div class="rt-pane" id="rt-aivideo">
+        <div class="ui-sec">
+          <h5>一句话生成视频</h5>
+          <div class="vid-tip">用你自己的 API Key 调视频大模型（默认火山方舟 Seedance），生成完自动进素材栏，拖一下就能入轨。</div>
+
+          <textarea id="vidPrompt" class="vid-ta" rows="3"
+            placeholder="例如：一只橘猫在窗台上伸懒腰，阳光斜射，镜头缓慢推近"></textarea>
+
+          <div class="vid-row">
+            <label class="vid-lb">首帧参考图（可选）</label>
+            <div class="vid-flex">
+              <input type="file" id="vidImgFile" accept="image/*" class="vid-file">
+              <button class="ui-out" id="vidImgClear">清除</button>
+            </div>
+          </div>
+          <div id="vidImgPrev" class="vid-prev hide"></div>
+
+          <div class="vid-act">
+            <button class="ui-out primary" id="vidGo">🎬 一键生成视频</button>
+            <button class="ui-out" id="vidAbort" style="display:none">中止</button>
+          </div>
+          <div class="vid-st" id="vidStatus">就绪</div>
+
+          <details class="vid-adv" id="vidAdv">
+            <summary>高级参数（接口地址 / 模型 / 画质 / 时长）</summary>
+            <div class="vid-body">
+              <div class="vid-row">
+                <label class="vid-lb">接口地址</label>
+                <input type="text" id="vidBase" class="vid-in"
+                  value="https://ark.cn-beijing.volces.com/api/v3"
+                  placeholder="https://ark.cn-beijing.volces.com/api/v3">
+              </div>
+              <div class="vid-row">
+                <label class="vid-lb">模型 ID</label>
+                <input type="text" id="vidModel" class="vid-in" value="doubao-seedance-2-5-260628"
+                  placeholder="doubao-seedance-2-5-260628">
+              </div>
+              <div class="vid-row">
+                <label class="vid-lb">画质</label>
+                <select id="vidRes" class="vid-in">
+                  <option value="480p">480p（省）</option>
+                  <option value="720p" selected>720p（推荐）</option>
+                  <option value="1080p">1080p（贵）</option>
+                </select>
+              </div>
+              <div class="vid-row">
+                <label class="vid-lb">时长（秒）</label>
+                <select id="vidDur" class="vid-in">
+                  <option value="4">4 秒</option>
+                  <option value="5" selected>5 秒</option>
+                  <option value="8">8 秒</option>
+                  <option value="10">10 秒</option>
+                </select>
+              </div>
+              <div class="vid-row">
+                <label class="vid-lb">画面比例</label>
+                <select id="vidRatio" class="vid-in">
+                  <option value="16:9">16:9 横屏</option>
+                  <option value="9:16" selected>9:16 竖屏</option>
+                  <option value="1:1">1:1 方形</option>
+                  <option value="adaptive">跟随参考图</option>
+                </select>
+              </div>
+              <div class="vid-row">
+                <label class="vid-lb"><input type="checkbox" id="vidAudio" checked> 生成声音</label>
+                <label class="vid-lb"><input type="checkbox" id="vidWm"> 带水印</label>
+              </div>
+              <div class="vid-note">密钥沿用【UI设计】里填的那把，不重复填、不上传、只在本机浏览器里。视频生成按服务商定价扣你账号的钱。</div>
+            </div>
+          </details>
+
+          <div id="vidResult" class="vid-res hide">
+            <video id="vidPreview" controls playsinline class="vid-player"></video>
+            <div class="vid-flex">
+              <button class="ui-out" id="vidToMat">存入素材栏</button>
+              <a id="vidDl" class="ui-out" download>下载 MP4</a>
+            </div>
+            <div class="vid-note">提示：服务商的下载链接通常只保留 24 小时，趁早存进素材栏或下载到本地。</div>
+          </div>
         </div>
       </div>
     </div>

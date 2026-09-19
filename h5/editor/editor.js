@@ -2345,19 +2345,10 @@ function aiPrefillEndpoint(p) {
   var v = p.urlCustom ? (p.baseHint || '') : (p.url || '');
   e.value = v;
 }
-// 【Key 获取链接】告诉用户去哪里拿密钥, 没有它新用户会卡在第一步
+// 【端点预填】切 provider 时把官方端点填进「API 地址」框
+// 注: 原「密钥安全提示」与「Key 获取链接」按用户要求已从界面移除
 function aiRefreshKeyLink() {
-  var p = aiProvider();
-  aiPrefillEndpoint(p);
-  var el = $id('uiAiKeyLink');
-  if (!el) return;
-  if (!p.keyHint) { el.innerHTML = ''; return; }
-  var href = p.keyHint;
-  if (p.id === 'custom') {
-    el.innerHTML = '\u2139\ufe0f 自定义模式：填任意 OpenAI 兼容端点(如 OpenRouter / 自建代理 / vLLM)，模型名随端点而定';
-    return;
-  }
-  el.innerHTML = '\u2139\ufe0f 还没有 Key？去 <a href="' + href + '" target="_blank" rel="noopener">' + href + '</a> 免费注册一个';
+  aiPrefillEndpoint(aiProvider());
 }
 
 function aiSaveKey() {
@@ -2767,7 +2758,7 @@ function setRTab(name) {
   if (tabs) Array.prototype.forEach.call(tabs.querySelectorAll('[data-rtab]'), function (b) {
     b.classList.toggle('on', b.getAttribute('data-rtab') === name);
   });
-  ['props', 'progress', 'ui'].forEach(function (k) {
+  ['props', 'progress', 'ui', 'aivideo'].forEach(function (k) {
     var p = $id('rt-' + k); if (p) p.classList.toggle('on', k === name);
   });
   var R = $id('edRight'); if (R) R.classList.toggle('wide', name === 'ui');
@@ -2878,6 +2869,7 @@ function bindUi() {
   var _ka = $id('uiAbort'); if (_ka) _ka.onclick = aiAbortNow;   // 中止当前 AI 请求
   aiTrimBind();                                                 // Key/模型/端点 oninput 实时去首尾空格
   aiBindEye();                                                  // Key 眼睛按钮: 明文/密文切换
+  vidBind();                                                   // 【AI视频】Tab: 按钮/首帧图/配置回填
   aiRelayBind();                                                // 中转开关+地址(高级折叠区)
   var _mm = $id('uiModelManual'); if (_mm) _mm.onclick = aiModelToggleManual;  // ✏️ 模型手填/下拉切换
   // 上次会话手填过模型 → 自动进手填模式(值从 LS 回填)
@@ -3081,6 +3073,208 @@ function init() {
   pushLog('auto', '工程打开 · 自动预估进度', 0, calcProgress().total);
   renderProgress();
 }
+// ── 【AI视频】视频大模型生成(火山方舟 Seedance 等) ────────────────
+// 协议与 UI设计 的 chat/completions 不同: 这里是异步任务制,
+// 先 POST 建任务拿 id, 再轮询 GET 查状态, succeeded 后从 content.video_url 取片。
+// 密钥沿用【UI设计】里那把(aiKey), 不重复存储; 钱扣在用户自己的账号上。
+var VID_LS_BASE = 'lixiu_vid_base', VID_LS_MODEL = 'lixiu_vid_model';
+var VID_BUSY = false, VID_ABORT = null, VID_POLL = null, VID_STOP = false;
+var VID_IMG_DATA = '';      // 首帧参考图(dataURL), 不进工程、只在会话里
+var VID_LAST = null;        // 最近一次成功产物 { url, name, id }
+var VID_MAX_WAIT = 600000;  // 轮询上限 10 分钟(视频生成普遍 1~5 分钟)
+var VID_POLL_GAP = 4000;    // 轮询间隔 4 秒
+
+function vidLS(k, v) {
+  try {
+    if (typeof v === 'undefined') return localStorage.getItem(k) || '';
+    localStorage.setItem(k, v); return v;
+  } catch (e) { return typeof v === 'undefined' ? '' : v; }
+}
+function vidSay(msg, tone) {
+  var el = $id('vidStatus'); if (!el) return;
+  el.textContent = msg;
+  el.className = 'vid-st' + (tone ? ' ' + tone : '');
+}
+// 配置: 接口地址 / 模型 ID 走 localStorage(页面刷新回填), Key 复用 aiKey()
+function vidCfg() {
+  var b = (($id('vidBase') && $id('vidBase').value) || '').trim();
+  var m = (($id('vidModel') && $id('vidModel').value) || '').trim();
+  return {
+    base: (b || vidLS(VID_LS_BASE) || 'https://ark.cn-beijing.volces.com/api/v3').replace(/\/+$/, ''),
+    model: m || vidLS(VID_LS_MODEL) || 'doubao-seedance-2-5-260628',
+    key: aiKey(),
+    prompt: (($id('vidPrompt') && $id('vidPrompt').value) || '').trim()
+  };
+}
+// 请求体: text 必有; 选了首帧图就追加 image_url(role=first_frame) 走图生视频
+function vidBody() {
+  var c = vidCfg();
+  var content = [{ type: 'text', text: c.prompt }];
+  if (VID_IMG_DATA) content.push({ type: 'image_url', image_url: { url: VID_IMG_DATA }, role: 'first_frame' });
+  return {
+    model: c.model,
+    content: content,
+    resolution: ($id('vidRes') || {}).value || '720p',
+    duration: parseInt((($id('vidDur') || {}).value || '5'), 10),
+    ratio: ($id('vidRatio') || {}).value || '9:16',
+    watermark: !!($id('vidWm') || {}).checked,
+    generate_audio: !!($id('vidAudio') || {}).checked
+  };
+}
+// 单次 HTTP: 统一走 text() 再解析, 保证 4xx 也能读到服务商的错误正文
+function vidFetch(url, opt) {
+  return fetch(url, opt).then(function (r) {
+    return r.text().then(function (txt) { return { ok: r.ok, status: r.status, txt: txt }; });
+  });
+}
+function vidErrMsg(res) {
+  var m = '';
+  try {
+    var d = JSON.parse(res.txt) || {};
+    m = ((d.error || {}).message) || d.message || '';
+  } catch (e) {}
+  var f = (typeof aiHttpErr === 'function') ? aiHttpErr(res.status, m) : '';
+  return '（HTTP ' + res.status + '）' + (f ? '：' + f : (m ? '：' + m : ''));
+}
+// 轮询: 递归 setTimeout(不是 setInterval, 避免上一轮没回来就发下一轮)
+function vidWait(id, waited) {
+  var c = vidCfg();
+  var url = c.base + '/contents/generations/tasks/' + encodeURIComponent(id);
+  if (VID_STOP) return Promise.reject({ stop: 1 });
+  if (waited > VID_MAX_WAIT) return Promise.reject({ timeout: 1 });
+  return vidFetch(url, {
+    headers: { 'Authorization': 'Bearer ' + c.key },
+    signal: VID_ABORT ? VID_ABORT.signal : undefined
+  }).then(function (res) {
+    if (!res.ok) return Promise.reject({ http: res, msg: vidErrMsg(res) });
+    var d = null;
+    try { d = JSON.parse(res.txt); } catch (e) { return Promise.reject({ bad: 1 }); }
+    var st = (d && d.status) || '';
+    if (st === 'succeeded') return d;
+    if (st === 'failed' || st === 'cancelled' || st === 'expired') {
+      var why = ((d && d.error && d.error.message) || '') ||
+        (st === 'failed' ? '任务失败' : st === 'cancelled' ? '任务被取消' : '任务已过期');
+      return Promise.reject({ failed: why });
+    }
+    vidSay(st === 'running' ? '生成中…（已等 ' + Math.round(waited / 1000) + ' 秒）'
+      : '排队中…（已等 ' + Math.round(waited / 1000) + ' 秒）');
+    return new Promise(function (rs) {
+      VID_POLL = setTimeout(function () { rs(vidWait(id, waited + VID_POLL_GAP)); }, VID_POLL_GAP);
+    });
+  });
+}
+function vidShow(d) {
+  var url = ((d || {}).content || {}).video_url || '';
+  if (!url) { vidSay('任务成功但没拿到视频地址', 'err'); return; }
+  // 文件名用完整任务 id(cgt-xxxx), 便于在素材栏里对上哪一次生成
+  VID_LAST = { url: url, id: d.id || '', name: 'AI视频-' + (d.id || Date.now()) + '.mp4' };
+  var box = $id('vidResult'); if (box) box.classList.remove('hide');
+  var v = $id('vidPreview'); if (v) { v.src = url; }
+  var dl = $id('vidDl'); if (dl) { dl.href = url; dl.setAttribute('download', VID_LAST.name); }
+  vidSay('生成完成', 'ok');
+  toast('视频生成好了，点「存入素材栏」就能拖进时间轴', 4200);
+}
+function vidClean() {
+  VID_BUSY = false; VID_STOP = false; VID_ABORT = null;
+  if (VID_POLL) { clearTimeout(VID_POLL); VID_POLL = null; }
+  var b = $id('vidGo'); if (b) b.classList.remove('busy');
+  var a = $id('vidAbort'); if (a) a.style.display = 'none';
+}
+function vidAbortNow() {
+  if (!VID_BUSY) return;
+  VID_STOP = true;
+  if (VID_ABORT) VID_ABORT.abort();
+  if (VID_POLL) { clearTimeout(VID_POLL); VID_POLL = null; }
+  vidClean(); vidSay('已中止', 'err'); toast('已中止视频生成');
+}
+// 主流程: 校验 → 提交 → 轮询 → 展示
+function vidGo() {
+  if (VID_BUSY) { toast('上一条还在生成，稍等一下'); return Promise.resolve(null); }
+  var c = vidCfg();
+  if (!c.prompt) { vidSay('先写一句画面描述', 'err'); toast('先写一句画面描述'); return Promise.resolve(null); }
+  if (!c.key) { vidSay('还没有 API Key', 'err'); toast('请先在【UI设计】里填你的 API Key'); return Promise.resolve(null); }
+  VID_BUSY = true; VID_STOP = false;
+  VID_ABORT = new AbortController();
+  var b = $id('vidGo'); if (b) b.classList.add('busy');
+  var ab = $id('vidAbort'); if (ab) ab.style.display = '';
+  vidSay('正在提交任务…');
+  var url = c.base + '/contents/generations/tasks';
+  return vidFetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + c.key },
+    body: JSON.stringify(vidBody()),
+    signal: VID_ABORT.signal
+  }).then(function (res) {
+    if (!res.ok) return Promise.reject({ http: res, msg: vidErrMsg(res) });
+    try { return JSON.parse(res.txt); } catch (e) { return Promise.reject({ bad: 1 }); }
+  }).then(function (d) {
+    var id = (d && d.id) || '';
+    if (!id) return Promise.reject({ bad: 1 });
+    vidSay('任务已提交（' + id + '），等生成…');
+    return vidWait(id, 0);
+  }).then(function (d) { vidClean(); vidShow(d); return VID_LAST; })
+    .catch(function (e) {
+      vidClean();
+      if (e && e.stop) { vidSay('已中止', 'err'); return null; }
+      if (e && e.timeout) { vidSay('等太久了（超过 10 分钟），已停', 'err'); toast('视频生成超时：换个更短的描述或减少时长再试', 4800); return null; }
+      if (e && e.failed) { vidSay('生成失败：' + e.failed, 'err'); toast('视频生成失败：' + e.failed, 4800); return null; }
+      if (e && e.http) { vidSay('调用失败' + e.msg, 'err'); toast('视频接口调用失败' + e.msg, 5200); return null; }
+      if (e && e.bad) { vidSay('接口返回读不懂（地址或模型 ID 可能不对）', 'err'); toast('接口返回异常：检查接口地址和模型 ID', 4800); return null; }
+      if (e && e.name === 'AbortError') { return null; }
+      vidSay('请求没走通（Key 无效 / 网络被拦 / 跨域）', 'err');
+      toast('视频请求没走通：检查 Key、模型是否开通、网络是否正常', 5200);
+      return null;
+    });
+}
+// 首帧参考图: FileReader 读成 dataURL, 直接塞进 content(服务商接受 data: URL)
+function vidPickImg(file) {
+  if (!file) return;
+  var fr = new FileReader();
+  fr.onload = function () {
+    VID_IMG_DATA = String(fr.result || '');
+    var p = $id('vidImgPrev');
+    if (p) { p.innerHTML = '<img class="vid-thumb" src="' + VID_IMG_DATA + '" alt="首帧">'; p.classList.remove('hide'); }
+  };
+  fr.readAsDataURL(file);
+}
+function vidClearImg() {
+  VID_IMG_DATA = '';
+  var p = $id('vidImgPrev'); if (p) { p.innerHTML = ''; p.classList.add('hide'); }
+  var f = $id('vidImgFile'); if (f) f.value = '';
+}
+// 产物入库: 下载 blob → 包成 File → addMaterial(与上传素材同一条路径)
+function vidToMat() {
+  if (!VID_LAST) { toast('还没有生成好的视频'); return Promise.resolve(0); }
+  return fetch(VID_LAST.url).then(function (r) {
+    if (!r.ok) throw new Error('dl');
+    return r.blob();
+  }).then(function (b) {
+    var f = new File([b], VID_LAST.name, { type: 'video/mp4' });
+    addMaterial(f);
+    var lib = $id('edLib'); if (lib) lib.classList.remove('hide');
+    renderMatList(); touchProgress();
+    toast('已存入素材栏：' + VID_LAST.name + '，拖到时间轴即可入片', 4600);
+    return 1;
+  }).catch(function () {
+    toast('自动下载被跨域拦住了：请点「下载 MP4」存到本地，再用「＋上传素材」导入', 5600);
+    return 0;
+  });
+}
+// 绑定: 按钮 / 文件选择 / 配置落 localStorage
+function vidBind() {
+  var g = $id('vidGo'); if (g) g.onclick = function () { vidGo(); };
+  var ab = $id('vidAbort'); if (ab) ab.onclick = function () { vidAbortNow(); };
+  var f = $id('vidImgFile');
+  if (f) f.onchange = function () { if (f.files && f.files[0]) vidPickImg(f.files[0]); };
+  var cl = $id('vidImgClear'); if (cl) cl.onclick = function () { vidClearImg(); };
+  var tm = $id('vidToMat'); if (tm) tm.onclick = function () { vidToMat(); };
+  [['vidBase', VID_LS_BASE], ['vidModel', VID_LS_MODEL]].forEach(function (pair) {
+    var el = $id(pair[0]); if (!el) return;
+    var saved = vidLS(pair[1]); if (saved) el.value = saved;
+    el.oninput = function () { vidLS(pair[1], el.value.trim()); };
+  });
+}
+
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();
 
@@ -3117,6 +3311,13 @@ window.__ed = {
   aiTimeout: function (ms) { AI_TIMEOUT = ms > 0 ? ms : 45000; return AI_TIMEOUT; },
   // 【AI配置升级】错误分类函数(供审计断言: 401/404/429 文案可测)
   aiHttpErr: aiHttpErr,
+  // 【AI视频】供审计断言: 读配置/请求体/主流程(配桩 fetch, 零额度)
+  vidCfg: vidCfg,
+  vidBody: vidBody,
+  vidGo: vidGo,
+  vidToMat: vidToMat,
+  vidLast: function () { return VID_LAST; },
+  vidSetImg: function (d) { VID_IMG_DATA = d || ''; },
   // 撤销栈快照(供测试断言: 剪辑与 UI设计 共用同一套栈)
   history: function () {
     return { undo: HISTORY.undo.map(function (x) { return x.name; }),

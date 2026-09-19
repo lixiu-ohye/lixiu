@@ -102,8 +102,9 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
     panes: ['props', 'progress', 'ui'].map(k => getComputedStyle(document.getElementById('rt-' + k)).display)
   }));
   R.data.tabs0 = tabs0;
-  ok('A4 右栏三大Tab(属性/进度/UI设计)且默认属性页',
-    JSON.stringify(tabs0.names) === JSON.stringify(['属性', '进度', 'UI设计'])
+  // 只验前三个必需 Tab 的名称与顺序, 不做全数组精确匹配 —— 未来新增 Tab(如 AI视频)不再触发假失败
+  ok('A4 右栏含属性/进度/UI设计三个必需Tab且默认属性页(新增Tab不破坏门禁)',
+    JSON.stringify(tabs0.names.slice(0, 3)) === JSON.stringify(['属性', '进度', 'UI设计'])
     && tabs0.active.length === 1 && tabs0.active[0] === 'props' && tabs0.panes[0] !== 'none' && tabs0.panes[1] === 'none',
     tabs0.names.join('/') + ' active=' + tabs0.active.join(','));
   // 进度面板现在位于 Tab 2, 后续章节操作它之前必须先切过去
@@ -1017,7 +1018,8 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
     box: getComputedStyle(document.getElementById('uiAiBox')).display,
     keyType: (document.getElementById('uiApiKey') || {}).type,
     // 取全部 .ui-ai-tip 拼接: 新增的「中转说明」也用了这个类, 单取第一个会命中错误节点
-    tip: Array.from(document.querySelectorAll('.ui-ai-tip')).map(e => e.textContent).join('')
+    tip: Array.from(document.querySelectorAll('.ui-ai-tip')).map(e => e.textContent).join(''),
+    hasKeyLink: !!document.getElementById('uiAiKeyLink')
   }));
   ok('T1 UI设计面板提供「本地 / AI」两种引擎', t0.opts === 2 && t0.engine === 'local', JSON.stringify(t0));
   ok('T2 AI 配置区默认收起(不打扰不用 AI 的人)', t0.box === 'none', t0.box);
@@ -1041,7 +1043,10 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
     tOrd && tOrd.firstCls === 'ui-sec' && tOrd.promptSecIdx === 0 && /一句话/.test(tOrd.promptSecTitle),
     JSON.stringify(tOrd));
   ok('T3 API Key 输入框为密码型(不明文显示)', t0.keyType === 'password', t0.keyType);
-  ok('T4 有密钥安全提示文案', /公共电脑别填/.test(t0.tip), t0.tip.slice(0, 30));
+  // 原断言验「必须有安全提示」; 用户要求删掉该文案后反转语义, 钉死不回退
+  ok('T4 密钥安全提示与Key获取链接已按用户要求移除',
+    !/公共电脑别填/.test(t0.tip) && t0.hasKeyLink === false,
+    'tip=' + t0.tip.slice(0, 30) + ' | hasKeyLink=' + t0.hasKeyLink);
 
   // 无 Key 守卫: 必须拦住, 且一个请求都不能发出去
   arkHits = 0;
@@ -1528,14 +1533,16 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
     p.value = 'ark'; p.dispatchEvent(new Event('change', { bubbles: true }));
   });
 
-  // M9: Key 获取链接按 provider 渲染
-  const mLink = await page.evaluate(() => {
-    const el = document.getElementById('uiAiKeyLink');
-    return { html: el ? el.innerHTML : '', hasArkUrl: el ? /volcengine/.test(el.innerHTML) : false };
-  });
-  ok('M9 Key 获取链接按当前 provider 渲染(方舟指向 volcengine 控制台)',
-    mLink.hasArkUrl === true && /免费注册/.test(mLink.html),
-    mLink.html.slice(0, 120));
+  // M9: Key 获取链接已按用户要求移除(原断言验「按 provider 渲染厂商控制台链接」)
+  // 只验渲染结果, 不验产物是否含 volcengine 字符串 —— 注册表 keyHint 字段仍在代码里
+  const mLink = await page.evaluate(() => ({
+    hasEl: !!document.getElementById('uiAiKeyLink'),
+    keyNodes: document.querySelectorAll('.ui-ai-key').length,
+    tips: Array.from(document.querySelectorAll('.ui-ai-tip')).map(e => e.textContent).join('')
+  }));
+  ok('M9 Key获取链接节点与厂商控制台引导已按用户要求移除',
+    mLink.hasEl === false && mLink.keyNodes === 0 && !/免费注册/.test(mLink.tips),
+    JSON.stringify(mLink).slice(0, 160));
 
   // ── N: AI 配置升级(实时trim / 眼睛 / 手填模型 / 省token测试 / 错误分类 / 中转) ──
   // 恢复 AI 模式 + 方舟
@@ -1653,6 +1660,166 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   });
   ok('N6 aiHttpErr 错误分类: 401→Key无效 / 404→模型或地址 / 429→限流或余额',
     nErr.ok === true, JSON.stringify(nErr).slice(0, 200));
+
+  // ── V 系列: 【AI视频】Tab ────────────────────────────────
+  // 视频生成是异步任务制(POST 建任务 → GET 轮询 → content.video_url),
+  // 全部走桩 fetch, 不发真实请求、零额度消耗。
+  // V1: 第四个 Tab 存在且可切换
+  const vBtn = await page.evaluate(() => ({
+    btn: !!document.querySelector('[data-rtab="aivideo"]'),
+    pane: !!document.getElementById('rt-aivideo')
+  }));
+  await page.click('[data-rtab="aivideo"]');
+  await page.waitForTimeout(220);
+  const vTab = await page.evaluate(() => {
+    const p = document.getElementById('rt-aivideo');
+    const u = document.getElementById('rt-ui');
+    return {
+      aiv: p ? p.classList.contains('on') : false,
+      ui: u ? u.classList.contains('on') : false,
+      disp: p ? getComputedStyle(p).display : 'no-el'
+    };
+  });
+  ok('V1 【AI视频】Tab: 按钮+面板存在, 点击可切换(其余 Tab 同步收起)',
+    vBtn.btn && vBtn.pane && vTab.aiv && vTab.ui === false && vTab.disp !== 'none',
+    JSON.stringify(vTab));
+
+  // V2: 默认模型 ID 与接口地址(不写死其它模型, 用户可改)
+  const vDef = await page.evaluate(() => ({
+    m: (document.getElementById('vidModel') || {}).value || '',
+    b: (document.getElementById('vidBase') || {}).value || '',
+    editable: (document.getElementById('vidModel') || {}).tagName
+  }));
+  ok('V2 默认 doubao-seedance-2-5-260628 + 方舟地址, 且模型 ID 是自由输入(不锁死)',
+    vDef.m === 'doubao-seedance-2-5-260628' && /ark\.cn-beijing\.volces\.com\/api\/v3/.test(vDef.b)
+      && vDef.editable === 'INPUT',
+    JSON.stringify(vDef));
+
+  // V3: 全链路(桩)—— POST 建任务 → GET 轮询 → succeeded → 拿到 video_url
+  const vRun = await page.evaluate(() => {
+    localStorage.setItem('lixiu_ark_key', 'sk-stub-key');
+    const calls = [];
+    window.fetch = function (url, opt) {
+      const u = String(url);
+      calls.push({ u: u, m: (opt && opt.method) || 'GET', body: (opt && opt.body) ? JSON.parse(opt.body) : null });
+      if (opt && opt.method === 'POST') {
+        return Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve('{"id":"cgt-stub-001"}') });
+      }
+      if (/cgt-stub-001/.test(u)) {
+        return Promise.resolve({
+          ok: true, status: 200,
+          text: () => Promise.resolve(JSON.stringify({
+            id: 'cgt-stub-001', status: 'succeeded',
+            content: { video_url: 'https://stub.example.com/a.mp4' }
+          }))
+        });
+      }
+      return Promise.resolve({ ok: false, status: 404, text: () => Promise.resolve('{}') });
+    };
+    document.getElementById('vidPrompt').value = '一只橘猫在窗台上伸懒腰';
+    return window.__ed.vidGo().then(function (r) {
+      return {
+        calls: calls, last: r,
+        status: (document.getElementById('vidStatus') || {}).textContent || '',
+        resShown: !document.getElementById('vidResult').classList.contains('hide')
+      };
+    });
+  });
+  await page.waitForTimeout(300);
+  ok('V3 视频生成全链路: POST 建任务 → GET 轮询 → succeeded → 拿到 video_url',
+    vRun.calls.length >= 2
+      && vRun.calls[0].m === 'POST' && /\/contents\/generations\/tasks$/.test(vRun.calls[0].u)
+      && vRun.calls[0].m === 'POST' && /cgt-stub-001/.test(vRun.calls[1].u)
+      && !!vRun.last && vRun.last.url === 'https://stub.example.com/a.mp4'
+      && vRun.resShown === true,
+    JSON.stringify({ n: vRun.calls.length, u0: vRun.calls[0] && vRun.calls[0].u, u1: vRun.calls[1] && vRun.calls[1].u, last: vRun.last, st: vRun.status }));
+
+  // V4: 请求体字段(model / content.text / resolution / duration / ratio)
+  const vBody0 = vRun.calls[0] ? vRun.calls[0].body : null;
+  ok('V4 提交体字段正确: model + content[0].text + 720p/5s/9:16',
+    !!vBody0 && vBody0.model === 'doubao-seedance-2-5-260628'
+      && vBody0.content[0].type === 'text' && vBody0.content[0].text === '一只橘猫在窗台上伸懒腰'
+      && vBody0.resolution === '720p' && vBody0.duration === 5 && vBody0.ratio === '9:16',
+    JSON.stringify(vBody0 || {}).slice(0, 220));
+
+  // V5: 选了首帧图 → 追加 image_url(role=first_frame)
+  const vImg = await page.evaluate(() => {
+    window.__ed.vidSetImg('data:image/png;base64,iVBORw0KGgo=');
+    const b = window.__ed.vidBody();
+    window.__ed.vidSetImg('');
+    return b;
+  });
+  ok('V5 选首帧图 → 提交体追加 image_url(role=first_frame)',
+    vImg.content.length === 2 && vImg.content[1].type === 'image_url'
+      && vImg.content[1].role === 'first_frame'
+      && /^data:image\//.test(vImg.content[1].image_url.url),
+    JSON.stringify(vImg.content[1] || {}).slice(0, 160));
+
+  // V6: 没 Key 直接拦下(不发请求)
+  const vNoKey = await page.evaluate(() => {
+    localStorage.removeItem('lixiu_ark_key');
+    const el = document.getElementById('uiApiKey'); if (el) el.value = '';
+    let called = false;
+    window.fetch = function () { called = true; return Promise.reject(new DOMException('stub', 'AbortError')); };
+    return window.__ed.vidGo().then(function () {
+      return { called: called, st: (document.getElementById('vidStatus') || {}).textContent || '' };
+    });
+  });
+  await page.waitForTimeout(200);
+  ok('V6 没填 Key 时直接拦下, 一个请求都不发',
+    vNoKey.called === false && /API Key/.test(vNoKey.st), JSON.stringify(vNoKey));
+
+  // V7: 401 走错误分类文案(复用 aiHttpErr)
+  const v401 = await page.evaluate(() => {
+    localStorage.setItem('lixiu_ark_key', 'sk-stub-key');
+    window.fetch = function () {
+      return Promise.resolve({
+        ok: false, status: 401,
+        text: () => Promise.resolve(JSON.stringify({ error: { message: 'invalid api key' } }))
+      });
+    };
+    return window.__ed.vidGo().then(function () {
+      return { st: (document.getElementById('vidStatus') || {}).textContent || '' };
+    });
+  });
+  await page.waitForTimeout(200);
+  ok('V7 HTTP 401 → 状态栏给出「Key 无效」级提示(不是裸报错)',
+    /Key|密钥|401/.test(v401.st) && v401.st.length > 4, JSON.stringify(v401));
+
+  // V8: 生成中防重复提交(第二条被 VID_BUSY 拦下, 按钮置灰)
+  const vBusy = await page.evaluate(() => {
+    localStorage.setItem('lixiu_ark_key', 'sk-stub-key');
+    window.fetch = function (url, opt) {
+      return new Promise(function (res) {
+        setTimeout(function () {
+          res({
+            ok: true, status: 200,
+            text: () => Promise.resolve((opt && opt.method === 'POST')
+              ? '{"id":"cgt-slow-1"}' : '{"id":"cgt-slow-1","status":"running"}')
+          });
+        }, 1500);
+      });
+    };
+    const p1 = window.__ed.vidGo();
+    const busyCls = document.getElementById('vidGo').classList.contains('busy');
+    const p2 = window.__ed.vidGo();
+    return p2.then(function (v2nd) {
+      // 让第一条跑完(轮询会一直 running), 主动中止收尾
+      if (window.__ed && document.getElementById('vidAbort')) document.getElementById('vidAbort').click();
+      return { busyCls: busyCls, second: v2nd };
+    });
+  });
+  await page.waitForTimeout(400);
+  ok('V8 生成中防重复提交: 按钮置灰 + 第二条请求被拦下',
+    vBusy.busyCls === true && vBusy.second === null, JSON.stringify(vBusy));
+
+  // V9: 恢复现场(清桩 Key / 清预览 src, 免得后续断言被污染)
+  await page.evaluate(() => {
+    localStorage.removeItem('lixiu_ark_key');
+    const v = document.getElementById('vidPreview'); if (v) { v.removeAttribute('src'); v.load && v.load(); }
+    const r = document.getElementById('vidResult'); if (r) r.classList.add('hide');
+    const p = document.getElementById('vidPrompt'); if (p) p.value = '';
+  });
 
   // N7: 恢复现场(端点预填回方舟, 移除桩 key)
   await page.evaluate(() => {

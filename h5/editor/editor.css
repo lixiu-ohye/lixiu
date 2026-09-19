@@ -322,3 +322,38 @@
 .ar-scroll{flex:1;min-height:0;overflow-y:auto}
 
 @media (max-width:768px){.ed-right{display:none}.ed-lib{width:200px}.ar-body{grid-template-columns:1fr;height:auto;max-height:190px;overflow-y:auto}}
+
+/* ── 【AI视频】Tab: 一句话生成视频 ───────────────────────── */
+.vid-tip{font-size:11px;color:#8b93a5;line-height:1.6;margin:2px 0 8px}
+.vid-ta{width:100%;box-sizing:border-box;background:#1b1f27;border:1px solid #353a46;border-radius:6px;
+  color:#dfe4ee;font-size:12px;padding:7px 8px;font-family:inherit;resize:vertical;line-height:1.55}
+.vid-ta:focus{outline:none;border-color:#5b7fb5}
+.vid-row{display:flex;align-items:center;gap:8px;margin:7px 0}
+.vid-lb{font-size:11.5px;color:#a8b0c0;flex-shrink:0}
+.vid-flex{display:flex;gap:6px;align-items:center;flex:1;min-width:0}
+.vid-file{flex:1;min-width:0;font-size:10.5px;color:#8b93a5;background:#1b1f27;
+  border:1px solid #353a46;border-radius:6px;padding:4px 5px}
+.vid-prev{margin:6px 0}
+.vid-thumb{max-width:100%;max-height:120px;border-radius:6px;border:1px solid #353a46;display:block}
+.vid-act{display:flex;gap:6px;margin-top:10px}
+/* .ui-out 基类是 width:100%, 这里改成按份分宽, 两个按钮才不会各占一行 */
+.vid-act .ui-out,.vid-flex .ui-out,.vid-res .ui-out{flex:1;width:auto;text-align:center;text-decoration:none;line-height:1.4}
+.vid-st{font-size:11px;color:#8b93a5;margin-top:7px;min-height:16px;line-height:1.5}
+.vid-st.ok{color:#8fd8ae}
+.vid-st.err{color:#e08b8b}
+.vid-adv{margin-top:10px;border:1px solid #2c313c;border-radius:6px;background:#1b1f27}
+.vid-adv summary{cursor:pointer;font-size:11.5px;color:#a8b0c0;padding:7px 9px;list-style:none}
+.vid-adv summary::-webkit-details-marker{display:none}
+.vid-adv summary::before{content:'\25B8 ';color:#6b7488}
+.vid-adv[open] summary::before{content:'\25BE '}
+.vid-body{padding:2px 9px 9px}
+.vid-in{flex:1;min-width:0;background:#141820;border:1px solid #353a46;border-radius:5px;
+  color:#dfe4ee;font-size:11px;padding:5px 6px;font-family:inherit}
+.vid-in:focus{outline:none;border-color:#5b7fb5}
+.vid-note{font-size:10.5px;color:#79808f;line-height:1.6;margin-top:7px}
+.vid-res{margin-top:10px;border-top:1px solid #2c313c;padding-top:10px}
+.vid-player{width:100%;max-height:220px;border-radius:6px;background:#000;display:block}
+.vid-res .vid-flex{margin-top:7px}
+/* loading: 生成中置灰防重复点击(逻辑上 VID_BUSY 已挡, 这里是让用户看得见) */
+.vid-act .ui-out.busy,.vid-res .ui-out.busy{opacity:.45;pointer-events:none}
+.vid-row .vid-lb input[type=checkbox]{margin-right:3px;vertical-align:-1px}
