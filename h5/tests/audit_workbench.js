@@ -50,7 +50,9 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   page.on('dialog', d => d.accept());   // confirm/prompt 全自动同意
 
   // ── A 加载 ──
-  await page.goto(PAGE, { waitUntil: 'domcontentloaded' });
+  // head 里的 Tailwind CDN 是阻塞脚本: 网络抖动时会拖住 DOMContentLoaded,
+  // 10s 默认超时不够 —— 之前实测 tailwind 单次响应 2.5s, 高峰期远超 10s。
+  await page.goto(PAGE, { waitUntil: 'domcontentloaded', timeout: 45000 });
   await page.waitForFunction(() => window.__ed && document.getElementById('pgBody'), null, { timeout: 15000 });
   await page.waitForTimeout(700);
   // 【创作台】顶部标签页: 默认视图是「AI 智能成片」, 剪辑台需点标签切过去
@@ -206,7 +208,9 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
       fields: L[0] ? Object.keys(L[0]).sort().join(',') : '', sample: L[L.length - 1] };
   });
   R.data.log = log;
-  ok('F1 进度日志常显在底部工程档案区', log.visible && log.inArchive && log.n > 0, 'n=' + log.n + ' inArchive=' + log.inArchive);
+  // 规格要求日志「默认折叠, 点击展开」→ 此处只验「位于底部工程档案区 + 有数据」;
+  // 折叠/展开交互由 U4/U5 覆盖。
+  ok('F1 进度日志位于底部工程档案区(默认折叠, 数据齐全)', log.inArchive && log.n > 0 && !log.visible, 'n=' + log.n + ' inArchive=' + log.inArchive + ' visible=' + log.visible);
   ok('F1b 日志不再需要"查看进度历史"开关(已移出进度Tab)', log.toggleGone);
   ok('F2 日志含四要素(时间戳/类型/详情/前后%)', log.fields === 'after,before,detail,ts,type', log.fields);
   ok('F3 日志区分 自动更新/人工修改', log.types.indexOf('auto') >= 0 && log.types.indexOf('manual') >= 0, log.types.join('/'));
@@ -1146,6 +1150,94 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
       && /超时|中止/.test(tTo.st), JSON.stringify(tTo));
 
   // 还原: 后续断言不能再被 hang 模式拖住 10 秒
+  await page.evaluate(() => window.__ed.aiTimeout(45000));
+  arkMode = 'ok';
+  await page.check('input[name=uiEngine][value=local]');
+  await page.waitForTimeout(200);
+
+  // ── U: 面板整体收起/展开 · 进度日志默认折叠 · AI loading 动画 ──
+  // U1/U2: 面板标题「◀ 收起」→ .ed-right.fold; 画布是 flex 布局, 面板消失后应自动扩宽
+  const uBefore = await page.evaluate(() => ({
+    cw: document.getElementById('edCanvas').getBoundingClientRect().width,
+    fold: document.getElementById('edRight').classList.contains('fold')
+  }));
+  await page.click('#edRightClose');
+  await page.waitForTimeout(180);
+  const uFold = await page.evaluate(() => ({
+    cw: document.getElementById('edCanvas').getBoundingClientRect().width,
+    fold: document.getElementById('edRight').classList.contains('fold'),
+    disp: getComputedStyle(document.getElementById('edRight')).display
+  }));
+  ok('U1 右侧面板可整体收起(fold 类生效, display:none)',
+    uFold.fold === true && uFold.disp === 'none', JSON.stringify(uFold));
+  ok('U2 面板收起后画布宽度自动扩大(不是被裁掉)',
+    uBefore.cw > 0 && uFold.cw > uBefore.cw, '收起前 ' + uBefore.cw + ' → 收起后 ' + uFold.cw);
+
+  // U3: 工具栏「🧩 面板」重新展开, 布局尺寸还原
+  await page.click('#edRightBtn');
+  await page.waitForTimeout(180);
+  const uBack = await page.evaluate(() => ({
+    cw: document.getElementById('edCanvas').getBoundingClientRect().width,
+    fold: document.getElementById('edRight').classList.contains('fold'),
+    disp: getComputedStyle(document.getElementById('edRight')).display
+  }));
+  ok('U3 工具栏「🧩 面板」可重新展开且尺寸还原',
+    uBack.fold === false && uBack.disp !== 'none' && Math.abs(uBack.cw - uBefore.cw) < 2, JSON.stringify(uBack));
+
+  // U4/U5: 进度变更日志默认折叠, 点「展开」显示明细, 清空按钮常驻可见
+  await page.click('#edRTabs [data-rtab="progress"]');
+  await page.waitForTimeout(180);
+  const uLog0 = await page.evaluate(() => {
+    const l = document.getElementById('pgLog');
+    return {
+      cls: l ? l.className : 'MISSING',
+      disp: l ? getComputedStyle(l).display : '',
+      toggle: (document.getElementById('pgLogToggle') || {}).textContent || '',
+      clear: !!document.getElementById('pgLogClear'),
+      n: window.__ed.prj().progress.log.length
+    };
+  });
+  ok('U4 进度日志默认折叠, 且有展开按钮与清空按钮',
+    uLog0.disp === 'none' && /hide/.test(uLog0.cls) && /展开/.test(uLog0.toggle)
+      && uLog0.clear === true && uLog0.n > 0, JSON.stringify(uLog0));
+  await page.click('#pgLogToggle');
+  await page.waitForTimeout(180);
+  const uLog1 = await page.evaluate(() => ({
+    cls: document.getElementById('pgLog').className,
+    disp: getComputedStyle(document.getElementById('pgLog')).display,
+    toggle: (document.getElementById('pgLogToggle') || {}).textContent || ''
+  }));
+  ok('U5 点「展开」后日志明细可见, 按钮文字切换为「收起」',
+    uLog1.disp !== 'none' && !/hide/.test(uLog1.cls) && /收起/.test(uLog1.toggle), JSON.stringify(uLog1));
+  await page.click('#pgLogToggle');              // 恢复默认折叠态
+  await page.waitForTimeout(120);
+
+  // U6: AI 请求进行中 → 状态栏 loading 转圈 + 生成/修改按钮置灰(AI_BUSY 已拦重复点击, 这是视觉反馈)
+  await page.click('#edRTabs [data-rtab="ui"]');
+  await page.waitForTimeout(150);
+  await page.check('input[name=uiEngine][value=ai]');
+  await page.evaluate(() => window.__ed.aiTimeout(30000));
+  arkMode = 'hang';
+  await page.fill('#uiPrompt', '做一个片头');
+  await page.click('#uiGen');
+  await page.waitForTimeout(200);
+  const uLoad = await page.evaluate(() => {
+    const st = document.getElementById('uiAiSt');
+    const g = document.getElementById('uiGenAct');
+    return {
+      busy: window.__ed.ai().busy,
+      stCls: st.className,
+      spin: getComputedStyle(st, '::before').animationName,
+      gCls: g.className,
+      genOpacity: getComputedStyle(document.getElementById('uiGen')).opacity
+    };
+  });
+  ok('U6 AI 请求进行中显示 loading 转圈且生成按钮置灰(防重复点击)',
+    uLoad.busy === true && /busy/.test(uLoad.stCls) && uLoad.spin !== 'none'
+      && /busy/.test(uLoad.gCls) && parseFloat(uLoad.genOpacity) < 0.6, JSON.stringify(uLoad));
+  // 收尾: 中止请求并还原环境, 别让 hang 模式影响后面的截图与断言
+  await page.click('#uiAbort');
+  await page.waitForTimeout(900);
   await page.evaluate(() => window.__ed.aiTimeout(45000));
   arkMode = 'ok';
   await page.check('input[name=uiEngine][value=local]');

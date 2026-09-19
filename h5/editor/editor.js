@@ -926,8 +926,9 @@ var PG_GROUPS = [
 
 var PG_SUB_DEF = null;            // 默认字幕样式快照(判断"是否调整过样式")
 var PG_PANEL_FOLD = false;        // 面板折叠态
-var PG_HIST_OPEN = false;         // 日志子面板展开态(历史遗留: 日志已常显在底部档案区)
+var PG_HIST_OPEN = false;         // 【进度变更日志】默认折叠, 点击展开查看明细(带清空日志按钮)
 var AR_FOLD = false;              // 【底部·工程档案】折叠态(收起后画布变高, 时间轴空间不受影响)
+var RP_FOLD = false;              // 【右侧编辑面板】整体收起态(属性/进度/UI设计三 Tab 一起隐藏, 画布扩满)
 var PG_GRP_FOLD = {};             // 分组折叠态
 var _pgTimer = null;              // 静默预估防抖句柄
 
@@ -1108,11 +1109,13 @@ function renderArchive() {
         + '<button data-msdel="' + i + '" title="删除该里程碑">✕</button></div>';
     }).join('') : '<div class="pg-empty">还没有里程碑</div>')
     + '</div></div>';
-  // ── 第 3 列: 进度变更日志(常显, 无需再点开) ──
+  // ── 第 3 列: 进度变更日志(可折叠: 默认收起, 点击展开看明细; 带清空按钮) ──
   html += '<div class="ar-col"><h5>🧾 进度历史<span class="n">' + log.length + ' 条</span>'
+    + '<button id="pgLogToggle" title="' + (PG_HIST_OPEN ? '收起日志明细' : '展开日志明细') + '">'
+    + (PG_HIST_OPEN ? '▾ 收起' : '▸ 展开') + '</button>'
     + (log.length ? '<button id="pgLogClear" title="清空进度日志(备注与里程碑保留)">🗑 清空</button>' : '')
     + '</h5>'
-    + '<div class="pg-log" id="pgLog">'
+    + '<div class="pg-log' + (PG_HIST_OPEN ? '' : ' hide') + '" id="pgLog">'
     + (log.length ? log.slice().reverse().map(function (l) {
       return '<div class="pg-log-item"><span class="pg-tag t-' + l.type + '">' + (PG_TYPE_NAME[l.type] || l.type) + '</span>'
         + '<span class="tm">' + esc(l.ts) + '</span><br>'
@@ -1125,6 +1128,16 @@ function renderArchive() {
   box.classList.toggle('hide', AR_FOLD);
   var fb = $id('arFold');
   if (fb) fb.textContent = AR_FOLD ? '▴ 展开' : '▾ 收起';
+}
+
+/* 【右侧编辑面板】整体收起/展开: .fold 直接 display:none,
+   画布与时间轴是 flex 布局, 面板消失后自动扩满剩余宽度。
+   收起/展开后重绘画布(预览区尺寸变了, 缓存的帧要按新宽度重算)。 */
+function toggleRightPanel(msg) {
+  var r = $id('edRight');
+  if (r) r.classList.toggle('fold', RP_FOLD);
+  toast(msg || (RP_FOLD ? '编辑面板已收起（点工具栏「🧩 面板」再展开）' : '编辑面板已展开'));
+  drawFrame();
 }
 
 function bindProgress(r) {
@@ -1216,7 +1229,9 @@ function bindProgress(r) {
       updateTime(); renderRuler(); drawFrame();
     };
   });
-  // 日志: 现在常显在底部「工程档案」区, 不再需要"查看进度历史"开关
+  // 日志: 底部「工程档案」区可折叠(默认收起), 点「展开/收起」切换明细可见性
+  var lg = $id('pgLogToggle');
+  if (lg) lg.onclick = function () { PG_HIST_OPEN = !PG_HIST_OPEN; renderArchive(); };
   var lc = $id('pgLogClear');
   if (lc) lc.onclick = function () {
     ensureProgress();
@@ -2078,6 +2093,7 @@ function aiReset() {
   }, AI_TIMEOUT);
   var b = $id('uiAbort');
   if (b) b.style.display = '';
+  aiLoading(true);
 }
 function aiDone() {
   AI_BUSY = false;
@@ -2085,12 +2101,19 @@ function aiDone() {
   AI_ABORT = null;
   var b = $id('uiAbort');
   if (b) b.style.display = 'none';
+  aiLoading(false);
 }
 // 用户点「中止」: 中止后 fetch 会 reject, 由 aiCall 的 catch 给文案
 function aiAbortNow() {
   if (!AI_ABORT) return;
   AI_ABORTED = true;
   AI_ABORT.abort();
+}
+// 【loading 动画】请求进行中: 状态栏转圈 + 生成/修改按钮置灰。
+// 逻辑上 AI_BUSY 已挡住重复点击, 这里只是让用户「看见」还在等, 不至误以为卡死。
+function aiLoading(on) {
+  var g = $id('uiGenAct');
+  if (g) g.classList.toggle('busy', !!on);
 }
 var AI_TYPES = ['rect', 'text', 'image', 'button', 'card', 'icon', 'tag'];
 var AI_SYS = '你是一个短视频/海报的 UI 版面生成器。\n'
@@ -2114,7 +2137,7 @@ function aiEngine() { var el = document.querySelector('input[name=uiEngine]:chec
 function aiSay(msg, tone) {
   var el = $id('uiAiSt'); if (!el) return;
   el.textContent = msg || '';
-  el.className = 'ui-ai-st' + (tone === 'ok' ? ' ok' : tone === 'err' ? ' err' : '');
+  el.className = 'ui-ai-st' + (tone === 'ok' ? ' ok' : tone === 'err' ? ' err' : ' busy');
 }
 function aiSyncBox() {
   var box = $id('uiAiBox');
@@ -2599,6 +2622,11 @@ function bind() {
   $id('edAddSTrack').onclick = function () { addTrack('subtitle'); };
   // 【底部·工程档案】折叠开关(收起后画布变高)
   $id('arFold').onclick = function () { AR_FOLD = !AR_FOLD; renderArchive(); };
+  // 【右侧编辑面板】整体收起/展开: 工具栏「🧩 面板」切回, 面板标题栏「◀ 收起」折叠
+  var _rp = $id('edRightBtn');
+  if (_rp) _rp.onclick = function () { RP_FOLD = !RP_FOLD; toggleRightPanel(); };
+  var _rc = $id('edRightClose');
+  if (_rc) _rc.onclick = function () { RP_FOLD = true; toggleRightPanel(); };
 
   // 轨道名列表 ⇄ 泳道 竖向滚动同步(否则轨道多起来后名字与片段错位)
   syncTrackScroll($id('edLanesCol'), $id('edTrackRows'));

@@ -18,6 +18,7 @@
 .ed-transport{display:flex;align-items:center;gap:6px;padding:7px 10px;background:#1f2229;border-top:1px solid #2c303a;flex-wrap:wrap}
 .ed-time{font-variant-numeric:tabular-nums;color:#9aa1b0;font-size:12px;margin:0 4px}
 .ed-right{width:280px;flex-shrink:0;overflow-y:auto;background:#1b1e25;padding:10px}
+.ed-right.fold{display:none}            /* 面板整体收起: 画布与时间轴自动扩满剩余宽度 */
 .ed-right h4{font-size:12px;color:#8b93a5;margin:10px 0 6px;font-weight:600;letter-spacing:.5px}
 .ed-right .grp{background:#22252e;border:1px solid #2e323d;border-radius:8px;padding:9px;margin-bottom:8px}
 .ed-field{display:flex;align-items:center;gap:6px;margin-bottom:6px}
@@ -227,9 +228,16 @@
   border-radius:6px;padding:6px 8px;font-size:11.5px;font-family:inherit;outline:none;margin-bottom:5px}
 .ui-ai input:focus{border-color:#9c6b85}
 .ui-ai-tip{margin-top:6px;font-size:10.5px;line-height:1.6;color:#8a8577}
-.ui-ai-st{margin-top:4px;font-size:10.5px;color:#9aa1b5;min-height:14px}
+.ui-ai-st{margin-top:4px;font-size:10.5px;color:#9aa1b5;min-height:14px;display:flex;align-items:center;gap:6px}
 .ui-ai-st.ok{color:#7fd6a2}
 .ui-ai-st.err{color:#ffb3b3}
+/* 请求进行中: 转圈 loading 动画, 让用户明确知道还在等, 不是卡死 */
+.ui-ai-st.busy{color:#8fb0d8}
+.ui-ai-st.busy::before{content:'';flex-shrink:0;width:10px;height:10px;border:2px solid #3a4356;
+  border-top-color:#7fa8d8;border-radius:50%;animation:ui-spin .7s linear infinite}
+@keyframes ui-spin{to{transform:rotate(360deg)}}
+/* 请求进行中: 生成/修改按钮置灰(逻辑上 AI_BUSY 已拦截, 这里是视觉反馈) */
+.ui-act.busy button{opacity:.45;pointer-events:none}
 /* 中止按钮: 只在 AI_BUSY 期间显示, 请求挂起时给用户一个出口 */
 .ui-ab{width:100%;margin-top:6px;border-radius:6px;padding:6px 4px;font-size:11.5px;cursor:pointer;font-family:inherit;background:#3d2626;border:1px solid #a05050;color:#ffb3b3}
 .ui-ab:hover{background:#4d2d2d;color:#fff}
@@ -257,6 +265,9 @@
 .ed-ptitle{display:flex;flex-direction:column;gap:2px;padding:0 2px 8px;border-bottom:1px solid #2c303a;margin-bottom:9px}
 .ed-ptitle>span:first-child{font-size:13px;font-weight:700;color:#e2e6ee;letter-spacing:.5px}
 .ed-ptitle .ed-pt-sub{font-size:10.5px;color:#6f7686}
+.ed-ptitle{position:relative}
+.ed-pt-close{position:absolute;right:-2px;top:-2px;background:#262a33;border:1px solid #353a46;color:#9aa1b0;border-radius:5px;font-size:10px;padding:2px 7px;cursor:pointer;font-family:inherit}
+.ed-pt-close:hover{background:#2e323d;color:#e2e6ee}
 .pg-foot-hint{margin-top:8px;font-size:10.5px;color:#6f7686;line-height:1.6}
 
 /* ══════════════ 【底部·工程档案】项目备注 / 里程碑 / 进度历史 ══════════════

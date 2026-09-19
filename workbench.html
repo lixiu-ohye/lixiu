@@ -234,6 +234,7 @@ input[type=text]{border:1px solid var(--line);border-radius:10px;padding:11px 12
 .ed-transport{display:flex;align-items:center;gap:6px;padding:7px 10px;background:#1f2229;border-top:1px solid #2c303a;flex-wrap:wrap}
 .ed-time{font-variant-numeric:tabular-nums;color:#9aa1b0;font-size:12px;margin:0 4px}
 .ed-right{width:280px;flex-shrink:0;overflow-y:auto;background:#1b1e25;padding:10px}
+.ed-right.fold{display:none}            /* 面板整体收起: 画布与时间轴自动扩满剩余宽度 */
 .ed-right h4{font-size:12px;color:#8b93a5;margin:10px 0 6px;font-weight:600;letter-spacing:.5px}
 .ed-right .grp{background:#22252e;border:1px solid #2e323d;border-radius:8px;padding:9px;margin-bottom:8px}
 .ed-field{display:flex;align-items:center;gap:6px;margin-bottom:6px}
@@ -443,9 +444,16 @@ input[type=text]{border:1px solid var(--line);border-radius:10px;padding:11px 12
   border-radius:6px;padding:6px 8px;font-size:11.5px;font-family:inherit;outline:none;margin-bottom:5px}
 .ui-ai input:focus{border-color:#9c6b85}
 .ui-ai-tip{margin-top:6px;font-size:10.5px;line-height:1.6;color:#8a8577}
-.ui-ai-st{margin-top:4px;font-size:10.5px;color:#9aa1b5;min-height:14px}
+.ui-ai-st{margin-top:4px;font-size:10.5px;color:#9aa1b5;min-height:14px;display:flex;align-items:center;gap:6px}
 .ui-ai-st.ok{color:#7fd6a2}
 .ui-ai-st.err{color:#ffb3b3}
+/* 请求进行中: 转圈 loading 动画, 让用户明确知道还在等, 不是卡死 */
+.ui-ai-st.busy{color:#8fb0d8}
+.ui-ai-st.busy::before{content:'';flex-shrink:0;width:10px;height:10px;border:2px solid #3a4356;
+  border-top-color:#7fa8d8;border-radius:50%;animation:ui-spin .7s linear infinite}
+@keyframes ui-spin{to{transform:rotate(360deg)}}
+/* 请求进行中: 生成/修改按钮置灰(逻辑上 AI_BUSY 已拦截, 这里是视觉反馈) */
+.ui-act.busy button{opacity:.45;pointer-events:none}
 /* 中止按钮: 只在 AI_BUSY 期间显示, 请求挂起时给用户一个出口 */
 .ui-ab{width:100%;margin-top:6px;border-radius:6px;padding:6px 4px;font-size:11.5px;cursor:pointer;font-family:inherit;background:#3d2626;border:1px solid #a05050;color:#ffb3b3}
 .ui-ab:hover{background:#4d2d2d;color:#fff}
@@ -473,6 +481,9 @@ input[type=text]{border:1px solid var(--line);border-radius:10px;padding:11px 12
 .ed-ptitle{display:flex;flex-direction:column;gap:2px;padding:0 2px 8px;border-bottom:1px solid #2c303a;margin-bottom:9px}
 .ed-ptitle>span:first-child{font-size:13px;font-weight:700;color:#e2e6ee;letter-spacing:.5px}
 .ed-ptitle .ed-pt-sub{font-size:10.5px;color:#6f7686}
+.ed-ptitle{position:relative}
+.ed-pt-close{position:absolute;right:-2px;top:-2px;background:#262a33;border:1px solid #353a46;color:#9aa1b0;border-radius:5px;font-size:10px;padding:2px 7px;cursor:pointer;font-family:inherit}
+.ed-pt-close:hover{background:#2e323d;color:#e2e6ee}
 .pg-foot-hint{margin-top:8px;font-size:10.5px;color:#6f7686;line-height:1.6}
 
 /* ══════════════ 【底部·工程档案】项目备注 / 里程碑 / 进度历史 ══════════════
@@ -629,11 +640,16 @@ input[type=text]{border:1px solid var(--line);border-radius:10px;padding:11px 12
         <button class="ed-btn" id="edDel" title="快捷键Delete">🗑 删除</button>
         <button class="ed-btn" id="edAddSub">＋字幕片段</button>
         <button class="ed-btn" id="edLibBtn" style="margin-left:auto">📦 素材库</button>
+        <button class="ed-btn" id="edRightBtn" title="收起/展开右侧编辑面板（属性·进度·UI设计）">🧩 面板</button>
       </div>
     </div>
     <!-- 右侧面板: 三大 Tab【属性】【进度】【UI设计】(内容由 editor.js 渲染) -->
     <div class="ed-right" id="edRight">
-      <div class="ed-ptitle"><span>🧩 编辑面板</span><span class="ed-pt-sub" id="edPtSub">选中片段后可改参数</span></div>
+      <div class="ed-ptitle">
+        <span>🧩 编辑面板</span>
+        <span class="ed-pt-sub" id="edPtSub">选中片段后可改参数</span>
+        <button class="ed-pt-close" id="edRightClose" title="收起面板（点工具栏「🧩 面板」再展开）">◀ 收起</button>
+      </div>
       <div class="ed-rtabs" id="edRTabs">
         <button data-rtab="props" class="on">属性</button>
         <button data-rtab="progress">进度</button>
@@ -730,7 +746,7 @@ input[type=text]{border:1px solid var(--line);border-radius:10px;padding:11px 12
             <label><input type="radio" name="uiMode" value="replace" checked> 清空重建</label>
             <label><input type="radio" name="uiMode" value="append"> 追加到现有图层</label>
           </div>
-          <div class="ui-act">
+          <div class="ui-act" id="uiGenAct">
             <button id="uiGen" class="primary">✨ 一键生成新UI</button>
             <button id="uiModify" title="只改指令里提到的属性, 其余保持不变">✏️ 修改选中图层</button>
           </div>
@@ -2542,8 +2558,9 @@ var PG_GROUPS = [
 
 var PG_SUB_DEF = null;            // 默认字幕样式快照(判断"是否调整过样式")
 var PG_PANEL_FOLD = false;        // 面板折叠态
-var PG_HIST_OPEN = false;         // 日志子面板展开态(历史遗留: 日志已常显在底部档案区)
+var PG_HIST_OPEN = false;         // 【进度变更日志】默认折叠, 点击展开查看明细(带清空日志按钮)
 var AR_FOLD = false;              // 【底部·工程档案】折叠态(收起后画布变高, 时间轴空间不受影响)
+var RP_FOLD = false;              // 【右侧编辑面板】整体收起态(属性/进度/UI设计三 Tab 一起隐藏, 画布扩满)
 var PG_GRP_FOLD = {};             // 分组折叠态
 var _pgTimer = null;              // 静默预估防抖句柄
 
@@ -2724,11 +2741,13 @@ function renderArchive() {
         + '<button data-msdel="' + i + '" title="删除该里程碑">✕</button></div>';
     }).join('') : '<div class="pg-empty">还没有里程碑</div>')
     + '</div></div>';
-  // ── 第 3 列: 进度变更日志(常显, 无需再点开) ──
+  // ── 第 3 列: 进度变更日志(可折叠: 默认收起, 点击展开看明细; 带清空按钮) ──
   html += '<div class="ar-col"><h5>🧾 进度历史<span class="n">' + log.length + ' 条</span>'
+    + '<button id="pgLogToggle" title="' + (PG_HIST_OPEN ? '收起日志明细' : '展开日志明细') + '">'
+    + (PG_HIST_OPEN ? '▾ 收起' : '▸ 展开') + '</button>'
     + (log.length ? '<button id="pgLogClear" title="清空进度日志(备注与里程碑保留)">🗑 清空</button>' : '')
     + '</h5>'
-    + '<div class="pg-log" id="pgLog">'
+    + '<div class="pg-log' + (PG_HIST_OPEN ? '' : ' hide') + '" id="pgLog">'
     + (log.length ? log.slice().reverse().map(function (l) {
       return '<div class="pg-log-item"><span class="pg-tag t-' + l.type + '">' + (PG_TYPE_NAME[l.type] || l.type) + '</span>'
         + '<span class="tm">' + esc(l.ts) + '</span><br>'
@@ -2741,6 +2760,16 @@ function renderArchive() {
   box.classList.toggle('hide', AR_FOLD);
   var fb = $id('arFold');
   if (fb) fb.textContent = AR_FOLD ? '▴ 展开' : '▾ 收起';
+}
+
+/* 【右侧编辑面板】整体收起/展开: .fold 直接 display:none,
+   画布与时间轴是 flex 布局, 面板消失后自动扩满剩余宽度。
+   收起/展开后重绘画布(预览区尺寸变了, 缓存的帧要按新宽度重算)。 */
+function toggleRightPanel(msg) {
+  var r = $id('edRight');
+  if (r) r.classList.toggle('fold', RP_FOLD);
+  toast(msg || (RP_FOLD ? '编辑面板已收起（点工具栏「🧩 面板」再展开）' : '编辑面板已展开'));
+  drawFrame();
 }
 
 function bindProgress(r) {
@@ -2832,7 +2861,9 @@ function bindProgress(r) {
       updateTime(); renderRuler(); drawFrame();
     };
   });
-  // 日志: 现在常显在底部「工程档案」区, 不再需要"查看进度历史"开关
+  // 日志: 底部「工程档案」区可折叠(默认收起), 点「展开/收起」切换明细可见性
+  var lg = $id('pgLogToggle');
+  if (lg) lg.onclick = function () { PG_HIST_OPEN = !PG_HIST_OPEN; renderArchive(); };
   var lc = $id('pgLogClear');
   if (lc) lc.onclick = function () {
     ensureProgress();
@@ -3694,6 +3725,7 @@ function aiReset() {
   }, AI_TIMEOUT);
   var b = $id('uiAbort');
   if (b) b.style.display = '';
+  aiLoading(true);
 }
 function aiDone() {
   AI_BUSY = false;
@@ -3701,12 +3733,19 @@ function aiDone() {
   AI_ABORT = null;
   var b = $id('uiAbort');
   if (b) b.style.display = 'none';
+  aiLoading(false);
 }
 // 用户点「中止」: 中止后 fetch 会 reject, 由 aiCall 的 catch 给文案
 function aiAbortNow() {
   if (!AI_ABORT) return;
   AI_ABORTED = true;
   AI_ABORT.abort();
+}
+// 【loading 动画】请求进行中: 状态栏转圈 + 生成/修改按钮置灰。
+// 逻辑上 AI_BUSY 已挡住重复点击, 这里只是让用户「看见」还在等, 不至误以为卡死。
+function aiLoading(on) {
+  var g = $id('uiGenAct');
+  if (g) g.classList.toggle('busy', !!on);
 }
 var AI_TYPES = ['rect', 'text', 'image', 'button', 'card', 'icon', 'tag'];
 var AI_SYS = '你是一个短视频/海报的 UI 版面生成器。\n'
@@ -3730,7 +3769,7 @@ function aiEngine() { var el = document.querySelector('input[name=uiEngine]:chec
 function aiSay(msg, tone) {
   var el = $id('uiAiSt'); if (!el) return;
   el.textContent = msg || '';
-  el.className = 'ui-ai-st' + (tone === 'ok' ? ' ok' : tone === 'err' ? ' err' : '');
+  el.className = 'ui-ai-st' + (tone === 'ok' ? ' ok' : tone === 'err' ? ' err' : ' busy');
 }
 function aiSyncBox() {
   var box = $id('uiAiBox');
@@ -4215,6 +4254,11 @@ function bind() {
   $id('edAddSTrack').onclick = function () { addTrack('subtitle'); };
   // 【底部·工程档案】折叠开关(收起后画布变高)
   $id('arFold').onclick = function () { AR_FOLD = !AR_FOLD; renderArchive(); };
+  // 【右侧编辑面板】整体收起/展开: 工具栏「🧩 面板」切回, 面板标题栏「◀ 收起」折叠
+  var _rp = $id('edRightBtn');
+  if (_rp) _rp.onclick = function () { RP_FOLD = !RP_FOLD; toggleRightPanel(); };
+  var _rc = $id('edRightClose');
+  if (_rc) _rc.onclick = function () { RP_FOLD = true; toggleRightPanel(); };
 
   // 轨道名列表 ⇄ 泳道 竖向滚动同步(否则轨道多起来后名字与片段错位)
   syncTrackScroll($id('edLanesCol'), $id('edTrackRows'));

@@ -53,11 +53,16 @@
         <button class="ed-btn" id="edDel" title="快捷键Delete">🗑 删除</button>
         <button class="ed-btn" id="edAddSub">＋字幕片段</button>
         <button class="ed-btn" id="edLibBtn" style="margin-left:auto">📦 素材库</button>
+        <button class="ed-btn" id="edRightBtn" title="收起/展开右侧编辑面板（属性·进度·UI设计）">🧩 面板</button>
       </div>
     </div>
     <!-- 右侧面板: 三大 Tab【属性】【进度】【UI设计】(内容由 editor.js 渲染) -->
     <div class="ed-right" id="edRight">
-      <div class="ed-ptitle"><span>🧩 编辑面板</span><span class="ed-pt-sub" id="edPtSub">选中片段后可改参数</span></div>
+      <div class="ed-ptitle">
+        <span>🧩 编辑面板</span>
+        <span class="ed-pt-sub" id="edPtSub">选中片段后可改参数</span>
+        <button class="ed-pt-close" id="edRightClose" title="收起面板（点工具栏「🧩 面板」再展开）">◀ 收起</button>
+      </div>
       <div class="ed-rtabs" id="edRTabs">
         <button data-rtab="props" class="on">属性</button>
         <button data-rtab="progress">进度</button>
@@ -154,7 +159,7 @@
             <label><input type="radio" name="uiMode" value="replace" checked> 清空重建</label>
             <label><input type="radio" name="uiMode" value="append"> 追加到现有图层</label>
           </div>
-          <div class="ui-act">
+          <div class="ui-act" id="uiGenAct">
             <button id="uiGen" class="primary">✨ 一键生成新UI</button>
             <button id="uiModify" title="只改指令里提到的属性, 其余保持不变">✏️ 修改选中图层</button>
           </div>
