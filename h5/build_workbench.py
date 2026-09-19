@@ -210,9 +210,8 @@ function nav(where){
   // 页面内锚点: jobs -> 我的任务卡片, settings -> 后端地址卡片
   var target = null;
   if (where === 'jobs') target = document.getElementById('jobsCard');
-  if (where === 'settings') target = document.getElementById('jobsCard');  // 设置暂同 jobs 区(后端地址卡在其下方)
   if (where === 'settings') target = document.querySelector('.orig-page .card:last-of-type');
-  if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
+  if (target && target.scrollIntoView) target.scrollIntoView({behavior:'smooth', block:'start'});
   // 移动端点击后收起抽屉
   if (window.innerWidth < 768){
     document.getElementById('sidebar').classList.remove('show');
