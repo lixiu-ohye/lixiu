@@ -846,6 +846,129 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   }));
   ok('S4 反向滚动轨道名时泳道跟随', Math.abs(sc3.lanes - sc3.names) <= 1, JSON.stringify(sc3));
 
+  // ── T UI设计 · AI 大模型模式(访客自带 Key) ──
+  // 全程 page.route 拦方舟接口, 不消耗任何真实额度。
+  // 只保留【一条】路由按 arkMode 分支 —— 中途 unroute 重注册会让后续异常用例静默退化成成功用例。
+  let arkMode = 'ok';           // ok | mut | http500 | badjson
+  let arkHits = 0;
+  const AI_OK = { w: 1080, h: 1080, layers: [
+    { type: 'rect', name: '底', x: 0, y: 0, w: 1080, h: 1080, fill: 'rgba(0,0,0,.85)', radius: 0 },
+    { type: 'text', name: '标题', x: 90, y: 440, w: 900, h: 120, text: { content: '自动化验证', size: 120, color: '#ffffff', align: 'center' } }
+  ] };
+  const AI_MUT = { type: 'rect', name: '底', x: 0, y: 0, w: 1080, h: 1080, fill: 'rgba(20,10,40,.9)', radius: 24 };
+  await page.route('**/ark.cn-beijing.volces.com/**', async route => {
+    const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization,content-type',
+      'Access-Control-Allow-Methods': 'POST,OPTIONS' };
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors, body: '' });
+    arkHits++;
+    const j = body => route.fulfill({ status: 200, headers: Object.assign({ 'Content-Type': 'application/json' }, cors), body: JSON.stringify(body) });
+    if (arkMode === 'http500') return route.fulfill({ status: 500, headers: Object.assign({ 'Content-Type': 'application/json' }, cors), body: JSON.stringify({ error: { message: 'mock 额度不足' } }) });
+    if (arkMode === 'badjson') return j({ choices: [{ message: { content: '我不太明白你的意思' } }] });
+    if (arkMode === 'mut') return j({ choices: [{ message: { content: JSON.stringify(AI_MUT) } }] });
+    return j({ choices: [{ message: { content: JSON.stringify(AI_OK) } }] });
+  });
+
+  await page.click('#edRTabs button[data-rtab="ui"]');
+  await page.waitForTimeout(300);
+  const t0 = await page.evaluate(() => ({
+    opts: document.querySelectorAll('input[name=uiEngine]').length,
+    engine: (document.querySelector('input[name=uiEngine]:checked') || {}).value,
+    box: getComputedStyle(document.getElementById('uiAiBox')).display,
+    keyType: (document.getElementById('uiApiKey') || {}).type,
+    tip: ((document.querySelector('.ui-ai-tip') || {}).textContent || '')
+  }));
+  ok('T1 UI设计面板提供「本地 / AI」两种引擎', t0.opts === 2 && t0.engine === 'local', JSON.stringify(t0));
+  ok('T2 AI 配置区默认收起(不打扰不用 AI 的人)', t0.box === 'none', t0.box);
+  ok('T3 API Key 输入框为密码型(不明文显示)', t0.keyType === 'password', t0.keyType);
+  ok('T4 有密钥安全提示文案', /公共电脑别填/.test(t0.tip), t0.tip.slice(0, 30));
+
+  // 无 Key 守卫: 必须拦住, 且一个请求都不能发出去
+  arkHits = 0;
+  await page.check('input[name=uiEngine][value=ai]');
+  await page.waitForTimeout(250);
+  const tExp = await page.evaluate(() => getComputedStyle(document.getElementById('uiAiBox')).display);
+  ok('T5 切 AI 模式后配置区展开', tExp !== 'none', tExp);
+  const tLen0 = await page.evaluate(() => window.__ed.ui().layers.length);
+  await page.fill('#uiPrompt', '做一个深色封面, 中间大标题');
+  await page.click('#uiGen');
+  await page.waitForTimeout(800);
+  const t1 = await page.evaluate(() => ({
+    n: window.__ed.ui().layers.length,
+    msg: [...document.querySelectorAll('.ed-toast')].map(x => x.textContent).join('|') + ' ' +
+      ((document.getElementById('uiAiSt') || {}).textContent || '')
+  }));
+  ok('T6 未填 Key 时拦住、有提示、且未发任何请求',
+    arkHits === 0 && t1.n === tLen0 && /Key/.test(t1.msg), 'hits=' + arkHits + ' | ' + t1.msg.slice(0, 70));
+
+  // Key 只落本机
+  await page.fill('#uiApiKey', 'audit-mock-key');
+  await page.click('#uiKeySave');
+  await page.waitForTimeout(300);
+  const t2 = await page.evaluate(() => ({ ls: localStorage.getItem('lixiu_ark_key'), has: window.__ed.ai().hasKey }));
+  ok('T7 Key 只存本机 localStorage, 且状态栏确认', t2.ls === 'audit-mock-key' && t2.has === true, String(t2.ls));
+
+  // 成功生成: 结构必须与本地模式一致(否则存不进 .lixiu)
+  await page.click('#uiGen');
+  await page.waitForTimeout(1300);
+  const t3 = await page.evaluate(() => {
+    const u = window.__ed.ui();
+    return { n: u.layers.length, types: u.layers.map(l => l.type).join(','), w: u.w, h: u.h,
+      textOk: !!(u.layers.find(l => l.type === 'text') || {}).text,
+      inPrj: window.__ed.prj().ui.layers.length,
+      hist: window.__ed.history().undo.slice(-1)[0] };
+  });
+  ok('T8 AI 返回图层已落进工程数据(可随 .lixiu 保存)',
+    t3.n === 2 && t3.types === 'rect,text' && t3.w === 1080 && t3.textOk && t3.inPrj === 2, JSON.stringify(t3));
+  ok('T9 AI 生成写入全局撤销栈(可 Ctrl+Z)', /AI 生成/.test(String(t3.hist)), String(t3.hist));
+
+  // 一句话修改选中图层
+  arkMode = 'mut'; arkHits = 0;
+  const aid = await page.evaluate(() => window.__ed.ui().layers[0].id);
+  await page.click('#uiLayers .ui-layer[data-uid="' + aid + '"]');
+  await page.waitForTimeout(250);
+  await page.fill('#uiPrompt', '圆角改成 24, 底色换成深紫色');
+  await page.click('#uiModify');
+  await page.waitForTimeout(1300);
+  const t4 = await page.evaluate(() => {
+    const l = window.__ed.ui().layers[0];
+    return { radius: l.radius, fill: l.fill, hist: window.__ed.history().undo.slice(-1)[0] };
+  });
+  ok('T10 AI 能改选中图层(圆角/填充生效)', arkHits >= 1 && t4.radius === 24 && t4.fill === 'rgba(20,10,40,.9)', JSON.stringify(t4));
+  ok('T11 AI 修改也进撤销栈', /AI 修改/.test(String(t4.hist)), String(t4.hist));
+
+  // 服务端报错兜底: 不崩、不产生图层、给出可读提示
+  arkMode = 'http500';
+  const tLen1 = await page.evaluate(() => window.__ed.ui().layers.length);
+  await page.fill('#uiPrompt', '再来一个封面');
+  await page.click('#uiGen');
+  await page.waitForTimeout(1200);
+  const t5 = await page.evaluate(() => ({
+    n: window.__ed.ui().layers.length,
+    msg: [...document.querySelectorAll('.ed-toast')].map(x => x.textContent).join('|') + ' ' +
+      ((document.getElementById('uiAiSt') || {}).textContent || '')
+  }));
+  ok('T12 后端 500 时不产生图层且给出失败原因', t5.n === tLen1 && /失败|500/.test(t5.msg), 'n=' + t5.n + ' | ' + t5.msg.slice(0, 70));
+
+  // 返回非 JSON 兜底
+  arkMode = 'badjson';
+  await page.fill('#uiPrompt', '随便来点什么');
+  await page.click('#uiGen');
+  await page.waitForTimeout(1200);
+  const t6 = await page.evaluate(() => ({
+    n: window.__ed.ui().layers.length,
+    st: (document.getElementById('uiAiSt') || {}).textContent || ''
+  }));
+  ok('T13 返回非 JSON 时不崩且提示无法解析', t6.n === tLen1 && /无法解析/.test(t6.st), 'n=' + t6.n + ' | ' + t6.st);
+
+  // 切回本地: 必须仍可用(不因引入 AI 而回归)
+  await page.check('input[name=uiEngine][value=local]');
+  await page.waitForTimeout(200);
+  await page.fill('#uiPrompt', '1080x1080 方形，深色底，中间大标题"回归"');
+  await page.click('#uiGen');
+  await page.waitForTimeout(900);
+  const t7 = await page.evaluate(() => ({ n: window.__ed.ui().layers.length, engine: window.__ed.ai().engine }));
+  ok('T14 切回本地模式仍可生成(无回归)', t7.engine === 'local' && t7.n >= 1, JSON.stringify(t7));
+
   // ── 全页截图 + 错误汇总 ──
   await page.screenshot({ path: SHOT + '/full.png', fullPage: false });
 

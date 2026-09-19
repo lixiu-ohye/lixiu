@@ -345,6 +345,17 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
 .ui-act button{flex:1;border-radius:6px;padding:7px 4px;font-size:11.5px;cursor:pointer;font-family:inherit;background:#262a33;border:1px solid #353a46;color:#c6cbd6}
 .ui-act button:hover{background:#303542;color:#fff}
 .ui-act button.primary{background:#7a4d63;border-color:#9c6b85;color:#fff}
+
+/* ── AI 大模型(访客自带 Key)配置区: 只有选到 AI 模式才展开, 不打搅本地模式用户 ── */
+.ui-ai{display:none;margin-top:7px;padding:8px;border:1px solid #333846;border-radius:8px;background:#191c22}
+.ui-ai.on{display:block}
+.ui-ai input{width:100%;box-sizing:border-box;background:#15171e;border:1px solid #333846;color:#dde1e8;
+  border-radius:6px;padding:6px 8px;font-size:11.5px;font-family:inherit;outline:none;margin-bottom:5px}
+.ui-ai input:focus{border-color:#9c6b85}
+.ui-ai-tip{margin-top:6px;font-size:10.5px;line-height:1.6;color:#8a8577}
+.ui-ai-st{margin-top:4px;font-size:10.5px;color:#9aa1b5;min-height:14px}
+.ui-ai-st.ok{color:#7fd6a2}
+.ui-ai-st.err{color:#ffb3b3}
 .ui-out{width:100%;border-radius:6px;padding:7px 4px;font-size:11.5px;cursor:pointer;font-family:inherit;background:#262a33;border:1px solid #353a46;color:#c6cbd6}
 .ui-out:hover{background:#303542;color:#fff}
 .ui-out.hot{background:#2f4a3d;border-color:#4f8d6c;color:#bfe8d2}
@@ -598,9 +609,27 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
           <div id="uiProps"></div>
         </div>
 
-        <!-- 一句话生成 UI(本地解析, 不依赖后端) -->
+        <!-- 一句话生成 UI: 两种引擎二选一(本地关键词解析 / AI 大模型), 生成的图层结构完全一致 -->
         <div class="ui-sec">
           <h5>一句话生成 UI</h5>
+          <div class="ui-row">
+            <label><input type="radio" name="uiEngine" value="local" checked> 本地解析（不用 Key）</label>
+            <label><input type="radio" name="uiEngine" value="ai"> AI 大模型（用自己的 Key）</label>
+          </div>
+
+          <!-- AI 模式才展开: 访客自带的豆包 Key 只存在本机浏览器里 -->
+          <div class="ui-ai" id="uiAiBox">
+            <input type="password" id="uiApiKey" placeholder="粘贴豆包 API Key" autocomplete="off" spellcheck="false">
+            <input type="text" id="uiAiModel" placeholder="模型 / 接入点 ID（留空用默认）" autocomplete="off" spellcheck="false">
+            <div class="ui-act">
+              <button id="uiKeySave">保存到本机</button>
+              <button id="uiKeyClear">清空</button>
+              <button id="uiKeyTest" title="发一个最小请求, 验证 Key 和模型能不能用">测试连接</button>
+            </div>
+            <div class="ui-ai-tip">🔒 Key 只存在你自己浏览器里，不会上传到哩秀服务器。但同一台电脑上打开开发者工具的人能看到它 —— 公共电脑别填。</div>
+            <div class="ui-ai-st" id="uiAiSt"></div>
+          </div>
+
           <textarea class="ui-prompt" id="uiPrompt" placeholder="例：1080x1080 方形，深色底，中间大标题'星界异宠'，下面一行小字'第二幕'，底部金色圆角标签'NEW'"></textarea>
           <div class="ui-row">
             <label><input type="radio" name="uiMode" value="replace" checked> 清空重建</label>
@@ -3189,11 +3218,205 @@ function renderUiHist() {
       + '<br><span style="color:#6f7686">' + esc(h.ts) + '</span></div>';
   }).join('');
 }
+// ═══════════ 【AI 大模型模式】访客自带 Key 直连豆包方舟 ═══════════
+// 为什么不配 CORS 代理 / 中转后端: 实测 https://ark.cn-beijing.volces.com/api/v3 的
+//   预检(OPTIONS)响应本身就带 access-control-allow-origin / -methods / -headers,
+//   浏览器可直连 ⇒ GitHub Pages 纯静态页够用, 不需要任何服务器。
+// 实测已知的坑: 401 这类**错误响应不带** ACAO, 浏览器读不到正文, fetch 直接 reject。
+//   所以 Key 无效时拿不到服务端原文, 只能给兜底提示 —— 必须 try/catch 兜住,
+//   否则会变成未捕获异常(审计的 L1 会抓)。
+var AI_LS_KEY = 'lixiu_ark_key', AI_LS_MODEL = 'lixiu_ark_model';
+var AI_DEF_MODEL = 'doubao-seed-1-6-251015';
+var AI_BUSY = false;
+var AI_TYPES = ['rect', 'text', 'image', 'button', 'card', 'icon', 'tag'];
+var AI_SYS = '你是一个短视频/海报的 UI 版面生成器。\n'
+  + '只输出一个 JSON 对象，不要任何解释文字，不要 markdown 代码块。\n'
+  + '结构：{"w":画布宽, "h":画布高, "layers":[图层, ...]}\n'
+  + '图层字段：type（只能是 rect/text/image/button/card/icon/tag 之一）、name、x、y、w、h、'
+  + 'fill（#rrggbb 或 rgba(...)）、radius、opacity（0~1 的小数）、'
+  + 'text（需要文字时才给，形如 {"content":"文字","size":48,"weight":700,"color":"#fff","align":"center","lineHeight":1.3}）。\n'
+  + '坐标以画布左上角为原点，单位 px。只画用户描述到的东西，不要额外堆装饰。';
+
+function aiLS(k, v) {
+  try {
+    if (v === undefined) return localStorage.getItem(k) || '';
+    if (v) localStorage.setItem(k, v); else localStorage.removeItem(k);
+  } catch (e) {}
+  return '';
+}
+function aiKey() { var el = $id('uiApiKey'); return (((el && el.value) || '').trim()) || aiLS(AI_LS_KEY); }
+function aiModel() { var el = $id('uiAiModel'); return (((el && el.value) || '').trim()) || aiLS(AI_LS_MODEL) || AI_DEF_MODEL; }
+function aiEngine() { var el = document.querySelector('input[name=uiEngine]:checked'); return el ? el.value : 'local'; }
+function aiSay(msg, tone) {
+  var el = $id('uiAiSt'); if (!el) return;
+  el.textContent = msg || '';
+  el.className = 'ui-ai-st' + (tone === 'ok' ? ' ok' : tone === 'err' ? ' err' : '');
+}
+function aiSyncBox() {
+  var box = $id('uiAiBox');
+  if (box) box.className = 'ui-ai' + (aiEngine() === 'ai' ? ' on' : '');
+}
+function aiSaveKey() {
+  var k = ((($id('uiApiKey') || {}).value) || '').trim();
+  var m = ((($id('uiAiModel') || {}).value) || '').trim();
+  if (!k) return toast('先把 API Key 粘进来再保存');
+  aiLS(AI_LS_KEY, k); aiLS(AI_LS_MODEL, m);
+  aiSay('已存到本机浏览器，下次打开自动带上', 'ok');
+  toast('API Key 已保存到本机（不会上传到任何服务器）');
+}
+function aiClearKey() {
+  aiLS(AI_LS_KEY, ''); aiLS(AI_LS_MODEL, '');
+  var a = $id('uiApiKey'), b = $id('uiAiModel');
+  if (a) a.value = ''; if (b) b.value = '';
+  aiSay('已清空');
+  toast('已清空本机保存的 Key');
+}
+// 容错解析: 模型偶尔会裹 ```json 围栏或加一句话, 逐级退让地剥
+function aiParseJson(content) {
+  var s = String(content == null ? '' : content).trim();
+  s = s.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  var obj = null;
+  try { obj = JSON.parse(s); } catch (e) {
+    var m = s.match(/\{[\s\S]*\}/);
+    if (m) { try { obj = JSON.parse(m[0]); } catch (e2) {} }
+    if (!obj) {
+      var a = s.match(/\[[\s\S]*\]/);
+      if (a) { try { obj = { layers: JSON.parse(a[0]) }; } catch (e3) {} }
+    }
+  }
+  return obj;
+}
+function aiNum(v, d) { var n = parseFloat(v); return isFinite(n) ? n : d; }
+// 把 AI 给的图层映射成编辑器内部结构(与本地解析、手绘图层完全一致 ⇒ 撤销栈 / .lixiu 都不用改)
+function aiToLayers(obj) {
+  var arr = Array.isArray(obj) ? obj : ((obj && obj.layers) || []);
+  var out = [];
+  arr.forEach(function (a) {
+    if (!a || typeof a !== 'object') return;
+    var k = String(a.type || '').toLowerCase();
+    var kind = AI_TYPES.indexOf(k) > -1 ? k : 'rect';
+    var L = uiNewLayer(kind, { name: String(a.name || UI_TYPE_NAME[kind] || '元素').slice(0, 24) });
+    L.x = aiNum(a.x, L.x); L.y = aiNum(a.y, L.y);
+    L.w = Math.max(2, aiNum(a.w != null ? a.w : a.width, L.w));
+    L.h = Math.max(2, aiNum(a.h != null ? a.h : a.height, L.h));
+    if (a.fill) L.fill = String(a.fill);
+    if (a.radius != null) L.radius = Math.max(0, aiNum(a.radius, L.radius));
+    if (a.opacity != null) {
+      var o = aiNum(a.opacity, 1);
+      L.opacity = o > 1 ? Math.min(1, o / 100) : Math.max(0, o);   // 模型可能给 0~100, 统一到 0~1
+    }
+    var t = a.text;
+    if (typeof t === 'string') t = { content: t };
+    if (t && typeof t === 'object') {
+      L.text = L.text || {};
+      if (t.content != null) L.text.content = String(t.content);
+      if (t.size != null) L.text.size = Math.max(6, aiNum(t.size, 48));
+      if (t.weight != null) L.text.weight = aiNum(t.weight, 400);
+      if (t.color) L.text.color = String(t.color);
+      if (t.align) L.text.align = ['left', 'center', 'right'].indexOf(t.align) > -1 ? t.align : 'center';
+      if (t.lineHeight != null) L.text.lineHeight = aiNum(t.lineHeight, 1.3);
+    }
+    out.push(L);
+  });
+  return out;
+}
+// 统一出口: 成功返回解析后的对象, 任何失败返回 null 并已提示用户
+function aiCall(userText, extraSys) {
+  var key = aiKey();
+  if (!key) { aiSay('需要先填 API Key', 'err'); toast('AI 模式要先填你自己的豆包 API Key'); return Promise.resolve(null); }
+  if (AI_BUSY) { toast('上一条还在生成，稍等一下'); return Promise.resolve(null); }
+  AI_BUSY = true;
+  aiSay('正在问 AI…');
+  var body = {
+    model: aiModel(),
+    messages: [
+      { role: 'system', content: AI_SYS + (extraSys ? '\n' + extraSys : '') },
+      { role: 'user', content: userText }
+    ],
+    temperature: 0.3,
+    response_format: { type: 'json_object' },
+    thinking: { type: 'disabled' }   // seed 1.6+ 不关掉的话推理轨迹会混进正文, JSON.parse 必炸
+  };
+  return fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify(body)
+  }).then(function (r) {
+    return r.text().then(function (txt) { return { ok: r.ok, status: r.status, txt: txt }; });
+  }).then(function (res) {
+    if (!res.ok) {
+      var m = '';
+      try { m = (((JSON.parse(res.txt) || {}).error) || {}).message || ''; } catch (e) {}
+      aiSay('调用失败（HTTP ' + res.status + '）' + (m ? '：' + String(m).slice(0, 100) : ''), 'err');
+      toast('AI 调用失败：' + (res.status === 401 ? 'Key 不对或还没生效' : (m || 'HTTP ' + res.status)), 4600);
+      return null;
+    }
+    var data = null;
+    try { data = JSON.parse(res.txt); } catch (e) { aiSay('服务端返回的不是 JSON', 'err'); return null; }
+    var content = (((((data || {}).choices || [])[0] || {}).message) || {}).content || '';
+    var obj = aiParseJson(content);
+    if (!obj) { aiSay('AI 返回内容无法解析，换个说法再试', 'err'); toast('AI 返回的不是能识别的 JSON，换个说法再试一次', 4200); return null; }
+    aiSay('AI 已返回', 'ok');
+    return obj;
+  }).catch(function () {
+    // 错误响应不带 CORS 头时浏览器读不到正文 → 只能在这里兜底, 千万别让它冒成未捕获异常
+    aiSay('请求没走通（多是 Key 无效，或网络被拦）', 'err');
+    toast('AI 请求没走通：检查 Key 是否有效、模型是否已开通、网络是否正常', 4800);
+    return null;
+  }).then(function (r) { AI_BUSY = false; return r; }, function () { AI_BUSY = false; return null; });
+}
+function aiTestKey() {
+  aiSay('正在测试…');
+  aiCall('只回一句 {"ok":true}', '不管你收到什么，都只回 {"ok":true} 这一个 JSON。').then(function (o) {
+    if (o) { aiSay('连接正常，Key 可用', 'ok'); toast('连接正常，Key 可用'); }
+  });
+}
+function uiGenerateAI(raw, mode) {
+  var u0 = ensureUI();
+  aiCall('需求：' + raw + '\n画布沿用当前的 ' + u0.w + '×' + u0.h + '，除非我上面写明了别的尺寸。').then(function (obj) {
+    if (!obj) return;
+    var u = ensureUI();
+    if (obj.w || obj.h) { u.w = clamp(aiNum(obj.w, u.w), 64, 4096); u.h = clamp(aiNum(obj.h, u.h), 64, 4096); }
+    var layers = aiToLayers(obj);
+    if (!layers.length) { toast('AI 没给出图层，把描述写具体一点再试', 4000); return; }
+    pushUndo('AI 生成 UI');
+    if (mode === 'replace') u.layers = layers;
+    else layers.forEach(function (l) { u.layers.push(l); });
+    UI_SEL = u.layers.length ? u.layers[u.layers.length - 1].id : null;
+    uiLog('gen', raw, 'AI ' + (mode === 'replace' ? '清空重建' : '追加') + ' ' + layers.length + ' 个图层');
+    var a = $id('uiCvW'), b = $id('uiCvH');
+    if (a) a.value = u.w; if (b) b.value = u.h;
+    renderUi(); touchProgress();
+    toast('AI 生成了 ' + layers.length + ' 个图层 · Ctrl+Z 可撤销', 3400);
+  });
+}
+function uiModifySelectedAI(l, raw) {
+  aiCall('这个图层现在的 JSON：\n' + JSON.stringify(l)
+    + '\n\n用户要改的是：' + raw
+    + '\n\n只输出改完之后的这一个图层对象（单个 JSON，不要数组、不要包 layers）。',
+    '这一次要返回单个图层对象本身，不要外层 layers 包装。')
+    .then(function (obj) {
+      if (!obj) return;
+      var arr = aiToLayers(obj && obj.layers ? obj : { layers: [obj] });
+      if (!arr.length) { toast('AI 没返回可用的图层', 3600); return; }
+      var n = arr[0];
+      pushUndo('AI 修改图层「' + l.name + '」');
+      ['x', 'y', 'w', 'h', 'radius', 'fill', 'opacity', 'type'].forEach(function (k) {
+        if (n[k] != null) l[k] = n[k];
+      });
+      if (n.text) { l.text = l.text || {}; Object.keys(n.text).forEach(function (k) { l.text[k] = n.text[k]; }); }
+      uiLog('mod', raw, 'AI 修改「' + l.name + '」');
+      renderUi(); touchProgress();
+      toast('AI 已修改「' + l.name + '」· Ctrl+Z 可撤销', 3200);
+    });
+}
+
 function uiGenerate() {
   var raw = ($id('uiPrompt').value || '').trim();
   if (!raw) return toast('先写一句你想要的 UI, 例如「1080x1080 深色底, 中间大标题, 底部金色标签」');
   var modeEl = document.querySelector('input[name=uiMode]:checked');
   var mode = modeEl ? modeEl.value : 'replace';
+  if (aiEngine() === 'ai') return uiGenerateAI(raw, mode);   // AI 大模型模式(异步)
   var res = parseUiPrompt(raw);
   pushUndo('一键生成 UI');
   var u = ensureUI();
@@ -3210,6 +3433,7 @@ function uiModifySelected() {
   if (!l) return toast('先在画布或图层列表里选中一个元素');
   var raw = ($id('uiPrompt').value || '').trim();
   if (!raw) return toast('先写一句要改什么, 例如「圆角改成 32, 换成金色」');
+  if (aiEngine() === 'ai') return uiModifySelectedAI(l, raw);   // AI 大模型模式(异步)
   var p = parseUiModify(raw, l);
   if (!p.keys.length) return toast('没识别出可改的属性, 试试「颜色改金色 / 圆角 32 / 字号 60 / 放到右下角 / 不透明度 80%」', 3600);
   pushUndo('修改图层「' + l.name + '」');
@@ -3408,6 +3632,19 @@ function bindUi() {
   if (gs) gs.onchange = function () { var u = ensureUI(); u.grid = clamp(+this.value || 8, 2, 100); renderUi(); };
   var gen = $id('uiGen'); if (gen) gen.onclick = uiGenerate;
   var mod = $id('uiModify'); if (mod) mod.onclick = uiModifySelected;
+
+  // 【AI 大模型模式】回填本机已存的 Key/模型 + 绑定模式切换与三个按钮
+  // (回填只写进输入框, 不自动发起任何请求 —— 不能悄悄消耗用户的额度)
+  var _k = aiLS(AI_LS_KEY), _m = aiLS(AI_LS_MODEL);
+  if (_k && $id('uiApiKey')) $id('uiApiKey').value = _k;
+  if (_m && $id('uiAiModel')) $id('uiAiModel').value = _m;
+  aiSyncBox();
+  Array.prototype.forEach.call(document.querySelectorAll('input[name=uiEngine]'), function (r) {
+    r.onchange = function () { aiSyncBox(); aiSay(''); };
+  });
+  var _ks = $id('uiKeySave'); if (_ks) _ks.onclick = aiSaveKey;
+  var _kc = $id('uiKeyClear'); if (_kc) _kc.onclick = aiClearKey;
+  var _kt = $id('uiKeyTest'); if (_kt) _kt.onclick = aiTestKey;
   Array.prototype.forEach.call(document.querySelectorAll('#uiTpl [data-tpl]'), function (b) {
     b.onclick = function () { uiApplyTemplate(this.getAttribute('data-tpl')); };
   });
@@ -3614,6 +3851,12 @@ window.__ed = {
     return { w: u.w, h: u.h, bg: u.bg, grid: u.grid, snap: u.snap, showGrid: u.showGrid,
       layers: u.layers, history: u.history, sel: UI_SEL, tab: RTAB };
   },
+  // 【AI 大模型模式】只读接口(供审计断言用; Key 一律走 DOM 输入, 不从代码里暴露)
+  ai: function () {
+    return { engine: aiEngine(), busy: AI_BUSY, model: aiModel(), hasKey: !!aiKey() };
+  },
+  aiParseJson: aiParseJson,
+  aiToLayers: aiToLayers,
   // 撤销栈快照(供测试断言: 剪辑与 UI设计 共用同一套栈)
   history: function () {
     return { undo: HISTORY.undo.map(function (x) { return x.name; }),

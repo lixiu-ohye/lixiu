@@ -126,9 +126,27 @@
           <div id="uiProps"></div>
         </div>
 
-        <!-- 一句话生成 UI(本地解析, 不依赖后端) -->
+        <!-- 一句话生成 UI: 两种引擎二选一(本地关键词解析 / AI 大模型), 生成的图层结构完全一致 -->
         <div class="ui-sec">
           <h5>一句话生成 UI</h5>
+          <div class="ui-row">
+            <label><input type="radio" name="uiEngine" value="local" checked> 本地解析（不用 Key）</label>
+            <label><input type="radio" name="uiEngine" value="ai"> AI 大模型（用自己的 Key）</label>
+          </div>
+
+          <!-- AI 模式才展开: 访客自带的豆包 Key 只存在本机浏览器里 -->
+          <div class="ui-ai" id="uiAiBox">
+            <input type="password" id="uiApiKey" placeholder="粘贴豆包 API Key" autocomplete="off" spellcheck="false">
+            <input type="text" id="uiAiModel" placeholder="模型 / 接入点 ID（留空用默认）" autocomplete="off" spellcheck="false">
+            <div class="ui-act">
+              <button id="uiKeySave">保存到本机</button>
+              <button id="uiKeyClear">清空</button>
+              <button id="uiKeyTest" title="发一个最小请求, 验证 Key 和模型能不能用">测试连接</button>
+            </div>
+            <div class="ui-ai-tip">🔒 Key 只存在你自己浏览器里，不会上传到哩秀服务器。但同一台电脑上打开开发者工具的人能看到它 —— 公共电脑别填。</div>
+            <div class="ui-ai-st" id="uiAiSt"></div>
+          </div>
+
           <textarea class="ui-prompt" id="uiPrompt" placeholder="例：1080x1080 方形，深色底，中间大标题'星界异宠'，下面一行小字'第二幕'，底部金色圆角标签'NEW'"></textarea>
           <div class="ui-row">
             <label><input type="radio" name="uiMode" value="replace" checked> 清空重建</label>
