@@ -230,6 +230,9 @@
 .ui-ai-st{margin-top:4px;font-size:10.5px;color:#9aa1b5;min-height:14px}
 .ui-ai-st.ok{color:#7fd6a2}
 .ui-ai-st.err{color:#ffb3b3}
+/* 中止按钮: 只在 AI_BUSY 期间显示, 请求挂起时给用户一个出口 */
+.ui-ab{width:100%;margin-top:6px;border-radius:6px;padding:6px 4px;font-size:11.5px;cursor:pointer;font-family:inherit;background:#3d2626;border:1px solid #a05050;color:#ffb3b3}
+.ui-ab:hover{background:#4d2d2d;color:#fff}
 .ui-out{width:100%;border-radius:6px;padding:7px 4px;font-size:11.5px;cursor:pointer;font-family:inherit;background:#262a33;border:1px solid #353a46;color:#c6cbd6}
 .ui-out:hover{background:#303542;color:#fff}
 .ui-out.hot{background:#2f4a3d;border-color:#4f8d6c;color:#bfe8d2}

@@ -145,6 +145,8 @@
             </div>
             <div class="ui-ai-tip">🔒 Key 只存在你自己浏览器里，不会上传到哩秀服务器。但同一台电脑上打开开发者工具的人能看到它 —— 公共电脑别填。</div>
             <div class="ui-ai-st" id="uiAiSt"></div>
+            <!-- 中止按钮: AI_BUSY 期间才显示。没有它的话请求挂起只能刷新页面 -->
+            <button class="ui-ab" id="uiAbort" style="display:none">⏹ 中止这次生成</button>
           </div>
 
           <textarea class="ui-prompt" id="uiPrompt" placeholder="例：1080x1080 方形，深色底，中间大标题'星界异宠'，下面一行小字'第二幕'，底部金色圆角标签'NEW'"></textarea>

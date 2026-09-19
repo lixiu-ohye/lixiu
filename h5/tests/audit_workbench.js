@@ -968,7 +968,7 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   // ── T UI设计 · AI 大模型模式(访客自带 Key) ──
   // 全程 page.route 拦方舟接口, 不消耗任何真实额度。
   // 只保留【一条】路由按 arkMode 分支 —— 中途 unroute 重注册会让后续异常用例静默退化成成功用例。
-  let arkMode = 'ok';           // ok | mut | http500 | badjson
+  let arkMode = 'ok';           // ok | mut | http500 | badjson | hang(测超时/中止用, 延迟 10s 才回应)
   let arkHits = 0;
   const AI_OK = { w: 1080, h: 1080, layers: [
     { type: 'rect', name: '底', x: 0, y: 0, w: 1080, h: 1080, fill: 'rgba(0,0,0,.85)', radius: 0 },
@@ -981,6 +981,10 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
     if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors, body: '' });
     arkHits++;
     const j = body => route.fulfill({ status: 200, headers: Object.assign({ 'Content-Type': 'application/json' }, cors), body: JSON.stringify(body) });
+    if (arkMode === 'hang') {                     // 模拟后端挂起: 延迟 10s 才回应(超时被设成 400ms, 所以一定等不到)
+      await new Promise(r => setTimeout(r, 10000));
+      return j({ choices: [{ message: { content: JSON.stringify(AI_OK) } }] });
+    }
     if (arkMode === 'http500') return route.fulfill({ status: 500, headers: Object.assign({ 'Content-Type': 'application/json' }, cors), body: JSON.stringify({ error: { message: 'mock 额度不足' } }) });
     if (arkMode === 'badjson') return j({ choices: [{ message: { content: '我不太明白你的意思' } }] });
     if (arkMode === 'mut') return j({ choices: [{ message: { content: JSON.stringify(AI_MUT) } }] });
@@ -1087,6 +1091,65 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   await page.waitForTimeout(900);
   const t7 = await page.evaluate(() => ({ n: window.__ed.ui().layers.length, engine: window.__ed.ai().engine }));
   ok('T14 切回本地模式仍可生成(无回归)', t7.engine === 'local' && t7.n >= 1, JSON.stringify(t7));
+
+  // ── 超时 / 中止: 请求挂起时 AI_BUSY 不能永久卡死(否则用户只能刷新页面) ──
+  // 把 45 秒超时临时缩到 400ms, 才能在合理时间内验证这条路径。
+  // 注意: 测试完必须还原, 且 hang 模式会让所有方舟请求延迟 10s, 结束前必须切回 ok。
+  await page.check('input[name=uiEngine][value=ai]');
+  await page.evaluate(() => window.__ed.aiTimeout(400));
+  arkMode = 'hang';
+  const tBefore = await page.evaluate(() => ({
+    n: window.__ed.ui().layers.length,
+    u: window.__ed.history().undo.length
+  }));
+
+  // 用户主动中止
+  await page.fill('#uiPrompt', '做一个封面');
+  await page.click('#uiGen');
+  await page.waitForTimeout(150);
+  // T15 必须在「请求已在飞」之后取 —— 请求没发出去时按钮必然隐藏、busy 必然为假
+  const tIn = await page.evaluate(() => ({
+    n: window.__ed.ui().layers.length,
+    busy: window.__ed.ai().busy,
+    ab: getComputedStyle(document.getElementById('uiAbort')).display,
+    st: (document.getElementById('uiAiSt') || {}).textContent || ''
+  }));
+  ok('T15 AI 进行中「中止」按钮可见且 AI_BUSY 为真(请求发出后)',
+    tIn.ab !== 'none' && tIn.busy === true && tIn.n === tBefore.n, JSON.stringify(tIn));
+  await page.click('#uiAbort');
+  await page.waitForTimeout(900);
+  const tAb = await page.evaluate(() => ({
+    n: window.__ed.ui().layers.length,
+    u: window.__ed.history().undo.length,
+    busy: window.__ed.ai().busy,
+    ab: getComputedStyle(document.getElementById('uiAbort')).display,
+    st: (document.getElementById('uiAiSt') || {}).textContent || ''
+  }));
+  ok('T16 点中止后不产生图层、不写撤销栈、AI_BUSY 复位',
+    tAb.n === tBefore.n && tAb.u === tBefore.u && tAb.busy === false && tAb.ab === 'none'
+      && /已中止/.test(tAb.st), JSON.stringify(tAb));
+
+  // 超时自动中止(无人点按钮)
+  await page.waitForTimeout(200);
+  await page.fill('#uiPrompt', '再来一个封面');
+  await page.click('#uiGen');
+  await page.waitForTimeout(1000);
+  const tTo = await page.evaluate(() => ({
+    n: window.__ed.ui().layers.length,
+    u: window.__ed.history().undo.length,
+    busy: window.__ed.ai().busy,
+    ab: getComputedStyle(document.getElementById('uiAbort')).display,
+    st: (document.getElementById('uiAiSt') || {}).textContent || ''
+  }));
+  ok('T17 超时无回应自动中止, 不产生图层也不写撤销栈',
+    tTo.n === tBefore.n && tTo.u === tBefore.u && tTo.busy === false && tTo.ab === 'none'
+      && /超时|中止/.test(tTo.st), JSON.stringify(tTo));
+
+  // 还原: 后续断言不能再被 hang 模式拖住 10 秒
+  await page.evaluate(() => window.__ed.aiTimeout(45000));
+  arkMode = 'ok';
+  await page.check('input[name=uiEngine][value=local]');
+  await page.waitForTimeout(200);
 
   // ── 全页截图 + 错误汇总 ──
   await page.screenshot({ path: SHOT + '/full.png', fullPage: false });

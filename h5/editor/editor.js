@@ -2060,6 +2060,38 @@ function renderUiHist() {
 var AI_LS_KEY = 'lixiu_ark_key', AI_LS_MODEL = 'lixiu_ark_model';
 var AI_DEF_MODEL = 'doubao-seed-1-6-251015';
 var AI_BUSY = false;
+// 超时 / 中止: fetch 本身没有超时机制, 挂起时 AI_BUSY 会永远卡在 true,
+//   用户只能刷新页面 —— 这是不可接受的。用 AbortController 统一管超时和用户中止,
+//   两者共用同一个 signal, 超时触发 abort() 即可走同一条清理路径。
+var AI_TIMEOUT = 45000;        // 生成整版 UI 的合理上限; 测试钩子 __ed.aiTimeout() 可临时缩短
+var AI_ABORT = null;           // 当前请求的 AbortController(会话级, 不入工程)
+var AI_TID = null;             // 超时定时器
+var AI_ABORTED = false;        // 是否「用户主动中止」(用于区分提示文案)
+// 统一收尾: 无论成功/失败/超时/中止, AI_BUSY 与中止按钮必须复位, 否则后续请求全部被拦
+function aiReset() {
+  AI_BUSY = true; AI_ABORTED = false;
+  if (AI_TID) { clearTimeout(AI_TID); AI_TID = null; }
+  AI_ABORT = new AbortController();
+  AI_TID = setTimeout(function () {
+    if (AI_ABORT) AI_ABORT.abort();
+    AI_TID = null;
+  }, AI_TIMEOUT);
+  var b = $id('uiAbort');
+  if (b) b.style.display = '';
+}
+function aiDone() {
+  AI_BUSY = false;
+  if (AI_TID) { clearTimeout(AI_TID); AI_TID = null; }
+  AI_ABORT = null;
+  var b = $id('uiAbort');
+  if (b) b.style.display = 'none';
+}
+// 用户点「中止」: 中止后 fetch 会 reject, 由 aiCall 的 catch 给文案
+function aiAbortNow() {
+  if (!AI_ABORT) return;
+  AI_ABORTED = true;
+  AI_ABORT.abort();
+}
 var AI_TYPES = ['rect', 'text', 'image', 'button', 'card', 'icon', 'tag'];
 var AI_SYS = '你是一个短视频/海报的 UI 版面生成器。\n'
   + '只输出一个 JSON 对象，不要任何解释文字，不要 markdown 代码块。\n'
@@ -2157,8 +2189,8 @@ function aiCall(userText, extraSys) {
   var key = aiKey();
   if (!key) { aiSay('需要先填 API Key', 'err'); toast('AI 模式要先填你自己的豆包 API Key'); return Promise.resolve(null); }
   if (AI_BUSY) { toast('上一条还在生成，稍等一下'); return Promise.resolve(null); }
-  AI_BUSY = true;
-  aiSay('正在问 AI…');
+  aiReset();                                  // 建 AbortController + 45s 超时定时器 + 显示中止按钮
+  aiSay('正在问 AI…（45 秒内无回应会自动中止）');
   var body = {
     model: aiModel(),
     messages: [
@@ -2172,7 +2204,8 @@ function aiCall(userText, extraSys) {
   return fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    signal: AI_ABORT.signal            // 超时定时器 / 中止按钮 共用这一个 signal
   }).then(function (r) {
     return r.text().then(function (txt) { return { ok: r.ok, status: r.status, txt: txt }; });
   }).then(function (res) {
@@ -2190,12 +2223,17 @@ function aiCall(userText, extraSys) {
     if (!obj) { aiSay('AI 返回内容无法解析，换个说法再试', 'err'); toast('AI 返回的不是能识别的 JSON，换个说法再试一次', 4200); return null; }
     aiSay('AI 已返回', 'ok');
     return obj;
-  }).catch(function () {
+  }).catch(function (e) {
     // 错误响应不带 CORS 头时浏览器读不到正文 → 只能在这里兜底, 千万别让它冒成未捕获异常
-    aiSay('请求没走通（多是 Key 无效，或网络被拦）', 'err');
-    toast('AI 请求没走通：检查 Key 是否有效、模型是否已开通、网络是否正常', 4800);
+    if (AI_ABORTED || (e && e.name === 'AbortError')) {
+      aiSay(AI_ABORTED ? '已中止' : '45 秒内没等到回应，已自动中止', 'err');
+      toast(AI_ABORTED ? '已中止 AI 请求' : 'AI 生成超时：换个更简短的描述再试', 4000);
+    } else {
+      aiSay('请求没走通（多是 Key 无效，或网络被拦）', 'err');
+      toast('AI 请求没走通：检查 Key 是否有效、模型是否已开通、网络是否正常', 4800);
+    }
     return null;
-  }).then(function (r) { AI_BUSY = false; return r; }, function () { AI_BUSY = false; return null; });
+  }).then(function (r) { aiDone(); return r; }, function () { aiDone(); return null; });
 }
 function aiTestKey() {
   aiSay('正在测试…');
@@ -2477,6 +2515,7 @@ function bindUi() {
   var _ks = $id('uiKeySave'); if (_ks) _ks.onclick = aiSaveKey;
   var _kc = $id('uiKeyClear'); if (_kc) _kc.onclick = aiClearKey;
   var _kt = $id('uiKeyTest'); if (_kt) _kt.onclick = aiTestKey;
+  var _ka = $id('uiAbort'); if (_ka) _ka.onclick = aiAbortNow;   // 中止当前 AI 请求
   Array.prototype.forEach.call(document.querySelectorAll('#uiTpl [data-tpl]'), function (b) {
     b.onclick = function () { uiApplyTemplate(this.getAttribute('data-tpl')); };
   });
@@ -2689,6 +2728,9 @@ window.__ed = {
   },
   aiParseJson: aiParseJson,
   aiToLayers: aiToLayers,
+  // 测试钩子: 把 45 秒超时临时缩短, 才能在不等 45 秒的前提下验证超时/中止路径。
+  //   生产代码里只有一个 AI_TIMEOUT 变量, 没有专门的测试分支。
+  aiTimeout: function (ms) { AI_TIMEOUT = ms > 0 ? ms : 45000; return AI_TIMEOUT; },
   // 撤销栈快照(供测试断言: 剪辑与 UI设计 共用同一套栈)
   history: function () {
     return { undo: HISTORY.undo.map(function (x) { return x.name; }),
