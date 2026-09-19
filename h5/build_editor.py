@@ -178,7 +178,7 @@ __EDITOR_CSS__
     </div>
   </nav>
   <div class="p-3 border-t border-white/10 text-[11px] text-gray-500 shrink-0">
-    剪辑工作台 · 智能成片 · 后端隧道自动发现
+    哩秀创作台 · 工程存在你自己的浏览器里
   </div>
 </aside>
 
@@ -198,9 +198,10 @@ __EDITOR_CSS__
       <button onclick="toggleSidebar()" class="hidden md:flex w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 items-center justify-center text-gray-600 dark:text-gray-300" title="侧边栏">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
       </button>
+      <!-- 右上角: 只留哩秀品牌标识(原先残留的"头/头目"字样已清掉) -->
       <div class="flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-gray-700">
-        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white text-xs flex items-center justify-center">头</div>
-        <span class="text-sm text-gray-700 dark:text-gray-200 hidden sm:block">头目</span>
+        <span class="w-7 h-7 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white text-xs flex items-center justify-center">哩</span>
+        <span class="text-sm text-gray-700 dark:text-gray-200 hidden sm:block">哩秀</span>
       </div>
     </div>
   </header>

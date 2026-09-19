@@ -22,7 +22,7 @@ var UID = 1; function uid(p) { return (p || 'c') + '_' + Date.now().toString(36)
 
 function blankProject() {
   return {
-    name: '未命名工程', canvas: { w: 1280, h: 720 }, fps: 30, duration: 10,
+    name: '', canvas: { w: 1280, h: 720 }, fps: 30, duration: 10,   // 工程名允许留空(输入框显示占位提示)
     tracks: [
       { id: 'sub1', kind: 'subtitle', locked: false, muted: false, clips: [] },
       { id: 'v1', kind: 'video', locked: false, muted: false, clips: [] },
@@ -78,6 +78,9 @@ function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function eachClip(fn) { PRJ.tracks.forEach(function (tr) { tr.clips.forEach(function (c) { fn(c, tr); }); }); }
 function findClip(id) { var r = null; eachClip(function (c, tr) { if (c.id === id) r = { clip: c, track: tr }; }); return r; }
 function toast(msg, ms) {
+  // 同一坐标只留一条: 否则连续两条提示会重叠糊在一起(实测截图发现)
+  var old = document.querySelectorAll('.ed-toast');
+  Array.prototype.forEach.call(old, function (o) { o.remove(); });
   var t = document.createElement('div'); t.className = 'ed-toast'; t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(function () { t.remove(); }, ms || 2200);
@@ -685,6 +688,10 @@ function renderKfList(c) {
 }
 
 // ═══════════ 【工程IO】.lixiu 文件导入导出(核心模块) ═══════════
+// 【保存到本机】存档键名: 写进浏览器本地存储, 刷新/误关页面都不丢
+var LS_KEY = 'lixiu_prj_autosave';
+var LS_KEY_AT = 'lixiu_prj_autosave_at';
+
 function exportProject() {
   ensureProgress();
   // 导出即视为达成「输出阶段 · 导出工程文件」→ 先置标记再算进度, 保证写进文件的进度是最新的
@@ -693,6 +700,20 @@ function exportProject() {
   applyAuto(true);
   var pg = calcProgress();
   pushLog('auto', '导出 .lixiu 工程文件', before, pg.total);
+  var data = buildProjectData();
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (PRJ.name || '工程') + '.lixiu';
+  a.click();
+  renderProgress();
+  toast('工程已另存为: ' + a.download + ' (进度 ' + pg.total + '% / UI图层 ' + PRJ.ui.layers.length
+    + ' 个 / 里程碑 ' + PRJ.progress.milestones.length + ' 个 / ' + PRJ.progress.log.length + ' 条日志)', 3400);
+}
+
+// 组装工程 JSON —— 「另存为 .lixiu」与「保存到本机」共用这一份结构, 不会有第二套字段
+function buildProjectData() {
+  var pg = calcProgress();
   var data = {
     magic: 'lixiu-project', version: 1, exportedAt: new Date().toISOString(),
     name: PRJ.name, canvas: PRJ.canvas, fps: PRJ.fps, duration: PRJ.duration,
@@ -718,14 +739,38 @@ function exportProject() {
     // 素材只存引用(名字+类型), 不嵌素材本体 —— 导入后按名提示重传
     materials: (PRJ.materials || []).map(function (m) { return { name: m.name, type: m.type }; })
   };
-  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = (PRJ.name || '工程') + '.lixiu';
-  a.click();
-  renderProgress();
-  toast('工程已导出: ' + a.download + ' (进度 ' + pg.total + '% / UI图层 ' + PRJ.ui.layers.length
-    + ' 个 / 备注 / 里程碑 / ' + PRJ.progress.log.length + ' 条日志)', 3400);
+  return data;
+}
+
+/* 【保存到本机】把工程写进浏览器本地存储 —— 用户不需要懂"导出文件"就能保住进度;
+   「↺ 恢复存档」按存档存在与否动态出现, 不常驻工具栏堆按钮。 */
+function saveLocal() {
+  ensureProgress();
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(buildProjectData()));
+    localStorage.setItem(LS_KEY_AT, tsNow());
+    updateSaveBtn();
+    toast('已保存到本机浏览器（刷新或误关都不会丢）');
+  } catch (e) {
+    toast('保存失败：浏览器存储空间不足或被禁用', 2600);
+  }
+}
+
+function updateSaveBtn() {
+  var b = $id('edRestore'); if (!b) return;
+  var at = '';
+  try { at = localStorage.getItem(LS_KEY_AT) || ''; } catch (e) {}
+  if (at) { b.style.display = ''; b.title = '本机有一份存档（' + at + '），点这里取回来'; }
+  else { b.style.display = 'none'; }
+}
+
+// 取回本机存档: 复用 importProject 的完整恢复逻辑(含轨道/进度/UI设计/素材缺失提示)
+function restoreLocal() {
+  var raw = null, at = '';
+  try { raw = localStorage.getItem(LS_KEY); at = localStorage.getItem(LS_KEY_AT) || ''; } catch (e) {}
+  if (!raw) return toast('本机还没有存档');
+  if (!confirm('取回本机存档' + (at ? '（' + at + '）' : '') + '？\n当前工程会被覆盖，素材需要重新上传。')) return;
+  importProject(new File([raw], '本机存档.lixiu', { type: 'application/json' }));
 }
 
 function importProject(file) {
@@ -755,10 +800,10 @@ function importProject(file) {
       renderAll(); renderMatList(); updateUndoBtns();
       // 导入后不自动覆盖(恢复历史配置优先), 仅提示
       var r = calcProgress();
-      pushLog('auto', '导入工程「' + PRJ.name + '」· 恢复进度 ' + r.total + '%', impBefore, r.total);
+      pushLog('auto', '导入工程「' + prjName() + '」· 恢复进度 ' + r.total + '%', impBefore, r.total);
       renderProgress();
       var missCnt = 0; eachClip(function (c) { if (c.matId && !matAlive(c.matId)) missCnt++; });
-      toast('工程已恢复: ' + PRJ.name + ' · 进度 ' + r.total + '% / UI图层 ' + PRJ.ui.layers.length
+      toast('工程已恢复: ' + prjName() + ' · 进度 ' + r.total + '% / UI图层 ' + PRJ.ui.layers.length
         + ' 个 / 备注 / 里程碑 ' + PRJ.progress.milestones.length + ' 个 / 日志 ' + PRJ.progress.log.length + ' 条'
         + (missCnt ? ' · ⚠ ' + missCnt + ' 个片段素材缺失, 请重传同名文件' : ''), 4600);
     } catch (e) { toast('导入失败: ' + e.message, 3500); }
@@ -837,7 +882,8 @@ var PG_GROUPS = [
 
 var PG_SUB_DEF = null;            // 默认字幕样式快照(判断"是否调整过样式")
 var PG_PANEL_FOLD = false;        // 面板折叠态
-var PG_HIST_OPEN = false;         // 日志子面板展开态
+var PG_HIST_OPEN = false;         // 日志子面板展开态(历史遗留: 日志已常显在底部档案区)
+var AR_FOLD = false;              // 【底部·工程档案】折叠态(收起后画布变高, 时间轴空间不受影响)
 var PG_GRP_FOLD = {};             // 分组折叠态
 var _pgTimer = null;              // 静默预估防抖句柄
 
@@ -946,6 +992,8 @@ function touchProgress() {
 
 function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function fmtT(t) { return fmt(t); }
+// 工程名只用于界面文案/文件名: 用户留空时回落到统一称呼, 不强行把名字写进工程数据
+function prjName() { return (PRJ.name || '').trim() || '未命名工程'; }
 
 function renderProgress() {
   ensureProgress();
@@ -984,39 +1032,55 @@ function renderProgress() {
     });
     html += '</div></div>';
   });
-  // ── 项目备注 ──
-  html += '<div class="pg-sec"><h5>📝 项目备注</h5>'
+  // 备注/里程碑/进度历史已移到底部【工程档案】区(见 renderArchive), 这里只留任务清单
+
+  box.innerHTML = html;
+  renderArchive();          // 同步刷新底部「工程档案」(备注/里程碑/进度历史)
+  bindProgress(r);
+}
+
+/* ══════════════ 【底部·工程档案】项目备注 / 里程碑 / 进度历史 ══════════════
+   原先这三块挤在右侧「进度」Tab 里, 和 14 项任务清单混在一起, 位置不合理;
+   现独立成页面底部一条, 三列横排, 随工程保存 / Ctrl+S 导出 / 导入一并带走。 */
+function renderArchive() {
+  ensureProgress();
+  var box = $id('arBody'); if (!box) return;
+  var ms = PRJ.progress.milestones, log = PRJ.progress.log;
+  var cnt = $id('arCnt');
+  if (cnt) cnt.textContent = '📝 备注 · 🚩 里程碑 ' + ms.length + ' 个 · 🧾 日志 ' + log.length + ' 条';
+
+  var html = '';
+  // ── 第 1 列: 项目备注(实时写入工程) ──
+  html += '<div class="ar-col"><h5>📝 项目备注</h5>'
     + '<textarea class="pg-notes" id="pgNotes" placeholder="记录本项目制作说明 / 交付要求 / 待办…(随工程保存)">' + esc(PRJ.progress.notes) + '</textarea></div>';
-  // ── 里程碑 ──
-  var ms = PRJ.progress.milestones;
-  html += '<div class="pg-sec"><h5>🚩 里程碑 <span style="color:#7b8294;font-weight:400">' + ms.length + ' 个</span></h5>'
+  // ── 第 2 列: 里程碑(点时间可定位播放头) ──
+  html += '<div class="ar-col"><h5>🚩 里程碑<span class="n">' + ms.length + ' 个</span></h5>'
     + '<div class="pg-ms-row"><input id="pgMsName" placeholder="如: 粗剪完成 / 字幕定稿">'
-    + '<button id="pgMsAdd" title="以当前播放头时间记录里程碑">标记</button></div>';
-  if (ms.length) {
-    html += '<div id="pgMsList">' + ms.map(function (m, i) {
+    + '<button id="pgMsAdd" title="以当前播放头时间记录里程碑">标记</button></div>'
+    + '<div class="ar-scroll" id="pgMsList">'
+    + (ms.length ? ms.map(function (m, i) {
       return '<div class="pg-ms-item"><span class="tt" data-msgo="' + m.t + '" title="点击定位到该时间">' + fmtT(m.t) + '</span>'
         + '<span class="nn">' + esc(m.name) + '</span>'
         + '<button data-msdel="' + i + '" title="删除该里程碑">✕</button></div>';
-    }).join('') + '</div>';
-  } else html += '<div class="pg-empty">还没有里程碑</div>';
-  html += '</div>';
-  // ── 进度变更日志(可折叠子面板) ──
-  var log = PRJ.progress.log;
-  html += '<div class="pg-sec"><h5>🧾 进度历史'
-    + '<button id="pgHistToggle">' + (PG_HIST_OPEN ? '收起日志' : '查看进度历史') + ' (' + log.length + ')</button></h5>'
-    + '<div class="pg-log' + (PG_HIST_OPEN ? '' : ' hide') + '" id="pgLog">'
+    }).join('') : '<div class="pg-empty">还没有里程碑</div>')
+    + '</div></div>';
+  // ── 第 3 列: 进度变更日志(常显, 无需再点开) ──
+  html += '<div class="ar-col"><h5>🧾 进度历史<span class="n">' + log.length + ' 条</span>'
+    + (log.length ? '<button id="pgLogClear" title="清空进度日志(备注与里程碑保留)">🗑 清空</button>' : '')
+    + '</h5>'
+    + '<div class="pg-log" id="pgLog">'
     + (log.length ? log.slice().reverse().map(function (l) {
       return '<div class="pg-log-item"><span class="pg-tag t-' + l.type + '">' + (PG_TYPE_NAME[l.type] || l.type) + '</span>'
         + '<span class="tm">' + esc(l.ts) + '</span><br>'
         + '<span class="dt">' + esc(l.detail) + '</span><br>'
         + '<span class="df">' + (l.before != null ? l.before + '% → ' + l.after + '%' : '') + '</span></div>';
     }).join('') : '<div class="pg-empty">暂无进度记录</div>')
-    + '</div>'
-    + (PG_HIST_OPEN || log.length ? '<div style="display:flex;gap:6px;margin-top:6px"><button class="ed-btn" id="pgLogClear" style="flex:1">🗑 清空日志</button></div>' : '')
-    + '</div>';
+    + '</div></div>';
 
   box.innerHTML = html;
-  bindProgress(r);
+  box.classList.toggle('hide', AR_FOLD);
+  var fb = $id('arFold');
+  if (fb) fb.textContent = AR_FOLD ? '▴ 展开' : '▾ 收起';
 }
 
 function bindProgress(r) {
@@ -1092,7 +1156,7 @@ function bindProgress(r) {
     renderProgress(); toast('已标记里程碑: ' + name);
   };
   if (iMs) iMs.onkeydown = function (e) { if (e.key === 'Enter') bMsAdd.click(); };
-  Array.prototype.forEach.call(document.querySelectorAll('#pgBody [data-msdel]'), function (el) {
+  Array.prototype.forEach.call(document.querySelectorAll('#arBody [data-msdel]'), function (el) {
     el.onclick = function () {
       ensureProgress();
       var i = +this.getAttribute('data-msdel'), m = PRJ.progress.milestones[i];
@@ -1102,15 +1166,13 @@ function bindProgress(r) {
       renderProgress();
     };
   });
-  Array.prototype.forEach.call(document.querySelectorAll('#pgBody [data-msgo]'), function (el) {
+  Array.prototype.forEach.call(document.querySelectorAll('#arBody [data-msgo]'), function (el) {
     el.onclick = function () {
       cur = clamp(+this.getAttribute('data-msgo') || 0, 0, PRJ.duration);
       updateTime(); renderRuler(); drawFrame();
     };
   });
-  // 日志子面板
-  var hb = $id('pgHistToggle');
-  if (hb) hb.onclick = function () { PG_HIST_OPEN = !PG_HIST_OPEN; renderProgress(); };
+  // 日志: 现在常显在底部「工程档案」区, 不再需要"查看进度历史"开关
   var lc = $id('pgLogClear');
   if (lc) lc.onclick = function () {
     ensureProgress();
@@ -2203,7 +2265,10 @@ function bind() {
   };
   $id('edImportPrj').onclick = function () { $id('edPrjFile').click(); };
   $id('edPrjFile').onchange = function (e) { if (e.target.files[0]) importProject(e.target.files[0]); e.target.value = ''; };
+  // 【顶部工具栏】另存为 .lixiu(下载) / 保存到本机浏览器(防误关)、恢复存档
   $id('edExportPrj').onclick = exportProject;
+  $id('edSave').onclick = saveLocal;
+  $id('edRestore').onclick = restoreLocal;
   $id('edExportFrame').onclick = function () {
     drawFrame();
     var a = document.createElement('a');
@@ -2212,7 +2277,13 @@ function bind() {
     a.click(); toast('当前帧已导出 PNG');
   };
   $id('edUndo').onclick = undo; $id('edRedo').onclick = redo;
-  $id('edName').onchange = function () { PRJ.name = this.value; };
+  // 工程名: 可点可改, 允许清空(空则回落到「未命名工程」, 不影响导出的默认文件名)
+  $id('edName').oninput = $id('edName').onchange = function () {
+    PRJ.name = (this.value || '').trim();
+    updateSaveBtn();
+  };
+  updateSaveBtn();
+  renderArchive();
 
   $id('edPlay').onclick = play;
   $id('edToStart').onclick = function () { cur = 0; updateTime(); renderRuler(); drawFrame(); };
@@ -2234,6 +2305,9 @@ function bind() {
 
   $id('edAddVTrack').onclick = function () { pushUndo('添加视频轨'); PRJ.tracks.push({ id: uid('v'), kind: 'video', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加视频轨'); };
   $id('edAddATrack').onclick = function () { pushUndo('添加音频轨'); PRJ.tracks.push({ id: uid('a'), kind: 'audio', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加音频轨'); };
+  $id('edAddSTrack').onclick = function () { pushUndo('添加字幕轨'); PRJ.tracks.push({ id: uid('sub'), kind: 'subtitle', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加字幕轨'); };
+  // 【底部·工程档案】折叠开关(收起后画布变高)
+  $id('arFold').onclick = function () { AR_FOLD = !AR_FOLD; renderArchive(); };
 
   // 轨道图标(锁定/静音/删轨) 事件委托
   $id('edTrackRows').addEventListener('click', function (e) {
@@ -2315,7 +2389,7 @@ function bind() {
     if (e.code === 'Space') { e.preventDefault(); play(); }
     else if (e.key === 's' || e.key === 'S') { e.preventDefault(); splitClip(); }
     else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); delClip(); }
-    else if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); exportProject(); }
+    else if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveLocal(); }
     else if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); undo(); }
     else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); redo(); }
     else if (e.key === 'ArrowLeft') { cur = Math.max(0, cur - (e.shiftKey ? 1 : 1 / (PRJ.fps || 30))); updateTime(); renderRuler(); drawFrame(); }

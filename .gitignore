@@ -10,6 +10,9 @@ _*.png
 _*.py
 _*.js
 _*.log
+_*.txt
+_*.pid
+_v_*.html
 _wx_*.html
 _wx_*.json
 _wx_fetch*.py

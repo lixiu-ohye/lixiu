@@ -128,7 +128,9 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
 /* 高度按"视口 - 外层页头与创作台标签页"算, 变量由壳层提供(独立打开时回退 105px) */
 .editor-root{display:flex;flex-direction:column;height:calc(100vh - var(--wb-chrome,105px));background:#181a20;color:#d7dae0;font-size:13px}
 .ed-toolbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#1f2229;border-bottom:1px solid #2c303a;flex-wrap:wrap}
-.ed-toolbar .pj{background:#262a33;border:1px solid #353a46;color:#e8eaee;border-radius:6px;padding:5px 10px;font-size:13px;width:150px;outline:none}
+.ed-toolbar .pj{background:#262a33;border:1px solid #353a46;color:#e8eaee;border-radius:6px;padding:5px 10px;font-size:13px;width:196px;outline:none}
+.ed-toolbar .pj::placeholder{color:#6f7686}
+.ed-toolbar .pj:focus{border-color:#9c6b85;background:#2b2f3a}
 .ed-btn{background:#262a33;border:1px solid #353a46;color:#c6cbd6;border-radius:6px;padding:5px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;font-family:inherit}
 .ed-btn:hover{background:#303542;color:#fff}
 .ed-btn.primary{background:#7a4d63;border-color:#9c6b85;color:#fff}
@@ -184,7 +186,8 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
 #edPlayhead::before{content:'';position:absolute;top:0;left:-5px;border:6px solid transparent;border-top-color:#ff5d5d}
 .ed-marker{position:absolute;top:26px;width:1px;height:10px;background:#e8c068;z-index:6}
 .ed-marker::after{content:'🚩';position:absolute;top:-2px;left:-6px;font-size:9px}
-.ed-toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);background:#2c303a;color:#e8eaee;padding:8px 18px;border-radius:8px;border:1px solid #3d4350;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.4);font-size:13px}
+/* 悬浮提示: 定位在"页头 + 创作台标签页"下方, 不遮挡标签页; 同时只保留一条(见 toast()) */
+.ed-toast{position:fixed;top:calc(var(--wb-chrome,105px) + 8px);left:50%;transform:translateX(-50%);background:#2c303a;color:#e8eaee;padding:8px 18px;border-radius:8px;border:1px solid #3d4350;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.4);font-size:13px;max-width:70vw;text-align:center}
 /* 素材库(编辑器内, 左侧壳层导航切换) */
 /* 【素材栏】常驻左栏(默认可见): 上传 / 缩略图列表 / 拖入时间轴
    ⚠ 原实现是 position:absolute 的抽屉且默认 display:none —— 既糊在侧边栏上又看不见,
@@ -347,7 +350,37 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
 /* UI设计: 空选中提示 */
 .ui-nosel{color:#6f7686;font-size:11px;padding:10px 4px;text-align:center;line-height:1.6}
 
-@media (max-width:768px){.ed-right{display:none}.ed-lib{width:200px}}
+/* ══════════════ 【布局分区】标题 / 提示 ══════════════
+   四大分区各带一个分区标题, 边界一眼能分清:
+   ① 顶部工具栏(.ed-toolbar) ② 右侧面板(.ed-right) ③ 底部时间轴(.ed-timeline) ④ 悬浮层(toast/tooltip) */
+.ed-zone{font-size:11.5px;font-weight:600;color:#a9b0c0;letter-spacing:.5px;flex-shrink:0}
+.ed-tb-hint{margin-left:auto;color:#6f7686;font-size:11px}
+.ed-tl-hint{color:#6f7686;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ed-ptitle{display:flex;flex-direction:column;gap:2px;padding:0 2px 8px;border-bottom:1px solid #2c303a;margin-bottom:9px}
+.ed-ptitle>span:first-child{font-size:13px;font-weight:700;color:#e2e6ee;letter-spacing:.5px}
+.ed-ptitle .ed-pt-sub{font-size:10.5px;color:#6f7686}
+.pg-foot-hint{margin-top:8px;font-size:10.5px;color:#6f7686;line-height:1.6}
+
+/* ══════════════ 【底部·工程档案】项目备注 / 里程碑 / 进度历史 ══════════════
+   位置: 页面最底部(时间轴之下)。收起时只有一行标题(30px) ⇒ 时间轴 236px 空间不受影响;
+   展开时高度来自画布收缩, 时间轴依旧不被挤压。 */
+.ed-archive{flex-shrink:0;background:#1b1e25;border-top:1px solid #2c303a}
+.ar-head{display:flex;align-items:center;gap:9px;padding:6px 10px;background:#1f2229;cursor:default}
+.ar-head .ar-hint{font-size:10.5px;color:#6f7686}
+.ar-head .ar-cnt{margin-left:auto;font-size:10.5px;color:#8b93a5;font-variant-numeric:tabular-nums}
+.ar-head .ed-btn{padding:3px 10px;font-size:11px}
+.ar-body{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr);gap:9px;padding:8px 10px;height:128px;border-top:1px solid #262a33}
+.ar-body.hide{display:none}
+.ar-col{min-width:0;display:flex;flex-direction:column;background:#22252e;border:1px solid #2e323d;border-radius:8px;padding:6px 8px;overflow:hidden}
+.ar-col>h5{font-size:11px;color:#8b93a5;margin:0 0 5px;font-weight:600;letter-spacing:.4px;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.ar-col>h5 .n{color:#6f7686;font-weight:400}
+.ar-col>h5 button{margin-left:auto;background:#262a33;border:1px solid #353a46;color:#9aa1b0;border-radius:5px;font-size:10px;padding:2px 7px;cursor:pointer;font-family:inherit}
+.ar-col .pg-notes{flex:1;height:auto;min-height:0;resize:none}
+.ar-col .pg-ms-item{flex-shrink:0}
+.ar-col .pg-log{flex:1;min-height:0;max-height:none;overflow-y:auto}
+.ar-scroll{flex:1;min-height:0;overflow-y:auto}
+
+@media (max-width:768px){.ed-right{display:none}.ed-lib{width:200px}.ar-body{grid-template-columns:1fr;height:auto;max-height:190px;overflow-y:auto}}
 /* ↑↑↑ 编辑器样式结束 ↑↑↑ */
 </style>
 </head>
@@ -390,7 +423,7 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
     </div>
   </nav>
   <div class="p-3 border-t border-white/10 text-[11px] text-gray-500 shrink-0">
-    剪辑工作台 · 智能成片 · 后端隧道自动发现
+    哩秀创作台 · 工程存在你自己的浏览器里
   </div>
 </aside>
 
@@ -410,9 +443,10 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
       <button onclick="toggleSidebar()" class="hidden md:flex w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 items-center justify-center text-gray-600 dark:text-gray-300" title="侧边栏">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
       </button>
+      <!-- 右上角: 只留哩秀品牌标识(原先残留的"头/头目"字样已清掉) -->
       <div class="flex items-center gap-2 pl-2 border-l border-gray-200 dark:border-gray-700">
-        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white text-xs flex items-center justify-center">头</div>
-        <span class="text-sm text-gray-700 dark:text-gray-200 hidden sm:block">头目</span>
+        <span class="w-7 h-7 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white text-xs flex items-center justify-center">哩</span>
+        <span class="text-sm text-gray-700 dark:text-gray-200 hidden sm:block">哩秀</span>
       </div>
     </div>
   </header>
@@ -428,19 +462,21 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
     <!-- 视图一: 【剪辑工作台】(h5/editor/*, 默认激活) -->
 <!-- ═══════════════════ 【剪辑工作台】视图(编辑器主体) ═══════════════════ -->
 <div id="viewEditor" class="editor-root">
-  <!-- 顶部工具栏: 工程名/新建/导入/导出/撤销重做 -->
+  <!-- 顶部工具栏: 工程名(可点可改可清空) / 保存 / 另存为 / 导入 / 撤销重做 -->
   <div class="ed-toolbar">
-    <input id="edName" class="pj" value="未命名工程" title="工程名称">
-    <button class="ed-btn" id="edNew">新建工程</button>
+    <input id="edName" class="pj" placeholder="给这条片子起个名字" title="点这里就能改工程名；清空也行，不影响保存">
+    <button class="ed-btn" id="edNew" title="清空重来（当前改动会先问一次）">新建工程</button>
     <span class="ed-sep"></span>
+    <button class="ed-btn primary" id="edSave" title="保存到本机浏览器，刷新/误关也不丢（Ctrl+S）">💾 保存</button>
+    <button class="ed-btn" id="edRestore" style="display:none" title="把本机上次保存的工程取回来">↺ 恢复存档</button>
+    <button class="ed-btn" id="edExportPrj" title="另存为 .lixiu 工程文件，下载到本机（可发给别人 / 换设备打开）">📁 另存为</button>
     <button class="ed-btn" id="edImportMat">导入素材</button>
-    <button class="ed-btn" id="edImportPrj">导入工程(.lixiu)</button>
-    <button class="ed-btn primary" id="edExportPrj">导出工程 Ctrl+S</button>
+    <button class="ed-btn" id="edImportPrj">打开工程(.lixiu)</button>
     <button class="ed-btn" id="edExportFrame">导出当前帧</button>
     <span class="ed-sep"></span>
     <button class="ed-btn" id="edUndo" title="Ctrl+Z">↶ 撤销</button>
     <button class="ed-btn" id="edRedo" title="Ctrl+Y">↷ 重做</button>
-    <span style="margin-left:auto;color:#6f7686;font-size:11px">空格播放 · S分割 · Del删除 · Ctrl+Z/Y撤销重做 · 滚轮缩放画布</span>
+    <span class="ed-tb-hint">空格播放 · S分割 · Del删除 · Ctrl+Z/Y撤销重做 · 滚轮缩放画布</span>
     <input type="file" id="edMatFile" multiple accept="video/*,image/*,audio/*" style="display:none">
     <input type="file" id="edPrjFile" accept=".lixiu" style="display:none">
   </div>
@@ -483,6 +519,7 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
     </div>
     <!-- 右侧面板: 三大 Tab【属性】【进度】【UI设计】(内容由 editor.js 渲染) -->
     <div class="ed-right" id="edRight">
+      <div class="ed-ptitle"><span>🧩 编辑面板</span><span class="ed-pt-sub" id="edPtSub">选中片段后可改参数</span></div>
       <div class="ed-rtabs" id="edRTabs">
         <button data-rtab="props" class="on">属性</button>
         <button data-rtab="progress">进度</button>
@@ -494,7 +531,8 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
         <div id="edProps"></div>
       </div>
 
-      <!-- ── Tab 2【进度】: 半自动智能进度模块(renderProgress() 渲染) ── -->
+      <!-- ── Tab 2【进度】: 半自动智能进度模块(renderProgress() 渲染)
+           注意: 备注/里程碑/进度历史已移到底部「工程档案」区, 这里只留任务清单 ── -->
       <div class="rt-pane" id="rt-progress">
         <section class="ed-prog" id="edProg">
           <div class="pg-head" id="pgHead" title="点击折叠/展开进度面板">
@@ -505,6 +543,7 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
           </div>
           <div class="pg-bar"><i id="pgFill" class="gray"></i></div>
           <div class="pg-body" id="pgBody"></div>
+          <div class="pg-foot-hint">📝 备注 · 🚩 里程碑 · 🧾 进度历史在页面底部「工程档案」区</div>
         </section>
       </div>
 
@@ -583,9 +622,12 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
   <!-- 底部时间轴: 轨道列 + 刻度标尺 + 轨道泳道 -->
   <div class="ed-timeline">
     <div class="ed-tl-headbar">
+      <span class="ed-zone">🎞 时间轴</span>
+      <span class="ed-sep"></span>
       <button class="ed-btn" id="edAddVTrack">＋视频轨</button>
       <button class="ed-btn" id="edAddATrack">＋音频轨</button>
-      <span style="color:#6f7686;font-size:11px">拖动片段移动 · 两端手柄裁剪 · 点标尺定位 · 🔒锁定 · 🔊静音</span>
+      <button class="ed-btn" id="edAddSTrack">＋字幕轨</button>
+      <span class="ed-tl-hint">拖动片段移动 · 两端手柄裁剪 · 点标尺定位播放头 · 🔒锁定 · 🔊静音</span>
     </div>
     <div class="ed-tl-main">
       <div class="ed-tracks-col">
@@ -597,6 +639,19 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
         <div id="edLanes"></div>
       </div>
     </div>
+  </div>
+
+  <!-- 底部【工程档案】: 项目备注 / 里程碑 / 进度历史
+       原本这三块挤在右侧「进度」Tab 里(和 14 项任务清单混在一起), 位置不合理。
+       现独立成底部一条, 三列横排; 收起时只占一行标题高度 ⇒ 不占用时间轴的空间。 -->
+  <div class="ed-archive" id="edArchive">
+    <div class="ar-head" id="arHead">
+      <span class="ed-zone">📚 工程档案</span>
+      <span class="ar-hint">随工程一起保存 · 导出 .lixiu 时一并带走</span>
+      <span class="ar-cnt" id="arCnt">备注 · 里程碑 0 个 · 日志 0 条</span>
+      <button class="ed-btn" id="arFold" title="收起/展开工程档案（收起后画布会变高）">▾ 收起</button>
+    </div>
+    <div class="ar-body" id="arBody"></div>
   </div>
 
   </div>
@@ -1096,7 +1151,7 @@ var UID = 1; function uid(p) { return (p || 'c') + '_' + Date.now().toString(36)
 
 function blankProject() {
   return {
-    name: '未命名工程', canvas: { w: 1280, h: 720 }, fps: 30, duration: 10,
+    name: '', canvas: { w: 1280, h: 720 }, fps: 30, duration: 10,   // 工程名允许留空(输入框显示占位提示)
     tracks: [
       { id: 'sub1', kind: 'subtitle', locked: false, muted: false, clips: [] },
       { id: 'v1', kind: 'video', locked: false, muted: false, clips: [] },
@@ -1152,6 +1207,9 @@ function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 function eachClip(fn) { PRJ.tracks.forEach(function (tr) { tr.clips.forEach(function (c) { fn(c, tr); }); }); }
 function findClip(id) { var r = null; eachClip(function (c, tr) { if (c.id === id) r = { clip: c, track: tr }; }); return r; }
 function toast(msg, ms) {
+  // 同一坐标只留一条: 否则连续两条提示会重叠糊在一起(实测截图发现)
+  var old = document.querySelectorAll('.ed-toast');
+  Array.prototype.forEach.call(old, function (o) { o.remove(); });
   var t = document.createElement('div'); t.className = 'ed-toast'; t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(function () { t.remove(); }, ms || 2200);
@@ -1759,6 +1817,10 @@ function renderKfList(c) {
 }
 
 // ═══════════ 【工程IO】.lixiu 文件导入导出(核心模块) ═══════════
+// 【保存到本机】存档键名: 写进浏览器本地存储, 刷新/误关页面都不丢
+var LS_KEY = 'lixiu_prj_autosave';
+var LS_KEY_AT = 'lixiu_prj_autosave_at';
+
 function exportProject() {
   ensureProgress();
   // 导出即视为达成「输出阶段 · 导出工程文件」→ 先置标记再算进度, 保证写进文件的进度是最新的
@@ -1767,6 +1829,20 @@ function exportProject() {
   applyAuto(true);
   var pg = calcProgress();
   pushLog('auto', '导出 .lixiu 工程文件', before, pg.total);
+  var data = buildProjectData();
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (PRJ.name || '工程') + '.lixiu';
+  a.click();
+  renderProgress();
+  toast('工程已另存为: ' + a.download + ' (进度 ' + pg.total + '% / UI图层 ' + PRJ.ui.layers.length
+    + ' 个 / 里程碑 ' + PRJ.progress.milestones.length + ' 个 / ' + PRJ.progress.log.length + ' 条日志)', 3400);
+}
+
+// 组装工程 JSON —— 「另存为 .lixiu」与「保存到本机」共用这一份结构, 不会有第二套字段
+function buildProjectData() {
+  var pg = calcProgress();
   var data = {
     magic: 'lixiu-project', version: 1, exportedAt: new Date().toISOString(),
     name: PRJ.name, canvas: PRJ.canvas, fps: PRJ.fps, duration: PRJ.duration,
@@ -1792,14 +1868,38 @@ function exportProject() {
     // 素材只存引用(名字+类型), 不嵌素材本体 —— 导入后按名提示重传
     materials: (PRJ.materials || []).map(function (m) { return { name: m.name, type: m.type }; })
   };
-  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = (PRJ.name || '工程') + '.lixiu';
-  a.click();
-  renderProgress();
-  toast('工程已导出: ' + a.download + ' (进度 ' + pg.total + '% / UI图层 ' + PRJ.ui.layers.length
-    + ' 个 / 备注 / 里程碑 / ' + PRJ.progress.log.length + ' 条日志)', 3400);
+  return data;
+}
+
+/* 【保存到本机】把工程写进浏览器本地存储 —— 用户不需要懂"导出文件"就能保住进度;
+   「↺ 恢复存档」按存档存在与否动态出现, 不常驻工具栏堆按钮。 */
+function saveLocal() {
+  ensureProgress();
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(buildProjectData()));
+    localStorage.setItem(LS_KEY_AT, tsNow());
+    updateSaveBtn();
+    toast('已保存到本机浏览器（刷新或误关都不会丢）');
+  } catch (e) {
+    toast('保存失败：浏览器存储空间不足或被禁用', 2600);
+  }
+}
+
+function updateSaveBtn() {
+  var b = $id('edRestore'); if (!b) return;
+  var at = '';
+  try { at = localStorage.getItem(LS_KEY_AT) || ''; } catch (e) {}
+  if (at) { b.style.display = ''; b.title = '本机有一份存档（' + at + '），点这里取回来'; }
+  else { b.style.display = 'none'; }
+}
+
+// 取回本机存档: 复用 importProject 的完整恢复逻辑(含轨道/进度/UI设计/素材缺失提示)
+function restoreLocal() {
+  var raw = null, at = '';
+  try { raw = localStorage.getItem(LS_KEY); at = localStorage.getItem(LS_KEY_AT) || ''; } catch (e) {}
+  if (!raw) return toast('本机还没有存档');
+  if (!confirm('取回本机存档' + (at ? '（' + at + '）' : '') + '？\n当前工程会被覆盖，素材需要重新上传。')) return;
+  importProject(new File([raw], '本机存档.lixiu', { type: 'application/json' }));
 }
 
 function importProject(file) {
@@ -1829,10 +1929,10 @@ function importProject(file) {
       renderAll(); renderMatList(); updateUndoBtns();
       // 导入后不自动覆盖(恢复历史配置优先), 仅提示
       var r = calcProgress();
-      pushLog('auto', '导入工程「' + PRJ.name + '」· 恢复进度 ' + r.total + '%', impBefore, r.total);
+      pushLog('auto', '导入工程「' + prjName() + '」· 恢复进度 ' + r.total + '%', impBefore, r.total);
       renderProgress();
       var missCnt = 0; eachClip(function (c) { if (c.matId && !matAlive(c.matId)) missCnt++; });
-      toast('工程已恢复: ' + PRJ.name + ' · 进度 ' + r.total + '% / UI图层 ' + PRJ.ui.layers.length
+      toast('工程已恢复: ' + prjName() + ' · 进度 ' + r.total + '% / UI图层 ' + PRJ.ui.layers.length
         + ' 个 / 备注 / 里程碑 ' + PRJ.progress.milestones.length + ' 个 / 日志 ' + PRJ.progress.log.length + ' 条'
         + (missCnt ? ' · ⚠ ' + missCnt + ' 个片段素材缺失, 请重传同名文件' : ''), 4600);
     } catch (e) { toast('导入失败: ' + e.message, 3500); }
@@ -1911,7 +2011,8 @@ var PG_GROUPS = [
 
 var PG_SUB_DEF = null;            // 默认字幕样式快照(判断"是否调整过样式")
 var PG_PANEL_FOLD = false;        // 面板折叠态
-var PG_HIST_OPEN = false;         // 日志子面板展开态
+var PG_HIST_OPEN = false;         // 日志子面板展开态(历史遗留: 日志已常显在底部档案区)
+var AR_FOLD = false;              // 【底部·工程档案】折叠态(收起后画布变高, 时间轴空间不受影响)
 var PG_GRP_FOLD = {};             // 分组折叠态
 var _pgTimer = null;              // 静默预估防抖句柄
 
@@ -2020,6 +2121,8 @@ function touchProgress() {
 
 function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function fmtT(t) { return fmt(t); }
+// 工程名只用于界面文案/文件名: 用户留空时回落到统一称呼, 不强行把名字写进工程数据
+function prjName() { return (PRJ.name || '').trim() || '未命名工程'; }
 
 function renderProgress() {
   ensureProgress();
@@ -2058,39 +2161,55 @@ function renderProgress() {
     });
     html += '</div></div>';
   });
-  // ── 项目备注 ──
-  html += '<div class="pg-sec"><h5>📝 项目备注</h5>'
+  // 备注/里程碑/进度历史已移到底部【工程档案】区(见 renderArchive), 这里只留任务清单
+
+  box.innerHTML = html;
+  renderArchive();          // 同步刷新底部「工程档案」(备注/里程碑/进度历史)
+  bindProgress(r);
+}
+
+/* ══════════════ 【底部·工程档案】项目备注 / 里程碑 / 进度历史 ══════════════
+   原先这三块挤在右侧「进度」Tab 里, 和 14 项任务清单混在一起, 位置不合理;
+   现独立成页面底部一条, 三列横排, 随工程保存 / Ctrl+S 导出 / 导入一并带走。 */
+function renderArchive() {
+  ensureProgress();
+  var box = $id('arBody'); if (!box) return;
+  var ms = PRJ.progress.milestones, log = PRJ.progress.log;
+  var cnt = $id('arCnt');
+  if (cnt) cnt.textContent = '📝 备注 · 🚩 里程碑 ' + ms.length + ' 个 · 🧾 日志 ' + log.length + ' 条';
+
+  var html = '';
+  // ── 第 1 列: 项目备注(实时写入工程) ──
+  html += '<div class="ar-col"><h5>📝 项目备注</h5>'
     + '<textarea class="pg-notes" id="pgNotes" placeholder="记录本项目制作说明 / 交付要求 / 待办…(随工程保存)">' + esc(PRJ.progress.notes) + '</textarea></div>';
-  // ── 里程碑 ──
-  var ms = PRJ.progress.milestones;
-  html += '<div class="pg-sec"><h5>🚩 里程碑 <span style="color:#7b8294;font-weight:400">' + ms.length + ' 个</span></h5>'
+  // ── 第 2 列: 里程碑(点时间可定位播放头) ──
+  html += '<div class="ar-col"><h5>🚩 里程碑<span class="n">' + ms.length + ' 个</span></h5>'
     + '<div class="pg-ms-row"><input id="pgMsName" placeholder="如: 粗剪完成 / 字幕定稿">'
-    + '<button id="pgMsAdd" title="以当前播放头时间记录里程碑">标记</button></div>';
-  if (ms.length) {
-    html += '<div id="pgMsList">' + ms.map(function (m, i) {
+    + '<button id="pgMsAdd" title="以当前播放头时间记录里程碑">标记</button></div>'
+    + '<div class="ar-scroll" id="pgMsList">'
+    + (ms.length ? ms.map(function (m, i) {
       return '<div class="pg-ms-item"><span class="tt" data-msgo="' + m.t + '" title="点击定位到该时间">' + fmtT(m.t) + '</span>'
         + '<span class="nn">' + esc(m.name) + '</span>'
         + '<button data-msdel="' + i + '" title="删除该里程碑">✕</button></div>';
-    }).join('') + '</div>';
-  } else html += '<div class="pg-empty">还没有里程碑</div>';
-  html += '</div>';
-  // ── 进度变更日志(可折叠子面板) ──
-  var log = PRJ.progress.log;
-  html += '<div class="pg-sec"><h5>🧾 进度历史'
-    + '<button id="pgHistToggle">' + (PG_HIST_OPEN ? '收起日志' : '查看进度历史') + ' (' + log.length + ')</button></h5>'
-    + '<div class="pg-log' + (PG_HIST_OPEN ? '' : ' hide') + '" id="pgLog">'
+    }).join('') : '<div class="pg-empty">还没有里程碑</div>')
+    + '</div></div>';
+  // ── 第 3 列: 进度变更日志(常显, 无需再点开) ──
+  html += '<div class="ar-col"><h5>🧾 进度历史<span class="n">' + log.length + ' 条</span>'
+    + (log.length ? '<button id="pgLogClear" title="清空进度日志(备注与里程碑保留)">🗑 清空</button>' : '')
+    + '</h5>'
+    + '<div class="pg-log" id="pgLog">'
     + (log.length ? log.slice().reverse().map(function (l) {
       return '<div class="pg-log-item"><span class="pg-tag t-' + l.type + '">' + (PG_TYPE_NAME[l.type] || l.type) + '</span>'
         + '<span class="tm">' + esc(l.ts) + '</span><br>'
         + '<span class="dt">' + esc(l.detail) + '</span><br>'
         + '<span class="df">' + (l.before != null ? l.before + '% → ' + l.after + '%' : '') + '</span></div>';
     }).join('') : '<div class="pg-empty">暂无进度记录</div>')
-    + '</div>'
-    + (PG_HIST_OPEN || log.length ? '<div style="display:flex;gap:6px;margin-top:6px"><button class="ed-btn" id="pgLogClear" style="flex:1">🗑 清空日志</button></div>' : '')
-    + '</div>';
+    + '</div></div>';
 
   box.innerHTML = html;
-  bindProgress(r);
+  box.classList.toggle('hide', AR_FOLD);
+  var fb = $id('arFold');
+  if (fb) fb.textContent = AR_FOLD ? '▴ 展开' : '▾ 收起';
 }
 
 function bindProgress(r) {
@@ -2166,7 +2285,7 @@ function bindProgress(r) {
     renderProgress(); toast('已标记里程碑: ' + name);
   };
   if (iMs) iMs.onkeydown = function (e) { if (e.key === 'Enter') bMsAdd.click(); };
-  Array.prototype.forEach.call(document.querySelectorAll('#pgBody [data-msdel]'), function (el) {
+  Array.prototype.forEach.call(document.querySelectorAll('#arBody [data-msdel]'), function (el) {
     el.onclick = function () {
       ensureProgress();
       var i = +this.getAttribute('data-msdel'), m = PRJ.progress.milestones[i];
@@ -2176,15 +2295,13 @@ function bindProgress(r) {
       renderProgress();
     };
   });
-  Array.prototype.forEach.call(document.querySelectorAll('#pgBody [data-msgo]'), function (el) {
+  Array.prototype.forEach.call(document.querySelectorAll('#arBody [data-msgo]'), function (el) {
     el.onclick = function () {
       cur = clamp(+this.getAttribute('data-msgo') || 0, 0, PRJ.duration);
       updateTime(); renderRuler(); drawFrame();
     };
   });
-  // 日志子面板
-  var hb = $id('pgHistToggle');
-  if (hb) hb.onclick = function () { PG_HIST_OPEN = !PG_HIST_OPEN; renderProgress(); };
+  // 日志: 现在常显在底部「工程档案」区, 不再需要"查看进度历史"开关
   var lc = $id('pgLogClear');
   if (lc) lc.onclick = function () {
     ensureProgress();
@@ -3277,7 +3394,10 @@ function bind() {
   };
   $id('edImportPrj').onclick = function () { $id('edPrjFile').click(); };
   $id('edPrjFile').onchange = function (e) { if (e.target.files[0]) importProject(e.target.files[0]); e.target.value = ''; };
+  // 【顶部工具栏】另存为 .lixiu(下载) / 保存到本机浏览器(防误关)、恢复存档
   $id('edExportPrj').onclick = exportProject;
+  $id('edSave').onclick = saveLocal;
+  $id('edRestore').onclick = restoreLocal;
   $id('edExportFrame').onclick = function () {
     drawFrame();
     var a = document.createElement('a');
@@ -3286,7 +3406,13 @@ function bind() {
     a.click(); toast('当前帧已导出 PNG');
   };
   $id('edUndo').onclick = undo; $id('edRedo').onclick = redo;
-  $id('edName').onchange = function () { PRJ.name = this.value; };
+  // 工程名: 可点可改, 允许清空(空则回落到「未命名工程」, 不影响导出的默认文件名)
+  $id('edName').oninput = $id('edName').onchange = function () {
+    PRJ.name = (this.value || '').trim();
+    updateSaveBtn();
+  };
+  updateSaveBtn();
+  renderArchive();
 
   $id('edPlay').onclick = play;
   $id('edToStart').onclick = function () { cur = 0; updateTime(); renderRuler(); drawFrame(); };
@@ -3308,6 +3434,9 @@ function bind() {
 
   $id('edAddVTrack').onclick = function () { pushUndo('添加视频轨'); PRJ.tracks.push({ id: uid('v'), kind: 'video', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加视频轨'); };
   $id('edAddATrack').onclick = function () { pushUndo('添加音频轨'); PRJ.tracks.push({ id: uid('a'), kind: 'audio', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加音频轨'); };
+  $id('edAddSTrack').onclick = function () { pushUndo('添加字幕轨'); PRJ.tracks.push({ id: uid('sub'), kind: 'subtitle', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加字幕轨'); };
+  // 【底部·工程档案】折叠开关(收起后画布变高)
+  $id('arFold').onclick = function () { AR_FOLD = !AR_FOLD; renderArchive(); };
 
   // 轨道图标(锁定/静音/删轨) 事件委托
   $id('edTrackRows').addEventListener('click', function (e) {
@@ -3389,7 +3518,7 @@ function bind() {
     if (e.code === 'Space') { e.preventDefault(); play(); }
     else if (e.key === 's' || e.key === 'S') { e.preventDefault(); splitClip(); }
     else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); delClip(); }
-    else if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); exportProject(); }
+    else if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveLocal(); }
     else if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); undo(); }
     else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); redo(); }
     else if (e.key === 'ArrowLeft') { cur = Math.max(0, cur - (e.shiftKey ? 1 : 1 / (PRJ.fps || 30))); updateTime(); renderRuler(); drawFrame(); }

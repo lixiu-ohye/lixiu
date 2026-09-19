@@ -2,7 +2,9 @@
 /* 高度按"视口 - 外层页头与创作台标签页"算, 变量由壳层提供(独立打开时回退 105px) */
 .editor-root{display:flex;flex-direction:column;height:calc(100vh - var(--wb-chrome,105px));background:#181a20;color:#d7dae0;font-size:13px}
 .ed-toolbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#1f2229;border-bottom:1px solid #2c303a;flex-wrap:wrap}
-.ed-toolbar .pj{background:#262a33;border:1px solid #353a46;color:#e8eaee;border-radius:6px;padding:5px 10px;font-size:13px;width:150px;outline:none}
+.ed-toolbar .pj{background:#262a33;border:1px solid #353a46;color:#e8eaee;border-radius:6px;padding:5px 10px;font-size:13px;width:196px;outline:none}
+.ed-toolbar .pj::placeholder{color:#6f7686}
+.ed-toolbar .pj:focus{border-color:#9c6b85;background:#2b2f3a}
 .ed-btn{background:#262a33;border:1px solid #353a46;color:#c6cbd6;border-radius:6px;padding:5px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;font-family:inherit}
 .ed-btn:hover{background:#303542;color:#fff}
 .ed-btn.primary{background:#7a4d63;border-color:#9c6b85;color:#fff}
@@ -58,7 +60,8 @@
 #edPlayhead::before{content:'';position:absolute;top:0;left:-5px;border:6px solid transparent;border-top-color:#ff5d5d}
 .ed-marker{position:absolute;top:26px;width:1px;height:10px;background:#e8c068;z-index:6}
 .ed-marker::after{content:'🚩';position:absolute;top:-2px;left:-6px;font-size:9px}
-.ed-toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);background:#2c303a;color:#e8eaee;padding:8px 18px;border-radius:8px;border:1px solid #3d4350;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.4);font-size:13px}
+/* 悬浮提示: 定位在"页头 + 创作台标签页"下方, 不遮挡标签页; 同时只保留一条(见 toast()) */
+.ed-toast{position:fixed;top:calc(var(--wb-chrome,105px) + 8px);left:50%;transform:translateX(-50%);background:#2c303a;color:#e8eaee;padding:8px 18px;border-radius:8px;border:1px solid #3d4350;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.4);font-size:13px;max-width:70vw;text-align:center}
 /* 素材库(编辑器内, 左侧壳层导航切换) */
 /* 【素材栏】常驻左栏(默认可见): 上传 / 缩略图列表 / 拖入时间轴
    ⚠ 原实现是 position:absolute 的抽屉且默认 display:none —— 既糊在侧边栏上又看不见,
@@ -221,4 +224,34 @@
 /* UI设计: 空选中提示 */
 .ui-nosel{color:#6f7686;font-size:11px;padding:10px 4px;text-align:center;line-height:1.6}
 
-@media (max-width:768px){.ed-right{display:none}.ed-lib{width:200px}}
+/* ══════════════ 【布局分区】标题 / 提示 ══════════════
+   四大分区各带一个分区标题, 边界一眼能分清:
+   ① 顶部工具栏(.ed-toolbar) ② 右侧面板(.ed-right) ③ 底部时间轴(.ed-timeline) ④ 悬浮层(toast/tooltip) */
+.ed-zone{font-size:11.5px;font-weight:600;color:#a9b0c0;letter-spacing:.5px;flex-shrink:0}
+.ed-tb-hint{margin-left:auto;color:#6f7686;font-size:11px}
+.ed-tl-hint{color:#6f7686;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ed-ptitle{display:flex;flex-direction:column;gap:2px;padding:0 2px 8px;border-bottom:1px solid #2c303a;margin-bottom:9px}
+.ed-ptitle>span:first-child{font-size:13px;font-weight:700;color:#e2e6ee;letter-spacing:.5px}
+.ed-ptitle .ed-pt-sub{font-size:10.5px;color:#6f7686}
+.pg-foot-hint{margin-top:8px;font-size:10.5px;color:#6f7686;line-height:1.6}
+
+/* ══════════════ 【底部·工程档案】项目备注 / 里程碑 / 进度历史 ══════════════
+   位置: 页面最底部(时间轴之下)。收起时只有一行标题(30px) ⇒ 时间轴 236px 空间不受影响;
+   展开时高度来自画布收缩, 时间轴依旧不被挤压。 */
+.ed-archive{flex-shrink:0;background:#1b1e25;border-top:1px solid #2c303a}
+.ar-head{display:flex;align-items:center;gap:9px;padding:6px 10px;background:#1f2229;cursor:default}
+.ar-head .ar-hint{font-size:10.5px;color:#6f7686}
+.ar-head .ar-cnt{margin-left:auto;font-size:10.5px;color:#8b93a5;font-variant-numeric:tabular-nums}
+.ar-head .ed-btn{padding:3px 10px;font-size:11px}
+.ar-body{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr);gap:9px;padding:8px 10px;height:128px;border-top:1px solid #262a33}
+.ar-body.hide{display:none}
+.ar-col{min-width:0;display:flex;flex-direction:column;background:#22252e;border:1px solid #2e323d;border-radius:8px;padding:6px 8px;overflow:hidden}
+.ar-col>h5{font-size:11px;color:#8b93a5;margin:0 0 5px;font-weight:600;letter-spacing:.4px;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.ar-col>h5 .n{color:#6f7686;font-weight:400}
+.ar-col>h5 button{margin-left:auto;background:#262a33;border:1px solid #353a46;color:#9aa1b0;border-radius:5px;font-size:10px;padding:2px 7px;cursor:pointer;font-family:inherit}
+.ar-col .pg-notes{flex:1;height:auto;min-height:0;resize:none}
+.ar-col .pg-ms-item{flex-shrink:0}
+.ar-col .pg-log{flex:1;min-height:0;max-height:none;overflow-y:auto}
+.ar-scroll{flex:1;min-height:0;overflow-y:auto}
+
+@media (max-width:768px){.ed-right{display:none}.ed-lib{width:200px}.ar-body{grid-template-columns:1fr;height:auto;max-height:190px;overflow-y:auto}}

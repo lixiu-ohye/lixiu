@@ -194,21 +194,29 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   ok('E2 备注写入工程数据', /审计测试/.test(ms.notes));
 
   // ── F 进度日志(结构化字段) ──
-  await page.click('#pgHistToggle');
-  await page.waitForTimeout(300);
+  // 布局重构后: 日志从右侧「进度」Tab 移到底部【工程档案】区, 且常显(不再需要"查看进度历史"开关)
+  await page.waitForTimeout(200);
   const log = await page.evaluate(() => {
     const items = [...document.querySelectorAll('.pg-log-item')];
     const L = window.__ed.prj().progress.log;
-    return { n: L.length, visible: getComputedStyle(document.getElementById('pgLog')).display !== 'none',
+    const el = document.getElementById('pgLog');
+    return { n: L.length, visible: !!el && getComputedStyle(el).display !== 'none' && el.getBoundingClientRect().height > 0,
+      inArchive: !!document.querySelector('#arBody #pgLog'), toggleGone: !document.getElementById('pgHistToggle'),
       html: items[0] ? items[0].innerHTML : '', types: [...new Set(L.map(x => x.type))],
       fields: L[0] ? Object.keys(L[0]).sort().join(',') : '', sample: L[L.length - 1] };
   });
   R.data.log = log;
-  ok('F1 日志子面板可展开', log.visible && log.n > 0, 'n=' + log.n);
+  ok('F1 进度日志常显在底部工程档案区', log.visible && log.inArchive && log.n > 0, 'n=' + log.n + ' inArchive=' + log.inArchive);
+  ok('F1b 日志不再需要"查看进度历史"开关(已移出进度Tab)', log.toggleGone);
   ok('F2 日志含四要素(时间戳/类型/详情/前后%)', log.fields === 'after,before,detail,ts,type', log.fields);
   ok('F3 日志区分 自动更新/人工修改', log.types.indexOf('auto') >= 0 && log.types.indexOf('manual') >= 0, log.types.join('/'));
   ok('F4 日志条目渲染出前后百分比', /→/.test(log.html), log.html.replace(/<[^>]+>/g, ' ').trim().slice(0, 80));
   await page.screenshot({ path: SHOT + '/panel-with-progress.png', clip: { x: 1290, y: 56, width: 310, height: 640 } });
+
+  // 工程名可点可改(工具栏第一个输入框) → 让 I6 的"导入恢复工程名"断言真正可判定
+  await page.fill('#edName', '审计工程');
+  await page.waitForTimeout(200);
+  ok('F5 工程名可编辑并写入工程数据', (await page.evaluate(() => window.__ed.prj().name)) === '审计工程');
 
   // ── G 导出 .lixiu ──
   step('G: export start');
@@ -699,6 +707,106 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
     n23.w === 1080 && n23.h === 1080 && n23.n === 0 && n23.grid === 8 && n23.snap === true, JSON.stringify(n23));
 
   await page.screenshot({ path: SHOT + '/ui-design.png' });
+
+  // ── P 布局分区(顶部工具栏 / 右侧面板 / 底部时间轴 / 悬浮层 + 底部工程档案) ──
+  step('P: layout zones');
+  await page.evaluate(() => nav('editor'));
+  await page.waitForTimeout(500);
+  const pz = await page.evaluate(() => {
+    const R2 = el => { const r = el.getBoundingClientRect(); return { h: Math.round(r.height), bottom: Math.round(r.bottom), w: Math.round(r.width) }; };
+    return {
+      headerTxt: document.querySelector('header').innerText.replace(/\s+/g, ' ').trim(),
+      bodyHasToumu: document.body.innerText.indexOf('头目') >= 0,
+      sideFoot: (document.querySelector('aside > div:last-child') || {}).innerText || '',
+      // 顶部工具栏
+      nameVis: !!document.getElementById('edName') && document.getElementById('edName').getBoundingClientRect().width > 0,
+      namePh: (document.getElementById('edName') || {}).placeholder || '',
+      saveVis: document.getElementById('edSave').getBoundingClientRect().width > 0,
+      saveTxt: document.getElementById('edSave').innerText.trim(),
+      asTxt: document.getElementById('edExportPrj').innerText.trim(),
+      // 右侧面板
+      pt: (document.querySelector('.ed-ptitle') || {}).innerText || '',
+      // 底部时间轴
+      tlH: R2(document.querySelector('.ed-timeline')).h,
+      tlBottom: R2(document.querySelector('.ed-timeline')).bottom,
+      tlZone: (document.querySelector('.ed-tl-headbar .ed-zone') || {}).innerText || '',
+      hasSTrack: !!document.getElementById('edAddSTrack'),
+      // 底部工程档案
+      arBottom: R2(document.getElementById('edArchive')).bottom,
+      vh: window.innerHeight,
+      arCols: [...document.querySelectorAll('#arBody .ar-col')].map(c => c.querySelector('h5').innerText.replace(/\s+/g, '')),
+      notesInAr: !!document.querySelector('#arBody #pgNotes'),
+      msInAr: !!document.querySelector('#arBody #pgMsAdd'),
+      logInAr: !!document.querySelector('#arBody #pgLog'),
+      notesInPgTab: !!document.querySelector('#pgBody #pgNotes'),
+      msInPgTab: !!document.querySelector('#pgBody #pgMsAdd'),
+      cvH: Math.round(document.getElementById('edCanvas').getBoundingClientRect().height),
+      // 悬浮层
+      tipPos: getComputedStyle(document.getElementById('edTip')).position
+    };
+  });
+  R.data.layout = pz;
+  ok('P1 顶部已无「头目」字样且保留哩秀品牌', !pz.bodyHasToumu && /哩秀/.test(pz.headerTxt), pz.headerTxt);
+  ok('P2 侧边栏无开发术语(后端隧道/自动发现)', !/后端隧道|自动发现/.test(pz.sideFoot), pz.sideFoot.replace(/\s+/g, ' '));
+  ok('P3 工具栏: 工程名可编辑(带留空提示)', pz.nameVis && pz.namePh.length > 0, pz.namePh);
+  ok('P4 工具栏: 保存 / 另存为 两个动作齐备', pz.saveVis && /保存/.test(pz.saveTxt) && /另存为/.test(pz.asTxt), pz.saveTxt + ' | ' + pz.asTxt);
+  ok('P5 右侧面板有分区标题「编辑面板」', /编辑面板/.test(pz.pt), pz.pt.replace(/\s+/g, ' '));
+  ok('P6 时间轴有分区标题且高度 236 未被压缩', /时间轴/.test(pz.tlZone) && pz.tlH === 236, pz.tlZone + ' h=' + pz.tlH);
+  ok('P7 时间轴底边不出视口(不溢出)', pz.tlBottom < pz.vh, 'bottom=' + pz.tlBottom + ' vh=' + pz.vh);
+  ok('P8 备注/里程碑/进度历史已移出右侧进度Tab', !pz.notesInPgTab && !pz.msInPgTab, JSON.stringify({ n: pz.notesInPgTab, m: pz.msInPgTab }));
+  ok('P9 底部工程档案三列齐备(备注/里程碑/进度历史)', pz.arCols.length === 3 && pz.notesInAr && pz.msInAr && pz.logInAr, pz.arCols.join(' | '));
+  ok('P10 工程档案贴在页面最底部', Math.abs(pz.arBottom - pz.vh) <= 2, 'bottom=' + pz.arBottom + ' vh=' + pz.vh);
+  ok('P11 悬浮 tooltip 为 fixed 定位', pz.tipPos === 'fixed', pz.tipPos);
+
+  // 收起档案区 → 空间还给画布, 时间轴不受影响
+  await page.click('#arFold');
+  await page.waitForTimeout(400);
+  const pz2 = await page.evaluate(() => ({
+    cvH: Math.round(document.getElementById('edCanvas').getBoundingClientRect().height),
+    tlH: Math.round(document.querySelector('.ed-timeline').getBoundingClientRect().height),
+    arBottom: Math.round(document.getElementById('edArchive').getBoundingClientRect().bottom),
+    hidden: document.getElementById('arBody').classList.contains('hide'),
+    btn: document.getElementById('arFold').innerText.trim()
+  }));
+  ok('P12 工程档案可收起(画布变高)', pz2.hidden && pz2.cvH > pz.cvH && /展开/.test(pz2.btn), pz.cvH + ' -> ' + pz2.cvH);
+  ok('P13 收起后时间轴高度不变', pz2.tlH === 236, 'h=' + pz2.tlH);
+  ok('P14 收起后档案区仍贴底', Math.abs(pz2.arBottom - pz.vh) <= 2, 'bottom=' + pz2.arBottom);
+  await page.click('#arFold');
+  await page.waitForTimeout(350);
+
+  // ＋字幕轨: 新增轨道 + 进撤销栈
+  const nt0 = await page.evaluate(() => window.__ed.prj().tracks.length);
+  await page.click('#edAddSTrack');
+  await page.waitForTimeout(350);
+  const nt1 = await page.evaluate(() => window.__ed.prj().tracks.filter(t => t.kind === 'subtitle').length);
+  await page.keyboard.press('Control+z');
+  await page.waitForTimeout(350);
+  const nt2 = await page.evaluate(() => window.__ed.prj().tracks.length);
+  ok('P15 ＋字幕轨 可新增且可 Ctrl+Z 撤销', nt2 === nt0, 'tracks ' + nt0 + ' -> ' + nt2 + ' (subtitle 数 ' + nt1 + ')');
+
+  // 保存到本机 → 存档可读 + 「↺ 恢复存档」出现
+  await page.click('#edSave');
+  await page.waitForTimeout(500);
+  const sv = await page.evaluate(() => {
+    const raw = localStorage.getItem('lixiu_prj_autosave');
+    let j = null; try { j = JSON.parse(raw); } catch (e) {}
+    return { magic: j && j.magic, hasTracks: !!(j && j.tracks), vis: getComputedStyle(document.getElementById('edRestore')).display };
+  });
+  ok('P16 💾保存 写入本机且为合法工程结构', sv.magic === 'lixiu-project' && sv.hasTracks, 'magic=' + sv.magic);
+  ok('P17 有存档后「↺ 恢复存档」按钮出现', sv.vis !== 'none', 'display=' + sv.vis);
+
+  // 悬浮提示: 连续两条不重叠, 且不被创作台标签页遮挡
+  await page.click('#edAddVTrack');
+  await page.click('#edAddSTrack');
+  await page.waitForTimeout(200);
+  const tst = await page.evaluate(() => {
+    const ts = [...document.querySelectorAll('.ed-toast')];
+    const r = ts.length ? ts[0].getBoundingClientRect() : null;
+    const tabs = document.getElementById('cbTabs').getBoundingClientRect();
+    return { n: ts.length, top: r ? Math.round(r.top) : -1, tabsBottom: Math.round(tabs.bottom) };
+  });
+  ok('P18 连续提示只保留一条(不重叠糊字)', tst.n <= 1, 'n=' + tst.n);
+  ok('P19 悬浮提示不被创作台标签页遮挡', tst.n === 0 || tst.top >= tst.tabsBottom, JSON.stringify(tst));
 
   // ── 全页截图 + 错误汇总 ──
   await page.screenshot({ path: SHOT + '/full.png', fullPage: false });
