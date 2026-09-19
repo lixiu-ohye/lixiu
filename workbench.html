@@ -53,15 +53,15 @@ tailwind.config = {
 }
 /* ↑↑↑↑↑↑↑↑↑ 工作台骨架样式结束 ↑↑↑↑↑↑↑↑↑ */
 
-/* ↓↓↓ 以下为【智能成片原页面】样式(收窄到 .orig-page 作用域) ↓↓↓ */
-:root{
-  --rose:#e8a0bf;--rose-dark:#d485a8;--gold:#d4a574;--cream:#fdf6f0;
-  --lavender:#c9b6d9;--bg:#fdf6f0;--card:#fffcf8;--ink:#4a3f42;--ink-2:#8a7b7e;
-  --line:rgba(200,160,140,0.22);--ok:#1D9E75;--warn:#BA7517;--err:#E24B4A;
-}
+/* ↓↓↓ 以下为【智能成片原页面】样式(收窄到 .orig-page 作用域) ↓↓↓
+   调色板变量(--rose/--gold/--cream/--bg/--card/--ink/--line/--ok...)由
+   智能成片自己的 :root 块提供, 经 scope_css() 收窄后会变成 .orig-page,
+   只在该子树生效并向下继承。
+   这里【不再重复定义一份】: 外壳对这些变量引用 0 次, 留一份全局定义既
+   没有用, 又造成「泄漏到外壳 + 两处定义改一处漏一处」的隐患。 */
 
 .orig-page *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{
+.orig-page{
   --rose:#e8a0bf;--rose-dark:#d485a8;--gold:#d4a574;--cream:#fdf6f0;
   --lavender:#c9b6d9;--bg:#fdf6f0;--card:#fffcf8;--ink:#4a3f42;--ink-2:#8a7b7e;
   --line:rgba(200,160,140,0.22);--ok:#1D9E75;--warn:#BA7517;--err:#E24B4A;

@@ -52,18 +52,38 @@ assert 'wrap' in orig_body, '智能成片业务内容缺失(wrap 未找到)'
 
 # ── 3. 原样式作用域收窄: 前缀 .orig-page, 防止污染工作台与编辑器 ──
 def scope_css(css):
+    """把智能成片的样式收窄到 .orig-page 子树。
+
+    :root 必须特殊处理 —— 它是 <html> 的伪类, 前缀写成 ".orig-page :root"
+    永远匹配不到任何元素(等于把整块变量定义丢掉)。所以把 :root 选择器
+    【整体换成】.orig-page: 变量落在 #viewStudio 自身再向下继承, 在子树内
+    与原全局定义完全等价, 但不会再泄漏到外壳和编辑器。
+    (旧版这里直接放行 :root, 导致智能成片的调色板 --rose/--bg/--card/--ink
+     等被注入到全局; 单行 :root{...} 会被下面的正则拦到, 而多行的 :root{
+     —— 属性写在后续行 —— 匹配不到正则, 直接从 else 分支漏过去。)
+    """
+    def fix_root(sel):
+        rest = sel[len(':root'):].strip().lstrip(',').strip()
+        s = '.orig-page'
+        if rest:
+            s += ', ' + ', '.join('.orig-page ' + x.strip() for x in rest.split(','))
+        return s
+
     out = []
     for line in css.split('\n'):
         ls = line.strip()
-        if ls.startswith('/*') or ls.startswith('@') or ls.startswith(':root'):
+        if ls.startswith('/*') or ls.startswith('@'):
             out.append(line); continue
         m = re.match(r'^([^{}@]+)\{(.*)\}$', ls)
         if m:
             sel, body = m.group(1).strip(), m.group(2)
             if sel.startswith(':root'):
-                out.append(line); continue
-            sels = ', '.join('.orig-page ' + x.strip() for x in sel.split(','))
-            out.append(sels + '{' + body + '}')
+                out.append(fix_root(sel) + '{' + body + '}')
+            else:
+                out.append(', '.join('.orig-page ' + x.strip() for x in sel.split(',')) + '{' + body + '}')
+        elif ls.startswith(':root') and ls.endswith('{'):
+            # 多行块的首行(属性写在后续行) —— 上面的单行正则匹配不到
+            out.append(fix_root(ls[:-1].strip()) + '{')
         else:
             out.append(line)
     return '\n'.join(out)
@@ -126,12 +146,12 @@ tailwind.config = {
 }
 /* ↑↑↑↑↑↑↑↑↑ 工作台骨架样式结束 ↑↑↑↑↑↑↑↑↑ */
 
-/* ↓↓↓ 以下为【智能成片原页面】样式(收窄到 .orig-page 作用域) ↓↓↓ */
-:root{
-  --rose:#e8a0bf;--rose-dark:#d485a8;--gold:#d4a574;--cream:#fdf6f0;
-  --lavender:#c9b6d9;--bg:#fdf6f0;--card:#fffcf8;--ink:#4a3f42;--ink-2:#8a7b7e;
-  --line:rgba(200,160,140,0.22);--ok:#1D9E75;--warn:#BA7517;--err:#E24B4A;
-}
+/* ↓↓↓ 以下为【智能成片原页面】样式(收窄到 .orig-page 作用域) ↓↓↓
+   调色板变量(--rose/--gold/--cream/--bg/--card/--ink/--line/--ok...)由
+   智能成片自己的 :root 块提供, 经 scope_css() 收窄后会变成 .orig-page,
+   只在该子树生效并向下继承。
+   这里【不再重复定义一份】: 外壳对这些变量引用 0 次, 留一份全局定义既
+   没有用, 又造成「泄漏到外壳 + 两处定义改一处漏一处」的隐患。 */
 __SCOPED_CSS__
 
 /* ↓↓↓ 【剪辑工作台】编辑器样式(h5/editor/editor.css) ↓↓↓ */
