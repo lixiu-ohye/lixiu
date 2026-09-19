@@ -276,6 +276,125 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   ok('J1 切到智能成片: 编辑器隐藏/原页面显示', sw1.ed === 'none' && sw1.st !== 'none' && sw1.t === '智能成片');
   ok('J2 切回剪辑工作台且进度面板重绘', sw2.ed !== 'none' && sw2.st === 'none' && sw2.pg && sw2.t === '剪辑工作台');
 
+  // ── W 智能成片「气泡对话」模块(2026-09-19 改版, 回归门禁) ──
+  // 设计意图: 用户不离开一个输入框就能走完全流程 —— 说需求 / 看理解 / 追问 / 开工;
+  //   右栏固定给出「素材 · 生成进度 · 成片」三段, 底部只留一个「开始生成」,
+  //   后端地址等调试项默认不出现(只在「设置」视图露出)。
+  step('W: studio chat');
+  await page.evaluate(() => nav('studio'));
+  await page.waitForTimeout(400);
+
+  const w1 = await page.evaluate(() => {
+    const b = document.querySelectorAll('#chatMsgs .bub.ai .bub-txt');
+    return { n: document.querySelectorAll('#chatMsgs .bub').length, first: b.length ? b[0].innerText : '' };
+  });
+  ok('W1 开场有 AI 欢迎气泡且指引先放素材', w1.n >= 1 && /素材/.test(w1.first) && /效果/.test(w1.first),
+    '气泡数=' + w1.n + ' | ' + w1.first.replace(/\n/g, ' ').slice(0, 60));
+
+  const w2 = await page.evaluate(() => ({
+    mats: !!document.getElementById('matCard'), prog: !!document.getElementById('progCard'), done: !!document.getElementById('doneCard'),
+    strip: !!document.getElementById('matStrip'), steps: !!document.getElementById('progSteps')
+  }));
+  ok('W2 右栏三段齐备(素材/生成进度/成片)', w2.mats && w2.prog && w2.done && w2.strip && w2.steps, JSON.stringify(w2));
+
+  const w3 = await page.evaluate(() => Array.from(document.querySelectorAll('#progSteps .lw-st')).map(e => e.textContent));
+  ok('W3 生成进度初始四步均为「待处理」', w3.length === 4 && w3.every(t => /^待处理/.test(t)), w3.join(' | '));
+
+  const w4 = await page.evaluate(() => {
+    const b = document.getElementById('goBtn');
+    const d = document.getElementById('dbgCard');
+    return { txt: b ? b.textContent.trim() : '', foot: !!document.querySelector('.lw-foot'),
+      dbgVisible: d ? getComputedStyle(d).display !== 'none' : false };
+  });
+  ok('W4 底部常驻「开始生成」且调试项默认隐藏', w4.txt === '开始生成' && w4.foot && !w4.dbgVisible, JSON.stringify(w4));
+
+  // W5/W6 没素材时的两道防线: 发言给引导; 点「开始生成」也给引导, 且不向后端发建任务请求
+  const jobReqs = [];
+  const onReq = r => { if (/\/api\/jobs/.test(r.url())) jobReqs.push(r.url()); };
+  page.on('request', onReq);
+  await page.fill('#chatInput', '剪成30秒口播');
+  await page.click('#chatSend');
+  await page.waitForTimeout(350);
+  await page.click('#goBtn');
+  await page.waitForTimeout(350);
+  page.off('request', onReq);
+  const w5 = await page.evaluate(() => Array.from(document.querySelectorAll('#chatMsgs .bub.ai .bub-txt')).map(e => e.innerText).join('\n'));
+  ok('W5 没素材时发言 → 引导先选素材', /还没收到素材/.test(w5));
+  ok('W6 没素材点「开始生成」→ 引导且不发建任务请求', /还没有素材/.test(w5) && jobReqs.length === 0, 'jobs 请求数=' + jobReqs.length);
+
+  // W7 选中素材 → 右栏素材条出缩略图 + 对话出素材气泡 + 真实读出总时长(读 video metadata, 不是估的)
+  await page.setInputFiles('#file', [{ name: 'chat_a.mp4', mimeType: 'video/mp4', buffer: TINY_MP4 }]);
+  await page.waitForTimeout(2000);
+  const w7 = await page.evaluate(() => ({
+    thumbs: document.querySelectorAll('#matStrip .lw-thumb').length,
+    hint: (document.getElementById('matHint') || {}).textContent,
+    meBubbles: document.querySelectorAll('#chatMsgs .bub.me').length,
+    sec: window.MAT_SEC
+  }));
+  ok('W7 素材进右栏素材条 + 对话气泡, 并真实读出总时长',
+    w7.thumbs >= 1 && /1 个/.test(w7.hint) && /共/.test(w7.hint) && w7.meBubbles >= 1 && w7.sec > 0,
+    'thumbs=' + w7.thumbs + ' hint=' + w7.hint + ' MAT_SEC=' + w7.sec + ' 我方气泡=' + w7.meBubbles);
+
+  // W8/W9 发言 → 「我理解到的」摘要卡, 胶囊必须与那句话对得上
+  await page.fill('#chatInput', '把说话的片段保留，去掉静音和卡顿，加中文字幕');
+  await page.click('#chatSend');
+  await page.waitForTimeout(450);
+  const w8 = await page.evaluate(() => {
+    const cards = document.querySelectorAll('#chatMsgs .bub[data-plan="1"]');
+    const last = cards[cards.length - 1];
+    const chips = last ? Array.from(last.querySelectorAll('.lw-chipv')).map(e => e.textContent) : [];
+    const lines = last ? last.querySelector('.bub-txt').innerText.split('\n').filter(Boolean) : [];
+    return { n: cards.length, who: last ? last.querySelector('.bub-who').textContent : '', chips: chips, q: lines[lines.length - 1] || '' };
+  });
+  R.data.studioChat = w8;
+  const w8j = w8.chips.join(' | ');
+  ok('W8 发言后出现「我理解到的」摘要卡', w8.n >= 1 && /我理解到的/.test(w8.who), JSON.stringify(w8).slice(0, 150));
+  ok('W9 摘要胶囊与需求一致(素材/保留说话/去静音/加字幕/预计成片)',
+    /素材 1 个/.test(w8j) && /保留说话片段/.test(w8j) && /去静音/.test(w8j) && /加中文字幕/.test(w8j) && /预计成片/.test(w8j), w8j);
+
+  // W10/W11 多轮对话: 第二句只补一点, 摘要要合并保留前一轮要点; AI 追问要随缺口变化
+  await page.fill('#chatInput', '节奏再紧凑一点');
+  await page.click('#chatSend');
+  await page.waitForTimeout(450);
+  const w10 = await page.evaluate(() => {
+    const cards = document.querySelectorAll('#chatMsgs .bub[data-plan="1"]');
+    const last = cards[cards.length - 1];
+    const lines = last.querySelector('.bub-txt').innerText.split('\n').filter(Boolean);
+    return { n: cards.length, chips: Array.from(last.querySelectorAll('.lw-chipv')).map(e => e.textContent), q: lines[lines.length - 1] || '' };
+  });
+  const w10j = w10.chips.join(' | ');
+  ok('W10 多轮对话: 追加需求后仍保留前一轮要点',
+    w10.n >= 2 && /节奏紧凑/.test(w10j) && /加中文字幕/.test(w10j) && /去静音/.test(w10j), w10j);
+  ok('W11 AI 主动追问随缺口变化(先问节奏→再问配乐)',
+    /节奏/.test(w8.q) && /配乐|音乐/.test(w10.q), '首问=' + w8.q + ' | 末问=' + w10.q);
+
+  // W12 整块区域可拖入文件(真实 DragEvent + 真实可解码 mp4, 免得媒体错误污染 L1)
+  const w12drag = await page.evaluate((b64) => {
+    const bin = atob(b64); const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    const dt = new DataTransfer();
+    dt.items.add(new File([arr], 'chat_drop.mp4', { type: 'video/mp4' }));
+    const root = document.getElementById('lwRoot');
+    root.dispatchEvent(new DragEvent('dragover', { dataTransfer: dt, bubbles: true, cancelable: true }));
+    const hi = root.classList.contains('drag');
+    root.dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));
+    return { hi };
+  }, TINY_MP4_B64);
+  await page.waitForTimeout(700);
+  const w12 = await page.evaluate(() => ({ thumbs: document.querySelectorAll('#matStrip .lw-thumb').length, n: (window.files || []).length }));
+  ok('W12 拖文件进区域即可入素材(含拖入高亮反馈)',
+    w12drag.hi && w12.n >= 2 && w12.thumbs >= 2, '高亮=' + w12drag.hi + ' 素材=' + w12.n + ' 缩略图=' + w12.thumbs);
+
+  const w13 = await page.evaluate(() => {
+    const d = document.getElementById('doneCard');
+    return { ph: !!document.getElementById('vidPh'), dl: !!d.querySelector('#dl'),
+      btns: Array.from(d.querySelectorAll('button')).map(b => b.textContent.trim()) };
+  });
+  ok('W13 成片卡有预览占位 / 下载 / 送进剪辑台精修',
+    w13.ph && w13.dl && w13.btns.some(t => /送进剪辑台精修/.test(t)), JSON.stringify(w13));
+
+  await page.screenshot({ path: SHOT + '/studio-chat.png' });
+
   // ── J3~J6 素材互通 + 成片送进剪辑台(2026-09-19 新增能力, 回归门禁) ──
   // 设计意图: 两个视图共用同一份工程 —— 智能成片里选的素材, 剪辑台立刻能用;
   //          智能成片出的成片, 一键带进剪辑台继续精修。
