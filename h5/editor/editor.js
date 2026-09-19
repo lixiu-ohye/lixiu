@@ -2104,16 +2104,66 @@ function renderUiHist() {
       + '<br><span style="color:#6f7686">' + esc(h.ts) + '</span></div>';
   }).join('');
 }
-// ═══════════ 【AI 大模型模式】访客自带 Key 直连豆包方舟 ═══════════
-// 为什么不配 CORS 代理 / 中转后端: 实测 https://ark.cn-beijing.volces.com/api/v3 的
-//   预检(OPTIONS)响应本身就带 access-control-allow-origin / -methods / -headers,
-//   浏览器可直连 ⇒ GitHub Pages 纯静态页够用, 不需要任何服务器。
-// 实测已知的坑: 401 这类**错误响应不带** ACAO, 浏览器读不到正文, fetch 直接 reject。
-//   所以 Key 无效时拿不到服务端原文, 只能给兜底提示 —— 必须 try/catch 兜住,
-//   否则会变成未捕获异常(审计的 L1 会抓)。
-var AI_LS_KEY = 'lixiu_ark_key', AI_LS_MODEL = 'lixiu_ark_model';
-var AI_DEF_MODEL = 'doubao-seed-1-6-251015';
+// ═══════════ 【AI 大模型模式】访客自带 Key 直连, 不烧开发者 token ═══════════
+// 为什么不用中转后端 / CORS 代理: 逐家实测过 OPTIONS 预检, 以下端点浏览器都能直连,
+//   且 POST 401 错误响应也带 access-control-allow-origin(除方舟), 所以纯静态页够用。
+//   用户填自己的 Key -> 浏览器直接调模型 -> token 扣用户自己账号, 本项目零成本。
+// 实测记录(2026-09-19, curl OPTIONS + POST 401):
+//   方舟 200/回显源, 但 401 不带 ACAO(错误分支走 fetch reject, 已兜底)
+//   DeepSeek / Kimi 200/回显源, 401 也回显源
+//   通义兼容模式 / 硅基流动 200/`*`, 401 也 `*`
+//   OpenAI 官方从本机不可达 -> 只能作为「自定义端点」入口给用户自己填代理
+var AI_LS_KEY = 'lixiu_ark_key', AI_LS_MODEL = 'lixiu_ark_model', AI_LS_PROVIDER = 'lixiu_ark_provider';
 var AI_BUSY = false;
+// ── provider 注册表 ── 每家模型一条: 端点 + 默认模型列表 + 请求体差异
+//   opts.thinking   是否附 thinking:{type:'disabled'}(仅方舟 seed 系列需要, 否则推理轨迹混正文)
+//   opts.jsonFmt    是否附 response_format:{type:'json_object'}(部分模型不支持, 会 400)
+//   opts.extraBody  该家的其他必填字段(如 Kimi 需要 max_tokens 显式给)
+//   urlCustom       为 true 时 url 从用户输入取, 而不是写死
+var AI_PROVIDERS = [
+  { id: 'ark', name: '豆包 · 火山方舟',
+    url: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+    models: ['doubao-seed-1-6-251015', 'doubao-1-5-pro-256k-250115', 'doubao-lite-32k-250428'],
+    defaultModel: 'doubao-seed-1-6-251015',
+    opts: { thinking: true, jsonFmt: true },
+    keyHint: 'https://console.volcengine.com/ark' },
+  { id: 'deepseek', name: 'DeepSeek',
+    url: 'https://api.deepseek.com/chat/completions',
+    models: ['deepseek-chat', 'deepseek-reasoner'],
+    defaultModel: 'deepseek-chat',
+    opts: { thinking: false, jsonFmt: false },
+    keyHint: 'https://platform.deepseek.com/api_keys' },
+  { id: 'kimi', name: 'Kimi · 月之暗面',
+    url: 'https://api.moonshot.cn/v1/chat/completions',
+    models: ['kimi-k2-0905-preview', 'moonshot-v1-128k', 'moonshot-v1-32k', 'moonshot-v1-8k'],
+    defaultModel: 'moonshot-v1-8k',
+    opts: { thinking: false, jsonFmt: true, extraBody: { max_tokens: 4096 } },
+    keyHint: 'https://platform.moonshot.cn' },
+  { id: 'tongyi', name: '通义千问 · 阿里云',
+    url: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+    models: ['qwen3-max', 'qwen-plus', 'qwen-turbo', 'qwen2.5-vl-72b-instruct'],
+    defaultModel: 'qwen-plus',
+    opts: { thinking: false, jsonFmt: true },
+    keyHint: 'https://bailian.console.aliyun.com' },
+  { id: 'siliconflow', name: '硅基流动 SiliconFlow',
+    url: 'https://api.siliconflow.cn/v1/chat/completions',
+    models: ['Qwen/Qwen3-32B', 'deepseek-ai/DeepSeek-V3', 'Qwen/Qwen2.5-72B-Instruct'],
+    defaultModel: 'Qwen/Qwen3-32B',
+    opts: { thinking: false, jsonFmt: true },
+    keyHint: 'https://siliconflow.cn' },
+  { id: 'custom', name: '自定义 · OpenAI 兼容',
+    url: '', urlCustom: true, models: [], defaultModel: '',
+    baseHint: 'https://ark.cn-beijing.volces.com/api/v3',
+    opts: { thinking: false, jsonFmt: true },
+    keyHint: '任何 /chat/completions 端点都可, 例如 OpenRouter / 自建代理 / vLLM' }
+];
+var AI_DEF_PROVIDER = 'ark';
+function aiProvider() {
+  var el = $id('uiAiProvider');
+  var v = (((el && el.value) || '').trim()) || aiLS(AI_LS_PROVIDER) || AI_DEF_PROVIDER;
+  for (var i = 0; i < AI_PROVIDERS.length; i++) if (AI_PROVIDERS[i].id === v) return AI_PROVIDERS[i];
+  return AI_PROVIDERS[0];
+}
 // 超时 / 中止: fetch 本身没有超时机制, 挂起时 AI_BUSY 会永远卡在 true,
 //   用户只能刷新页面 —— 这是不可接受的。用 AbortController 统一管超时和用户中止,
 //   两者共用同一个 signal, 超时触发 abort() 即可走同一条清理路径。
@@ -2171,7 +2221,20 @@ function aiLS(k, v) {
   return '';
 }
 function aiKey() { var el = $id('uiApiKey'); return (((el && el.value) || '').trim()) || aiLS(AI_LS_KEY); }
-function aiModel() { var el = $id('uiAiModel'); return (((el && el.value) || '').trim()) || aiLS(AI_LS_MODEL) || AI_DEF_MODEL; }
+// 模型名: 优先输入框, 其次本机存的, 最后用该 provider 的默认模型
+function aiModel() {
+  var p = aiProvider();
+  var el = $id('uiAiModel');
+  var v = (((el && el.value) || '').trim());
+  if (!v) {
+    v = aiLS(AI_LS_MODEL);
+    // 存的是「另一家」的模型名(例如存了 deepseek-chat 但当前选方舟) -> 回退到当前家的默认
+    var hit = p.models.some ? p.models.indexOf(v) > -1 : false;
+    if (!hit && p.defaultModel) v = p.defaultModel;
+  }
+  if (!v && p.defaultModel) v = p.defaultModel;
+  return v || '';
+}
 function aiEngine() { var el = document.querySelector('input[name=uiEngine]:checked'); return el ? el.value : 'local'; }
 function aiSay(msg, tone) {
   var el = $id('uiAiSt'); if (!el) return;
@@ -2181,19 +2244,83 @@ function aiSay(msg, tone) {
 function aiSyncBox() {
   var box = $id('uiAiBox');
   if (box) box.className = 'ui-ai' + (aiEngine() === 'ai' ? ' on' : '');
+  aiRefreshModelList();
 }
+// provider 下拉变化时: 刷新模型下拉 + 更新 Key 获取链接 + 保存 provider
+function aiRefreshModelList() {
+  var p = aiProvider();
+  var sel = $id('uiAiModel');
+  if (!sel) return;
+  // 自定义端点: 允许手输任意模型名, 用 <input> 而不是 <select>
+  if (p.urlCustom) {
+    if (sel.tagName === 'SELECT') {
+      var keep = sel.value;
+      var w = document.createElement('input');
+      w.type = 'text'; w.id = 'uiAiModel';
+      w.setAttribute('placeholder', '模型名, 例如 gpt-4o-mini / deepseek-chat');
+      w.setAttribute('autocomplete', 'off'); w.setAttribute('spellcheck', 'false');
+      w.value = keep || '';
+      sel.parentNode.replaceChild(w, sel);
+      aiRefreshKeyLink();
+      return;
+    }
+    return;
+  }
+  if (sel.tagName !== 'SELECT') {
+    var keep = sel.value;
+    var s = document.createElement('select');
+    s.id = 'uiAiModel';
+    s.innerHTML = p.models.map(function (m) {
+      return '<option value="' + m + '">' + m + '</option>';
+    }).join('');
+    sel.parentNode.replaceChild(s, sel);
+    if (keep && p.models.indexOf(keep) > -1) s.value = keep;
+    aiRefreshKeyLink();
+    return;
+  }
+  // 已是 select: 刷新选项, 尽量保留原选择
+  var cur = sel.value || aiLS(AI_LS_MODEL) || p.defaultModel;
+  sel.innerHTML = p.models.map(function (m) {
+    return '<option value="' + m + '">' + m + '</option>';
+  }).join('');
+  if (p.models.indexOf(cur) > -1) sel.value = cur;
+  else if (p.defaultModel) sel.value = p.defaultModel;
+  aiRefreshKeyLink();
+}
+// 【Key 获取链接】告诉用户去哪里拿密钥, 没有它新用户会卡在第一步
+function aiRefreshKeyLink() {
+  var p = aiProvider();
+  var e = $id('uiAiEndpoint');
+  if (e) e.style.display = p.urlCustom ? '' : 'none';
+  var el = $id('uiAiKeyLink');
+  if (!el) return;
+  if (!p.keyHint) { el.innerHTML = ''; return; }
+  var href = p.keyHint;
+  if (p.id === 'custom') {
+    el.innerHTML = '\u2139\ufe0f 自定义模式：填任意 OpenAI 兼容端点(如 OpenRouter / 自建代理 / vLLM)，模型名随端点而定';
+    return;
+  }
+  el.innerHTML = '\u2139\ufe0f 还没有 Key？去 <a href="' + href + '" target="_blank" rel="noopener">' + href + '</a> 免费注册一个';
+}
+
 function aiSaveKey() {
+  var p = aiProvider();
   var k = ((($id('uiApiKey') || {}).value) || '').trim();
   var m = ((($id('uiAiModel') || {}).value) || '').trim();
   if (!k) return toast('先把 API Key 粘进来再保存');
-  aiLS(AI_LS_KEY, k); aiLS(AI_LS_MODEL, m);
+  aiLS(AI_LS_KEY, k); aiLS(AI_LS_MODEL, m); aiLS(AI_LS_PROVIDER, p.id);
+  // 端点覆盖开关状态一并保存(重开页面后保持)
+  aiLS('lixiu_ai_ep_override', AI_EP_OVERRIDE ? '1' : '');
   aiSay('已存到本机浏览器，下次打开自动带上', 'ok');
-  toast('API Key 已保存到本机（不会上传到任何服务器）');
+  toast('AI 配置已保存到本机（Key 不会上传到任何服务器）');
 }
 function aiClearKey() {
-  aiLS(AI_LS_KEY, ''); aiLS(AI_LS_MODEL, '');
-  var a = $id('uiApiKey'), b = $id('uiAiModel');
-  if (a) a.value = ''; if (b) b.value = '';
+  aiLS(AI_LS_KEY, ''); aiLS(AI_LS_MODEL, ''); aiLS(AI_LS_PROVIDER, '');
+  aiLS(AI_LS_RELAY, ''); aiLS(AI_LS_RELAY_URL, ''); aiLS('lixiu_ai_ep_override', '');
+  var a = $id('uiApiKey');
+  if (a) a.value = '';
+  // 模型下拉按当前 provider 的默认值回填, 而不是清空成空串
+  aiRefreshModelList();
   aiSay('已清空');
   toast('已清空本机保存的 Key');
 }
@@ -2246,24 +2373,62 @@ function aiToLayers(obj) {
   });
   return out;
 }
-// 统一出口: 成功返回解析后的对象, 任何失败返回 null 并已提示用户
-function aiCall(userText, extraSys) {
-  var key = aiKey();
-  if (!key) { aiSay('需要先填 API Key', 'err'); toast('AI 模式要先填你自己的豆包 API Key'); return Promise.resolve(null); }
-  if (AI_BUSY) { toast('上一条还在生成，稍等一下'); return Promise.resolve(null); }
-  aiReset();                                  // 建 AbortController + 45s 超时定时器 + 显示中止按钮
-  aiSay('正在问 AI…（45 秒内无回应会自动中止）');
+// 按当前 provider 组装请求体 —— 不同家的字段能力不一样, 不能一套 body 通吃
+function aiBuildBody(userText, extraSys, isTest) {
+  var p = aiProvider();
   var body = {
     model: aiModel(),
     messages: [
       { role: 'system', content: AI_SYS + (extraSys ? '\n' + extraSys : '') },
       { role: 'user', content: userText }
     ],
-    temperature: 0.3,
-    response_format: { type: 'json_object' },
-    thinking: { type: 'disabled' }   // seed 1.6+ 不关掉的话推理轨迹会混进正文, JSON.parse 必炸
+    temperature: 0.3
   };
-  return fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
+  if (p.opts.jsonFmt) body.response_format = { type: 'json_object' };
+  // 只有方舟 seed 系列必须关 thinking, 否则推理轨迹混进正文, JSON.parse 必炸;
+  // 其他家没有这个字段, 带了会被 400 拒绝, 所以严格判断
+  if (p.opts.thinking) body.thinking = { type: 'disabled' };
+  if (p.opts.extraBody) {
+    for (var k in p.opts.extraBody) body[k] = p.opts.extraBody[k];
+  }
+  if (isTest) body.max_tokens = 8;   // 连通测试只回一个词, 最大限度省 token
+  return body;
+}
+// 端点拼接: 用户给 base(可能带 /chat/completions 也可能只有 base), 统一拼出完整地址
+function aiEndpointJoin(base) {
+  var b = String(base || '').trim().replace(/\/$/, '');
+  if (/\/chat\/completions$/.test(b)) return b;
+  if (/\/v[0-9]+$/.test(b)) return b + '/chat/completions';
+  return b + '/v1/chat/completions';
+}
+// 统一出口: 成功返回解析后的对象, 任何失败返回 null 并已提示用户
+function aiCall(userText, extraSys, isTest) {
+  var p = aiProvider();
+  var key = aiKey();
+  if (!key) { aiSay('需要先填 API Key', 'err'); toast('AI 模式要先填你自己的 ' + p.name + ' API Key'); return Promise.resolve(null); }
+  var url = p.url;
+  if (p.urlCustom) {
+    var ue = $id('uiAiEndpoint');
+    url = (((ue && ue.value) || '').trim()) || 'https://api.openai.com/v1/chat/completions';
+  }
+  // 用户填了自定义端点 URL: 任何 provider 都允许覆盖预设地址(填了就用, 没填用预设)
+  var ueAll = $id('uiAiEndpoint');
+  var ueAllV = ((ueAll && ueAll.value) || '').trim();
+  if (ueAllV && /^https?:\/\//.test(ueAllV) && ueAllV !== url) {
+    // 端点输入框对非 custom 家默认隐藏; 只有用户显式填了才覆盖(见 aiEndpointShow)
+    if (AI_EP_OVERRIDE) url = aiEndpointJoin(ueAllV);
+  }
+  // 中转开关(可选): 填了中转地址就走中转 —— 专给 CORS 被拦的服务商或企业网关用
+  var relayOn = (aiLS(AI_LS_RELAY) === '1') && aiLS(AI_LS_RELAY_URL);
+  if (relayOn) {
+    url = aiLS(AI_LS_RELAY_URL).replace(/\/$/, '') + '?target=' + encodeURIComponent(url);
+  }
+  if (!aiModel()) { aiSay('模型名不能为空', 'err'); return Promise.resolve(null); }
+  if (AI_BUSY) { toast('上一条还在生成，稍等一下'); return Promise.resolve(null); }
+  aiReset();                                  // 建 AbortController + 45s 超时定时器 + 显示中止按钮
+  aiSay('正在问 ' + p.name + '…（45 秒内无回应会自动中止）');
+  var body = aiBuildBody(userText, extraSys, isTest);
+  return fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
     body: JSON.stringify(body),
@@ -2273,9 +2438,10 @@ function aiCall(userText, extraSys) {
   }).then(function (res) {
     if (!res.ok) {
       var m = '';
-      try { m = (((JSON.parse(res.txt) || {}).error) || {}).message || ''; } catch (e) {}
-      aiSay('调用失败（HTTP ' + res.status + '）' + (m ? '：' + String(m).slice(0, 100) : ''), 'err');
-      toast('AI 调用失败：' + (res.status === 401 ? 'Key 不对或还没生效' : (m || 'HTTP ' + res.status)), 4600);
+      try { m = (((JSON.parse(res.txt) || {}).error) || {}).message || JSON.parse(res.txt).message || ''; } catch (e) {}
+      var friendly = aiHttpErr(res.status, m);
+      aiSay('调用失败（HTTP ' + res.status + '）' + (friendly ? '：' + friendly : ''), 'err');
+      toast('AI 调用失败：' + friendly, 4600);
       return null;
     }
     var data = null;
@@ -2286,7 +2452,7 @@ function aiCall(userText, extraSys) {
     aiSay('AI 已返回', 'ok');
     return obj;
   }).catch(function (e) {
-    // 错误响应不带 CORS 头时浏览器读不到正文 → 只能在这里兜底, 千万别让它冒成未捕获异常
+    // 方舟的错误响应不带 CORS 头, 浏览器读不到正文 → 只能在这里兜底, 千万别让它冒成未捕获异常
     if (AI_ABORTED || (e && e.name === 'AbortError')) {
       aiSay(AI_ABORTED ? '已中止' : '45 秒内没等到回应，已自动中止', 'err');
       toast(AI_ABORTED ? '已中止 AI 请求' : 'AI 生成超时：换个更简短的描述再试', 4000);
@@ -2297,10 +2463,58 @@ function aiCall(userText, extraSys) {
     return null;
   }).then(function (r) { aiDone(); return r; }, function () { aiDone(); return null; });
 }
+// 【Key/模型/端点输入实时去空格】粘贴密钥时最常见的事故就是首尾带空格 → 401。
+//   oninput 实时 trim 首尾(中间不动), 光标跟到末尾, 用户无感。
+function aiTrimBind() {
+  ['uiApiKey', 'uiAiModel', 'uiAiEndpoint'].forEach(function (id) {
+    var el = $id(id);
+    if (!el) return;
+    el.oninput = function () {
+      var v = el.value, t = v.replace(/^\s+|\s+$/g, '');
+      if (t !== v) { el.value = t; }
+    };
+    el.onblur = function () { el.value = el.value.trim(); };   // blur 再兜底一次
+    el.onpaste = function (e) {
+      // 粘贴内容直接 trim 后写入, 连中间那一下闪变都没有
+      try {
+        var txt = (e.clipboardData || window.clipboardData).getData('text') || '';
+        if (txt !== txt.trim()) {
+          e.preventDefault();
+          el.value = txt.trim();
+        }
+      } catch (err) {}
+    };
+  });
+}
+// 【眼睛按钮】Key 明文/密文切换(切换不影响输入值)
+function aiBindEye() {
+  var b = $id('uiKeyEye');
+  if (!b) return;
+  b.onclick = function () {
+    var el = $id('uiApiKey');
+    if (!el) return;
+    el.type = el.type === 'password' ? 'text' : 'password';
+    b.classList.toggle('on', el.type === 'text');
+  };
+}
+// 【HTTP 错误分类】把服务商状态码翻成用户能懂的话(401/404/429/403/5xx)
+function aiHttpErr(status, msg) {
+  var m = String(msg || '');
+  if (status === 401) return 'API Key 无效或还没生效（检查有没有多空格、是不是这家服务商的 Key）';
+  if (status === 403) return 'Key 没有这个模型的权限（去服务商控制台开通模型/充值）';
+  if (status === 404) return '模型或接口地址不存在（模型名/端点 URL 检查一下）';
+  if (status === 429) return '触发限流或余额不足（稍后再试 / 去充值）';
+  if (status >= 500) return '服务商内部错误, 稍后再试';
+  if (/insufficient|balance|\u4f59\u989d/i.test(m)) return '余额不足: ' + m.slice(0, 80);
+  return m ? m.slice(0, 100) : 'HTTP ' + status;
+}
+// 测试请求的省 token 参数: 只回一个词, 最多 8 个 token。
+//   通过 aiBuildBody 的 opts.maxTokens 注入(见 aiBuildBody 补丁),
+//   DeepSeek 等不支持 json_object 的家只回纯文本也算成功。
 function aiTestKey() {
-  aiSay('正在测试…');
-  aiCall('只回一句 {"ok":true}', '不管你收到什么，都只回 {"ok":true} 这一个 JSON。').then(function (o) {
-    if (o) { aiSay('连接正常，Key 可用', 'ok'); toast('连接正常，Key 可用'); }
+  aiSay('正在测试…（消耗你自己的少量 token）');
+  aiCall('只回一句 {"ok":true}', '不管你收到什么，都只回 {"ok":true} 这一个 JSON。', true).then(function (o) {
+    if (o) { aiSay('连接正常，Key 可用', 'ok'); toast('✅ 连通成功：地址、Key、模型都能用'); }
   });
 }
 function uiGenerateAI(raw, mode) {
@@ -2567,17 +2781,23 @@ function bindUi() {
 
   // 【AI 大模型模式】回填本机已存的 Key/模型 + 绑定模式切换与三个按钮
   // (回填只写进输入框, 不自动发起任何请求 —— 不能悄悄消耗用户的额度)
-  var _k = aiLS(AI_LS_KEY), _m = aiLS(AI_LS_MODEL);
+  var _k = aiLS(AI_LS_KEY), _m = aiLS(AI_LS_MODEL), _pv = aiLS(AI_LS_PROVIDER);
   if (_k && $id('uiApiKey')) $id('uiApiKey').value = _k;
-  if (_m && $id('uiAiModel')) $id('uiAiModel').value = _m;
+  if (_pv && $id('uiAiProvider')) $id('uiAiProvider').value = _pv;
+  AI_EP_OVERRIDE = aiLS('lixiu_ai_ep_override') === '1';
   aiSyncBox();
+  if (_m && $id('uiAiModel')) $id('uiAiModel').value = _m;
   Array.prototype.forEach.call(document.querySelectorAll('input[name=uiEngine]'), function (r) {
     r.onchange = function () { aiSyncBox(); aiSay(''); };
   });
+  var _pvd = $id('uiAiProvider');
+  if (_pvd) _pvd.onchange = function () { aiRefreshModelList(); aiSay(''); };
   var _ks = $id('uiKeySave'); if (_ks) _ks.onclick = aiSaveKey;
   var _kc = $id('uiKeyClear'); if (_kc) _kc.onclick = aiClearKey;
   var _kt = $id('uiKeyTest'); if (_kt) _kt.onclick = aiTestKey;
   var _ka = $id('uiAbort'); if (_ka) _ka.onclick = aiAbortNow;   // 中止当前 AI 请求
+  aiTrimBind();                                                 // Key/模型/端点 oninput 实时去首尾空格
+  aiBindEye();                                                  // Key 眼睛按钮: 明文/密文切换
   Array.prototype.forEach.call(document.querySelectorAll('#uiTpl [data-tpl]'), function (b) {
     b.onclick = function () { uiApplyTemplate(this.getAttribute('data-tpl')); };
   });
@@ -2797,6 +3017,11 @@ window.__ed = {
   },
   aiParseJson: aiParseJson,
   aiToLayers: aiToLayers,
+  // 【多模型接入】供审计断言: 读取 provider 注册表 / 直接调 aiCall(配桩 fetch, 零额度)
+  aiProviders: function () { return AI_PROVIDERS; },
+  aiCall: aiCall,
+  aiProvider: aiProvider,
+  aiBuildBody: aiBuildBody,
   // 测试钩子: 把 45 秒超时临时缩短, 才能在不等 45 秒的前提下验证超时/中止路径。
   //   生产代码里只有一个 AI_TIMEOUT 变量, 没有专门的测试分支。
   aiTimeout: function (ms) { AI_TIMEOUT = ms > 0 ? ms : 45000; return AI_TIMEOUT; },

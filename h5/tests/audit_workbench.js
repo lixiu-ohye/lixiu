@@ -1350,6 +1350,154 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   ok('V8 五大提示位点全部到位(工具栏/素材栏/进度/时间轴/工程档案)',
     vZones.total === 5, JSON.stringify(vZones));
 
+
+  // ── M: 多模型接入(provider 注册表 / 下拉切换 / 请求体差异)──
+  // M1: 注册表 6 家全部就位, 每家都有 url(或 urlCustom)与 defaultModel(或空)
+  const mReg = await page.evaluate(() => {
+    const P = window.__ed.aiProviders ? window.__ed.aiProviders() : null;
+    if (!P) return { n: 0 };
+    return {
+      n: P.length,
+      ids: P.map(x => x.id).join(','),
+      allUrl: P.every(x => x.urlCustom || /^https?:\/\//.test(x.url)),
+      hasArk: !!P.find(x => x.id === 'ark'),
+      hasDeepseek: !!P.find(x => x.id === 'deepseek'),
+      hasCustom: !!P.find(x => x.id === 'custom' && x.urlCustom === true),
+      arkThinking: !!(P.find(x => x.id === 'ark') || {}).opts.thinking,
+      arkJson: !!(P.find(x => x.id === 'ark') || {}).opts.jsonFmt,
+      dkNoJson: ((P.find(x => x.id === 'deepseek') || {}).opts.jsonFmt === false)
+    };
+  });
+  ok('M1 provider 注册表 6 家就位, 字段完整',
+    mReg.n === 6 && mReg.allUrl === true && mReg.hasArk === true
+      && mReg.hasDeepseek === true && mReg.hasCustom === true,
+    JSON.stringify(mReg));
+  ok('M2 请求体差异正确(方舟关 thinking+json, DeepSeek 禁 json_object)',
+    mReg.arkThinking === true && mReg.arkJson === true && mReg.dkNoJson === true,
+    JSON.stringify({ arkThinking: mReg.arkThinking, arkJson: mReg.arkJson, dkNoJson: mReg.dkNoJson }));
+
+  // M3: 切到「UI设计」Tab, provider 下拉默认方舟, 模型下拉自动填充模型列表
+  await page.click('#edRTabs [data-rtab="ui"]');
+  await page.waitForTimeout(160);
+  await page.evaluate(() => {
+    const r = document.querySelector('input[name=uiEngine][value=ai]');
+    if (r && !r.checked) r.checked = true;
+    if (r) r.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page.waitForTimeout(120);
+  const mDef = await page.evaluate(() => {
+    const p = document.getElementById('uiAiProvider');
+    const m = document.getElementById('uiAiModel');
+    return {
+      pTag: p ? p.tagName : 'MISSING',
+      pVal: p ? p.value : '',
+      mTag: m ? m.tagName : 'MISSING',
+      mOpts: m && m.tagName === 'SELECT' ? m.options.length : -1,
+      boxOn: document.getElementById('uiAiBox').className
+    };
+  });
+  ok('M3 AI 模式展开后 provider 默认方舟, 模型下拉已填充',
+    mDef.pTag === 'SELECT' && mDef.pVal === 'ark'
+      && mDef.mTag === 'SELECT' && mDef.mOpts >= 3
+      && /on/.test(mDef.boxOn),
+    JSON.stringify(mDef));
+
+  // M4: 切到 DeepSeek, 模型下拉换成 DeepSeek 的模型, 端点输入框仍隐藏
+  await page.selectOption('#uiAiProvider', 'deepseek');
+  await page.waitForTimeout(140);
+  const mDk = await page.evaluate(() => {
+    const m = document.getElementById('uiAiModel');
+    const e = document.getElementById('uiAiEndpoint');
+    return {
+      mTag: m ? m.tagName : 'MISSING',
+      mVal: m ? m.value : '',
+      mOpts: m && m.tagName === 'SELECT' ? Array.from(m.options).map(o => o.value) : [],
+      eDisp: e ? e.style.display : 'no-el'
+    };
+  });
+  ok('M4 切到 DeepSeek 后模型下拉换成 deepseek-chat/deepseek-reasoner, 端点输入仍隐藏',
+    mDk.mTag === 'SELECT' && mDk.mOpts.indexOf('deepseek-chat') > -1
+      && mDk.mVal === 'deepseek-chat' && mDk.eDisp === 'none',
+    JSON.stringify(mDk));
+
+  // M5: 切到「自定义」, 模型变成手输 input, 端点输入框出现
+  await page.selectOption('#uiAiProvider', 'custom');
+  await page.waitForTimeout(140);
+  const mCus = await page.evaluate(() => {
+    const m = document.getElementById('uiAiModel');
+    const e = document.getElementById('uiAiEndpoint');
+    return { mTag: m ? m.tagName : 'MISSING', eDisp: e ? e.style.display : 'no-el' };
+  });
+  ok('M5 切到自定义模式: 模型变手输 input, 端点输入框出现',
+    mCus.mTag === 'INPUT' && mCus.eDisp !== 'none',
+    JSON.stringify(mCus));
+
+  // M6: 请求体按 provider 正确生成(用桩 fetch 拦截, 零额度消耗)
+  //   注意: 前面 T 模块会往 uiApiKey 输入框填 mock key, aiKey() 优先读输入框,
+  //   所以这里不硬编码具体 key 值, 只验「带了 Bearer 前缀且非空」
+  const mBody = await page.evaluate(() => {
+    let captured = null;
+    window.fetch = function (url, opt) {
+      captured = {
+        url: String(url),
+        body: JSON.parse(opt.body),
+        auth: opt.headers['Authorization']
+      };
+      return Promise.reject(new DOMException('stub', 'AbortError'));
+    };
+    localStorage.setItem('lixiu_ark_key', 'sk-stub-key');
+    const inp = document.getElementById('uiApiKey');
+    if (inp) inp.value = 'sk-stub-key';
+    const p = document.getElementById('uiAiProvider');
+    p.value = 'ark'; p.dispatchEvent(new Event('change', { bubbles: true }));
+    return window.__ed.aiCall ? window.__ed.aiCall('测试描述').then(() => captured) : Promise.resolve(null);
+  });
+  ok('M6 方舟请求体带 thinking:disabled + response_format:json_object, 走方舟端点, 带用户 Key',
+    mBody && /ark\.cn-beijing\.volces\.com/.test(mBody.url)
+      && mBody.body.thinking && mBody.body.thinking.type === 'disabled'
+      && mBody.body.response_format && mBody.body.response_format.type === 'json_object'
+      && /^Bearer .+/.test(mBody.auth || ''),
+    'captured=' + (mBody ? 'yes' : 'NULL') + ' | url=' + (mBody && mBody.url.slice(0, 60))
+      + ' | thinking=' + JSON.stringify(mBody && mBody.body.thinking)
+      + ' | rf=' + JSON.stringify(mBody && mBody.body.response_format)
+      + ' | auth=' + (mBody && mBody.auth));
+
+  // M7: 换 DeepSeek, 请求体不带 thinking/response_format(否则被 400 拒)
+  await page.waitForTimeout(200);
+  const mBody2 = await page.evaluate(() => {
+    let captured = null;
+    window.fetch = function (url, opt) {
+      captured = { url: String(url), body: JSON.parse(opt.body) };
+      return Promise.reject(new DOMException('stub', 'AbortError'));
+    };
+    const p = document.getElementById('uiAiProvider');
+    p.value = 'deepseek'; p.dispatchEvent(new Event('change', { bubbles: true }));
+    return window.__ed.aiCall('测试描述').then(() => captured);
+  });
+  ok('M7 DeepSeek 请求体不带 thinking / response_format(避免 400)',
+    mBody2 && /deepseek\.com/.test(mBody2.url)
+      && mBody2.body.thinking === undefined
+      && mBody2.body.response_format === undefined,
+    JSON.stringify(mBody2 && mBody2.body).slice(0, 200));
+
+  // M8: 恢复方舟 + 清理桩 fetch
+  await page.waitForTimeout(200);
+  await page.evaluate(() => {
+    localStorage.removeItem('lixiu_ark_key');
+    const p = document.getElementById('uiAiProvider');
+    p.value = 'ark'; p.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+
+  // M9: Key 获取链接按 provider 渲染
+  const mLink = await page.evaluate(() => {
+    const el = document.getElementById('uiAiKeyLink');
+    return { html: el ? el.innerHTML : '', hasArkUrl: el ? /volcengine/.test(el.innerHTML) : false };
+  });
+  ok('M9 Key 获取链接按当前 provider 渲染(方舟指向 volcengine 控制台)',
+    mLink.hasArkUrl === true && /免费注册/.test(mLink.html),
+    mLink.html.slice(0, 120));
+
+
   // ── 全页截图 + 错误汇总 ──
   await page.screenshot({ path: SHOT + '/full.png', fullPage: false });
 
