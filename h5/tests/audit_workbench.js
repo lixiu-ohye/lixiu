@@ -35,7 +35,11 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   page.setDefaultTimeout(10000);
   step('browser launched');
   const errs = [], consoleErrs = [], netFails = [];
-  page.on('pageerror', e => errs.push(String(e.message).split('\n')[0]));
+  // 带上栈首帧(文件名:行:列) —— 只记 message 的话定位不到代码位置, 只能靠猜
+  page.on('pageerror', e => {
+    const st = String(e.stack || '').split('\n').slice(0, 2).map(s => s.trim()).join(' @ ');
+    errs.push(String(e.message).split('\n')[0] + (st ? ' [' + st.slice(0, 150) + ']' : ''));
+  });
   page.on('console', m => { if (m.type() === 'error') consoleErrs.push(m.text().slice(0, 160)); });
   page.on('requestfailed', r => { if (!r.url().startsWith('file:')) netFails.push(r.url().slice(0, 80)); });
   page.on('dialog', d => d.accept());   // confirm/prompt 全自动同意
@@ -57,6 +61,23 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   ok('A1 剪辑工作台默认激活', shells.editorVisible && !shells.studioVisible);
   ok('A2 顶栏标题=剪辑工作台', shells.title === '剪辑工作台', shells.title);
   ok('A3 画布/时间轴/素材库/提示层齐备', shells.hasCanvas && shells.hasTimeline && shells.hasLib && shells.hasTip);
+  const tabs0 = await page.evaluate(() => ({
+    names: [...document.querySelectorAll('#edRTabs [data-rtab]')].map(b => b.textContent.trim()),
+    active: [...document.querySelectorAll('#edRTabs [data-rtab]')].filter(b => b.classList.contains('on')).map(b => b.getAttribute('data-rtab')),
+    panes: ['props', 'progress', 'ui'].map(k => getComputedStyle(document.getElementById('rt-' + k)).display)
+  }));
+  R.data.tabs0 = tabs0;
+  ok('A4 右栏三大Tab(属性/进度/UI设计)且默认属性页',
+    JSON.stringify(tabs0.names) === JSON.stringify(['属性', '进度', 'UI设计'])
+    && tabs0.active.length === 1 && tabs0.active[0] === 'props' && tabs0.panes[0] !== 'none' && tabs0.panes[1] === 'none',
+    tabs0.names.join('/') + ' active=' + tabs0.active.join(','));
+  // 进度面板现在位于 Tab 2, 后续章节操作它之前必须先切过去
+  await page.click('#edRTabs [data-rtab="progress"]');
+  await page.waitForTimeout(350);
+  const tabSw = await page.evaluate(() => ({ p: getComputedStyle(document.getElementById('rt-progress')).display,
+    u: getComputedStyle(document.getElementById('rt-ui')).display,
+    hit: !!document.querySelector('#pgBody .pg-task') }));
+  ok('A5 切到进度Tab后进度面板可用', tabSw.p !== 'none' && tabSw.u === 'none' && tabSw.hit);
 
   // ── B 初始进度态 ──
   const base = await page.evaluate(() => {
@@ -219,10 +240,376 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   const stopTxt = await page.evaluate(() => document.getElementById('edPlay').textContent.trim());
   ok('K1 空格播放/暂停生效', /暂停/.test(playTxt) && /播放/.test(stopTxt), playTxt + ' -> ' + stopTxt);
 
+  // ── M 面板折叠 / 分组折叠 / 片尾触发重算 / 重置人工锁定 ──
+  step('M: fold / play-trigger / reset lock');
+  // M1 整面板折叠与展开(点标题栏)
+  await page.click('#pgHead');
+  await page.waitForTimeout(300);
+  const foldOff = await page.evaluate(() => document.getElementById('pgBody').classList.contains('hide'));
+  await page.click('#pgHead');
+  await page.waitForTimeout(300);
+  const foldOn = await page.evaluate(() => ({ hide: document.getElementById('pgBody').classList.contains('hide'), len: document.getElementById('pgBody').innerHTML.length }));
+  ok('M1 进度面板可折叠/展开', foldOff === true && foldOn.hide === false && foldOn.len > 500, 'folded=' + foldOff + ' unfolded_len=' + foldOn.len);
+  // M2 单个阶段分组折叠 —— 注意: 每次点击都会 renderProgress() 重建 DOM,
+  //    必须重新查询节点, 读旧引用会拿到已脱离文档的陈旧子树(曾因此误报失败)
+  const gFold = await page.evaluate(async () => {
+    const gid = document.querySelector('.pg-grp-h[data-grp]').getAttribute('data-grp');
+    const tasks = () => {
+      const h = document.querySelector('.pg-grp-h[data-grp="' + gid + '"]');
+      return h && h.parentElement ? h.parentElement.querySelector('.pg-tasks') : null;
+    };
+    document.querySelector('.pg-grp-h[data-grp="' + gid + '"]').click();
+    await new Promise(r => setTimeout(r, 250));
+    const hid = !!(tasks() && tasks().classList.contains('hide'));
+    document.querySelector('.pg-grp-h[data-grp="' + gid + '"]').click();
+    await new Promise(r => setTimeout(r, 250));
+    const back = !!(tasks() && !tasks().classList.contains('hide'));
+    return { gid, hid, back };
+  });
+  ok('M2 阶段分组可折叠/展开', gFold.hid === true && gFold.back === true, gFold.gid + ' hid=' + gFold.hid + ' back=' + gFold.back);
+  // M3 播放到片尾 → 自动触发一次进度重算(附加逻辑)
+  await page.evaluate(() => { window.__ed.prj().stats.previewed = false; window.__ed.prj().duration = 0.4; });
+  await page.click('#edLanesCol');
+  await page.click('#edPlay');
+  await page.waitForTimeout(1800);
+  const prev = await page.evaluate(() => {
+    const L = window.__ed.prj().progress.log;
+    return { previewed: !!window.__ed.prj().stats.previewed, hit: L.some(x => /播放完成/.test(x.detail)),
+      last: L.length ? L[L.length - 1].detail : '' };
+  });
+  ok('M3 播放到片尾自动触发进度重算', prev.previewed === true && prev.hit === true, prev.last);
+  // M4 重置人工锁定 → 全部交回自动检测
+  const beforeReset = await page.evaluate(() => Object.keys(window.__ed.prj().progress.items).filter(k => window.__ed.prj().progress.items[k].lock).length);
+  await page.click('#pgReset');   // confirm 由上方全局 dialog 处理器自动同意
+  await page.waitForTimeout(600);
+  const afterReset = await page.evaluate(() => ({ lock: Object.keys(window.__ed.prj().progress.items).filter(k => window.__ed.prj().progress.items[k].lock).length,
+    manualDom: document.querySelectorAll('#pgBody .pg-task.manual').length,
+    logHit: window.__ed.prj().progress.log.some(x => /重置全部人工锁定/.test(x.detail)) }));
+  ok('M4 重置人工锁定清空全部 lock 标记', beforeReset > 0 && afterReset.lock === 0 && afterReset.manualDom === 0 && afterReset.logHit === true,
+    beforeReset + ' -> ' + afterReset.lock + ' (dom manual=' + afterReset.manualDom + ')');
+
+  // ══════════════════════════════════════════════════════════════
+  // N 【UI设计模块】独立画布 / 图层 / 属性 / 对齐 / 生成 / 叠加 / 统一撤销栈
+  // ══════════════════════════════════════════════════════════════
+  step('N: UI design module');
+  const uiOf = () => page.evaluate(() => window.__ed.ui());
+  const hist = () => page.evaluate(() => window.__ed.history());
+  // canvas 坐标 → 屏幕坐标(画布被 CSS 缩放, 必须换算)
+  // 注意: 右栏可滚动, 点过下面的属性输入框后画布可能被顶出视口(boundingBox.y 为负),
+  // 此时鼠标事件落空 → 必须先 scrollIntoViewIfNeeded 再换算坐标
+  async function uiScreen(cx, cy) {
+    const U = await uiOf();
+    const loc = page.locator('#uiCanvas');
+    await loc.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(120);
+    const b = await loc.boundingBox();
+    return { x: b.x + cx * b.width / U.w, y: b.y + cy * b.height / U.h };
+  }
+  async function drag(from, to) {
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    await page.mouse.move(to.x, to.y, { steps: 10 });
+    await page.mouse.up();
+    await page.waitForTimeout(260);
+  }
+  async function setProp(sel, val) {
+    await page.click(sel);
+    await page.fill(sel, String(val));
+    await page.evaluate(() => document.activeElement && document.activeElement.blur());
+    await page.waitForTimeout(240);
+  }
+
+  // ── N1 切到 UI设计 Tab ──
+  await page.click('#edRTabs [data-rtab="ui"]');
+  await page.waitForTimeout(400);
+  const uiTab = await page.evaluate(() => ({
+    pane: getComputedStyle(document.getElementById('rt-ui')).display,
+    props: getComputedStyle(document.getElementById('rt-props')).display,
+    wide: document.getElementById('edRight').classList.contains('wide'),
+    cvW: document.getElementById('uiCanvas').width,
+    empty: /还没有元素/.test(document.getElementById('uiLayers').innerText)
+  }));
+  R.data.uiTab = uiTab;
+  ok('N1 切到UI设计Tab: 面板可见+右栏加宽+空态提示', uiTab.pane !== 'none' && uiTab.props === 'none' && uiTab.wide && uiTab.empty, 'w=' + uiTab.cvW);
+
+  // ── N2 六类组件 ──
+  for (const t of ['rect', 'text', 'image', 'button', 'card', 'icon']) {
+    await page.click('#uiTools [data-add="' + t + '"]');
+    await page.waitForTimeout(120);
+  }
+  const n2 = await uiOf();
+  const types = n2.layers.map(l => l.type);
+  R.data.comp = types;
+  ok('N2 六类组件均可添加', n2.layers.length === 6
+    && ['rect', 'text', 'image', 'button', 'card', 'icon'].every(t => types.indexOf(t) >= 0), types.join(','));
+
+  // ── N3 图层列表: 名称/类型/选中 ──
+  const rows = await page.evaluate(() => [...document.querySelectorAll('#uiLayers .ui-layer')].map(r => ({
+    name: r.querySelector('.nm').textContent, ty: r.querySelector('.ty').textContent })));
+  await page.click('#uiLayers .ui-layer:nth-child(1)');    // 列表首个 = 最上层(icon)
+  await page.waitForTimeout(200);
+  const n3 = await page.evaluate(() => ({ sel: window.__ed.ui().sel, cls: document.querySelector('#uiLayers .ui-layer').className,
+    propName: document.getElementById('uiPropName').textContent }));
+  ok('N3 图层列表渲染类型+名称, 点击可选中', rows.length === 6 && rows.every(r => r.name && r.ty) && !!n3.sel && /sel/.test(n3.cls) && !!n3.propName,
+    rows.map(r => r.ty + r.name).join('|').slice(0, 60));
+
+  // ── N4 显隐 / 锁定 ──
+  await page.click('#uiLayers .ui-layer:nth-child(1) [data-eye]');
+  await page.waitForTimeout(200);
+  const uiHidden = await page.evaluate(() => { const L = window.__ed.ui().layers; return L[L.length - 1].visible; });
+  await page.click('#uiLayers .ui-layer:nth-child(1) [data-lock]');
+  await page.waitForTimeout(200);
+  const uiLocked = await page.evaluate(() => { const L = window.__ed.ui().layers; return L[L.length - 1].locked; });
+  ok('N4 图层可隐藏/锁定(写入工程数据)', uiHidden === false && uiLocked === true, 'visible=' + uiHidden + ' locked=' + uiLocked);
+
+  // ── N5 层级排序 ──
+  const z0 = (await uiOf()).layers.map(l => l.id);
+  await page.click('#uiLayers .ui-layer:nth-child(3) [data-up]');       // 列表第3行 = 数组倒数第3
+  await page.waitForTimeout(220);
+  const z1 = (await uiOf()).layers.map(l => l.id);
+  ok('N5 图层层级可上下移动', z0.join() !== z1.join() && z0.length === z1.length, '顺序已改变');
+  // 复原: 锁定/隐藏的那层先恢复, 方便后续拖动
+  await page.click('#uiLayers [data-lock]');
+  await page.waitForTimeout(150);
+  await page.click('#uiLayers [data-eye]');
+  await page.waitForTimeout(200);
+
+  // ── N6 画布自定义尺寸 ──
+  await page.fill('#uiCvW', '800');
+  await page.fill('#uiCvH', '1200');
+  await page.click('#uiCvApply');
+  await page.waitForTimeout(350);
+  const cvSize = await page.evaluate(() => ({ w: window.__ed.ui().w, h: window.__ed.ui().h, cw: document.getElementById('uiCanvas').width }));
+  ok('N6 画布尺寸可自定义(800×1200)', cvSize.w === 800 && cvSize.h === 1200 && cvSize.cw === 800, cvSize.w + 'x' + cvSize.h);
+
+  // ── N7 拖动移动 + 网格吸附 ──
+  await page.selectOption('#uiGridSize', '24');
+  await page.waitForTimeout(200);
+  const snapOn = await page.evaluate(() => window.__ed.ui().snap);
+  // 选中「矩形」并用对齐工具放到左上(x=0,y=0), 再向右下拖 50/50 → 落点必须落在 24 的整数倍
+  const rectId = await page.evaluate(() => (window.__ed.ui().layers.find(l => l.type === 'rect') || {}).id);
+  await page.click('#uiLayers .ui-layer[data-uid="' + rectId + '"]');   // 走真实路径: 点图层列表行选中
+  await page.waitForTimeout(250);
+  await page.click('#uiProps [data-al="left"]'); await page.waitForTimeout(200);
+  await page.click('#uiProps [data-al="top"]'); await page.waitForTimeout(250);
+  let cur = await page.evaluate(() => { const s = window.__ed.ui(); return s.layers.find(l => l.id === s.sel); });
+  await drag(await uiScreen(cur.x + cur.w / 2, cur.y + cur.h / 2), await uiScreen(cur.x + cur.w / 2 + 50, cur.y + cur.h / 2 + 50));
+  const moved = await page.evaluate(() => { const s = window.__ed.ui(); return s.layers.find(l => l.id === s.sel); });
+  ok('N7 画布拖动可移动图层且吸附到网格', snapOn === true && moved.x !== 0 && moved.x % 24 === 0 && moved.y % 24 === 0,
+    '(' + Math.round(cur.x) + ',' + Math.round(cur.y) + ') → (' + moved.x + ',' + moved.y + ') grid=24');
+
+  // ── N8 角点缩放 ──
+  const before8 = { w: moved.w, h: moved.h };
+  const se = await uiScreen(moved.x + moved.w, moved.y + moved.h);
+  await drag(se, { x: se.x + 40, y: se.y + 40 });
+  const after8 = await page.evaluate(() => { const s = window.__ed.ui(); return s.layers.find(l => l.id === s.sel); });
+  ok('N8 角点手柄可缩放图层', after8.w > before8.w && after8.h > before8.h,
+    before8.w + 'x' + before8.h + ' → ' + after8.w + 'x' + after8.h);
+
+  // ── N9 元素属性面板 ──
+  const p0 = await page.evaluate(() => { const s = window.__ed.ui(); const l = s.layers.find(x => x.id === s.sel); return { id: l.id, fill: l.fill, op: l.opacity }; });
+  await setProp('#uiP_radius', 40);
+  await page.fill('#uiP_fillT', '#3f7ad6');
+  await page.evaluate(() => document.activeElement && document.activeElement.blur());
+  await page.waitForTimeout(240);
+  await page.evaluate(() => { const r = document.getElementById('uiP_opacity'); r.value = '70'; r.dispatchEvent(new Event('input', { bubbles: true })); r.dispatchEvent(new Event('change', { bubbles: true })); });
+  await page.waitForTimeout(260);
+  await page.click('#uiP_shadowOn');
+  await page.waitForTimeout(320);
+  const p1 = await page.evaluate(() => { const s = window.__ed.ui(); const l = s.layers.find(x => x.id === s.sel);
+    return { radius: l.radius, fill: l.fill, op: l.opacity, shadow: !!(l.shadow && l.shadow.on), hasBlurField: !!document.getElementById('uiP_shadowBlur') }; });
+  ok('N9 属性面板可改圆角/填充/不透明度/阴影', p1.radius === 40 && p1.fill === '#3f7ad6' && Math.abs(p1.op - 0.7) < 0.001 && p1.shadow === true && p1.hasBlurField,
+    'r=' + p1.radius + ' fill=' + p1.fill + ' op=' + p1.op + ' shadow=' + p1.shadow);
+
+  // ── N10 对齐工具 ──
+  await page.click('#uiProps [data-al="hcenter"]');
+  await page.waitForTimeout(250);
+  const al = await page.evaluate(() => { const s = window.__ed.ui(); const l = s.layers.find(x => x.id === s.sel); return { x: l.x, expect: Math.round((s.w - l.w) / 2) }; });
+  ok('N10 对齐工具(水平居中)生效', al.x === al.expect, 'x=' + al.x + ' 期望=' + al.expect);
+
+  // ── N11 快捷键: Ctrl+D 复制 / Delete 删除 ──
+  const c0 = (await uiOf()).layers.length;
+  await page.click('#uiWrap');
+  await page.keyboard.press('Control+d');
+  await page.waitForTimeout(300);
+  const c1 = (await uiOf()).layers.length;
+  await page.keyboard.press('Delete');
+  await page.waitForTimeout(300);
+  const c2 = (await uiOf()).layers.length;
+  ok('N11 UI图层快捷键 Ctrl+D 复制 / Delete 删除', c1 === c0 + 1 && c2 === c0, c0 + ' →复制 ' + c1 + ' →删除 ' + c2);
+
+  // ── N12 一句话生成(清空重建) ──
+  await page.fill('#uiPrompt', "做一个 1080x1080 的方形封面，深色底，中间大标题'星界异宠'，下面一行小字'第二幕'，底部一个金色圆角标签'NEW'");
+  await page.check('input[name=uiMode][value="replace"]');
+  await page.click('#uiGen');
+  await page.waitForTimeout(600);
+  const g1 = await uiOf();
+  const titleL = g1.layers.find(l => l.text && /星界异宠/.test(l.text.content || ''));
+  const tagL = g1.layers.find(l => l.type === 'tag');
+  const bgL = g1.layers.find(l => l.name === '底色');
+  R.data.gen1 = { w: g1.w, h: g1.h, n: g1.layers.length, names: g1.layers.map(l => l.name) };
+  ok('N12 一句话生成(清空重建): 尺寸/底色/标题/标签都解析到',
+    g1.w === 1080 && g1.h === 1080 && g1.layers.length === 4 && !!titleL && !!tagL && !!bgL
+    && bgL.w === 1080 && bgL.h === 1080 && tagL.fill === '#d4af37',
+    g1.layers.length + ' 层: ' + g1.layers.map(l => l.name).join('/'));
+  ok('N12b 生成记录写入工程(history)', g1.history.length > 0 && g1.history[g1.history.length - 1].kind === 'gen',
+    g1.history[g1.history.length - 1] ? g1.history[g1.history.length - 1].note : '无');
+
+  // ── N13 追加模式 ──
+  await page.fill('#uiPrompt', "右上角一个白色标签'TOP'");
+  await page.check('input[name=uiMode][value="append"]');
+  await page.click('#uiGen');
+  await page.waitForTimeout(500);
+  const g2 = await uiOf();
+  ok('N13 追加模式不覆盖原有图层', g2.layers.length === g1.layers.length + 1 && !!g2.layers.find(l => l.text && /TOP/.test(l.text.content || '')),
+    g1.layers.length + ' → ' + g2.layers.length);
+
+  // ── N14 修改选中图层: 只改提到的属性 ──
+  const tagId = await page.evaluate(() => (window.__ed.ui().layers.find(l => l.type === 'tag') || {}).id);
+  await page.click('#uiLayers .ui-layer[data-uid="' + tagId + '"]');     // 走真实路径: 点图层列表行选中
+  await page.waitForTimeout(250);
+  const m0 = await page.evaluate(() => { const s = window.__ed.ui(); const l = s.layers.find(x => x.id === s.sel); return { fill: l.fill, opacity: l.opacity, w: l.w }; });
+  await page.fill('#uiPrompt', '圆角改成 12, 不透明度 60%');
+  await page.click('#uiModify');
+  await page.waitForTimeout(500);
+  const m1 = await page.evaluate(() => { const s = window.__ed.ui(); const l = s.layers.find(x => x.id === s.sel); return { radius: l.radius, fill: l.fill, opacity: l.opacity, w: l.w, prompt: l.name }; });
+  ok('N14 修改选中图层: 只改提到的, 未提及的保持不变',
+    m1.radius === 12 && Math.abs(m1.opacity - 0.6) < 0.001 && m1.fill === m0.fill && m1.w === m0.w,
+    'r=' + m1.radius + ' op=' + m1.opacity + ' 填充保持=' + (m1.fill === m0.fill) + ' 宽保持=' + (m1.w === m0.w));
+
+  // ── N15 五个模板按钮 ──
+  const tplRes = [];
+  for (const k of ['sub', 'cover', 'end', 'btn', 'tag']) {
+    const a = (await uiOf()).layers.length;
+    await page.click('#uiTpl [data-tpl="' + k + '"]');
+    await page.waitForTimeout(260);
+    const b = (await uiOf()).layers.length;
+    tplRes.push(k + ':' + a + '→' + b);
+  }
+  const tplOk = await page.evaluate(() => window.__ed.ui().layers.length);
+  // 注意: tplRes 形如 "sub:5→6", 取数要用 split(':')[1].split('→'), 否则 "sub:5" 被 Number() 成 NaN
+  const tplNum = s => { const p = s.split(':')[1].split('→'); return [+p[0], +p[1]]; };
+  ok('N15 五个模板按钮均可插入图层', tplRes.length === 5 && tplRes.every(s => { const [a, b] = tplNum(s); return b > a; }) && tplOk > 0, tplRes.join(' '));
+
+  // ── N16 导出 PNG ──
+  const [png] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), page.click('#uiExportPng')]);
+  const pngPath = TMP + '/ui_design.png';
+  await png.saveAs(pngPath);
+  const pngSize = fs.statSync(pngPath).size;
+  ok('N16 导出 PNG(设计图)成功', pngSize > 1000 && /\.png$/.test(png.suggestedFilename()), png.suggestedFilename() + ' ' + pngSize + 'B');
+
+  // ── N17 一键叠加到视频画布 ──
+  const clipBefore = await page.evaluate(() => { let n = 0; window.__ed.prj().tracks.forEach(t => n += t.clips.length); return n; });
+  await page.click('#uiToVideo');
+  await page.waitForTimeout(600);
+  const ov = await page.evaluate(() => {
+    let hit = null;
+    window.__ed.prj().tracks.forEach(t => t.clips.forEach(c => { if (c.ui) hit = c; }));
+    return { has: !!hit, isPng: hit ? /^data:image\/png;base64,/.test(hit.ui.img) : false,
+      dur: hit ? +(hit.t1 - hit.t0).toFixed(2) : 0,
+      dom: document.querySelectorAll('#edLanes .ed-clip.ui').length,
+      total: (() => { let n = 0; window.__ed.prj().tracks.forEach(t => n += t.clips.length); return n; })() };
+  });
+  R.data.overlay = ov;
+  ok('N17 一键叠加到视频画布(进时间轴, 可作为贴纸/字幕卡片)',
+    ov.has && ov.isPng && ov.dur >= 2 && ov.dom >= 1 && ov.total === clipBefore + 1, '时长' + ov.dur + 's dom=' + ov.dom);
+
+  // ── N18 全局撤销栈: 剪辑 + UI设计 共用同一套 ──
+  const h0 = await hist();
+  await page.click('#uiTools [data-add="rect"]');
+  await page.waitForTimeout(300);
+  const h1 = await hist();
+  const cntAfterAdd = (await uiOf()).layers.length;
+  await page.keyboard.press('Control+z');
+  await page.waitForTimeout(400);
+  const h2 = await hist();
+  const cntAfterUndo = (await uiOf()).layers.length;
+  // 栈已满(20 上限)时长度不再增长, 只丢最旧的一条 —— 两种都算正常
+  ok('N18a UI操作进入撤销栈且可撤销(tooltip/名称)',
+    (h1.undo.length === h0.undo.length + 1 || h1.undo.length === h1.max) && /添加矩形/.test(h1.undo[h1.undo.length - 1])
+    && cntAfterUndo === cntAfterAdd - 1 && h2.redo.length === 1, '栈顶=' + h1.undo[h1.undo.length - 1] + ' 图层 ' + cntAfterAdd + '→' + cntAfterUndo + ' (' + h1.undo.length + '/' + h1.max + ')');
+  await page.keyboard.press('Control+y');
+  await page.waitForTimeout(400);
+  const cntAfterRedo = (await uiOf()).layers.length;
+  ok('N18b Ctrl+Y 可重做', cntAfterRedo === cntAfterAdd, cntAfterUndo + ' → ' + cntAfterRedo);
+  // 同一个栈里再做一个「剪辑」操作, 证明两个模块共用一套
+  await page.click('#edAddSub');
+  await page.waitForTimeout(450);
+  const h3 = await hist();
+  const names = h3.undo.map(x => x);
+  ok('N18c 剪辑操作与UI操作同一个撤销栈',
+    names.some(n => /字幕片段/.test(n)) && names.some(n => /矩形|图层|模板|生成|UI|对齐/.test(n)),
+    names.slice(-4).join(' | '));
+
+  // ── N19 撤销栈上限 20 步 ──
+  await page.evaluate(() => { const U = window.__ed.ui(); U.layers.length = 0; });   // 清掉图层, 腾出 60 上限空间
+  await page.click('#edNew');                                   // 新建工程 → 撤销栈清空
+  await page.waitForTimeout(500);
+  await page.click('#edRTabs [data-rtab="ui"]');
+  await page.waitForTimeout(300);
+  for (let i = 0; i < 22; i++) { await page.click('#uiTools [data-add="rect"]'); }
+  await page.waitForTimeout(500);
+  const hLim = await hist();
+  ok('N19 撤销栈上限 20 步(超出丢最旧)', hLim.undo.length === 20 && hLim.max === 20, 'undo=' + hLim.undo.length + ' max=' + hLim.max);
+
+  // ── N20 新建工程清空撤销栈与UI设计 ──
+  const n20 = await page.evaluate(() => ({ layers: window.__ed.ui().layers.length, hist: window.__ed.ui().history.length }));
+  await page.click('#edNew');
+  await page.waitForTimeout(500);
+  const n20b = await page.evaluate(() => ({ undo: window.__ed.history().undo.length, redo: window.__ed.history().redo.length,
+    layers: window.__ed.ui().layers.length, designHist: window.__ed.ui().history.length }));
+  await page.click('#edRTabs [data-rtab="ui"]');
+  await page.waitForTimeout(300);
+  ok('N20 新建工程: 撤销栈与UI设计全部重置', n20.layers > 0 && n20b.undo === 0 && n20b.redo === 0 && n20b.layers === 0 && n20b.designHist === 0,
+    JSON.stringify(n20b));
+
+  // ── N21 导出 .lixiu 含 UI设计(且不含撤销栈) ──
+  await page.fill('#uiPrompt', "1080x1080 深色底，中间大标题'存档测试'，底部金色标签'v1'");
+  await page.check('input[name=uiMode][value="replace"]');
+  await page.click('#uiGen');
+  await page.waitForTimeout(500);
+  const [dl3] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), page.click('#edExportPrj')]);
+  const lixiu3 = TMP + '/audit_ui.lixiu';
+  await dl3.saveAs(lixiu3);
+  const J3 = JSON.parse(fs.readFileSync(lixiu3, 'utf8'));
+  const uiKeys = J3.ui ? Object.keys(J3.ui).sort().join(',') : '';
+  // 键序用运行时 sort 现算, 不手写(手写极易写错字母序, 上次就是栽在这)
+  const wantUiKeys = ['bg', 'grid', 'h', 'history', 'layers', 'showGrid', 'snap', 'w'].sort().join(',');
+  R.data.uiexport = { keys: Object.keys(J3).sort().join(','), ui: uiKeys, n: J3.ui ? J3.ui.layers.length : 0 };
+  ok('N21 .lixiu 含 UI设计(画布+图层+生成历史), 且不含撤销栈',
+    !!J3.ui && uiKeys === wantUiKeys && J3.ui.layers.length > 0 && J3.ui.history.length > 0
+    && !('undoStack' in J3) && !('redo' in J3), Object.keys(J3).length + ' 个顶层字段 / ui: ' + uiKeys);
+
+  // ── N22 导入工程恢复 UI设计 ──
+  const beforeImport = J3.ui.layers.length;
+  await page.setInputFiles('#edPrjFile', lixiu3);
+  await page.waitForTimeout(800);
+  const n22 = await page.evaluate(() => ({ n: window.__ed.ui().layers.length, w: window.__ed.ui().w,
+    hist: window.__ed.ui().history.length, undo: window.__ed.history().undo.length,
+    title: (window.__ed.ui().layers.find(l => l.text && /存档测试/.test(l.text.content || '')) || {}).name }));
+  ok('N22 导入工程恢复UI图层/尺寸/历史, 并清空撤销栈',
+    n22.n === beforeImport && n22.w === 1080 && n22.hist > 0 && n22.undo === 0 && !!n22.title,
+    '图层 ' + n22.n + '/' + beforeImport + ' 撤销栈=' + n22.undo);
+
+  // ── N23 旧版工程(无 ui 字段)回退默认, 不报错 ──
+  const legacy = TMP + '/legacy_no_ui.lixiu';
+  fs.writeFileSync(legacy, JSON.stringify({ magic: 'lixiu-project', version: 1, name: '旧工程', canvas: { w: 1280, h: 720 },
+    fps: 30, duration: 10, tracks: [{ id: 'v1', kind: 'video', locked: false, muted: false, clips: [] }], markers: [], materials: [] }));
+  await page.setInputFiles('#edPrjFile', legacy);
+  await page.waitForTimeout(800);
+  const n23 = await page.evaluate(() => ({ w: window.__ed.ui().w, h: window.__ed.ui().h, n: window.__ed.ui().layers.length,
+    grid: window.__ed.ui().grid, snap: window.__ed.ui().snap }));
+  ok('N23 旧工程(无ui字段)回退默认UI设计且不报错',
+    n23.w === 1080 && n23.h === 1080 && n23.n === 0 && n23.grid === 8 && n23.snap === true, JSON.stringify(n23));
+
+  await page.screenshot({ path: SHOT + '/ui-design.png' });
+
   // ── 全页截图 + 错误汇总 ──
   await page.screenshot({ path: SHOT + '/full.png', fullPage: false });
+
+
   R.data.errors = { pageErrors: errs, consoleErrors: consoleErrs.slice(0, 6), netFails: [...new Set(netFails)].slice(0, 4) };
-  ok('L1 无 JS 未捕获异常', errs.length === 0, errs.join(' | ').slice(0, 200));
+  ok('L1 无 JS 未捕获异常', errs.length === 0, errs.join(' | ').slice(0, 500));
   if (netFails.length) warn('存在网络请求失败(离线打开时访问后端属预期)', [...new Set(netFails)].join(' '));
 
   await browser.close();

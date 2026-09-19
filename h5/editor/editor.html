@@ -40,21 +40,102 @@
         <button class="ed-btn" id="edLibBtn" style="margin-left:auto">📦 素材库</button>
       </div>
     </div>
-    <!-- 右侧属性面板: 顶部【半自动智能进度模块】(可折叠), 下方选中片段属性(动态渲染) -->
+    <!-- 右侧面板: 三大 Tab【属性】【进度】【UI设计】(内容由 editor.js 渲染) -->
     <div class="ed-right" id="edRight">
-      <!-- ── 【半自动智能进度模块】面板壳(内容由 editor.js 的 renderProgress() 渲染) ── -->
-      <section class="ed-prog" id="edProg">
-        <div class="pg-head" id="pgHead" title="点击折叠/展开进度面板">
-          <span>📊 项目进度</span>
-          <span class="pg-chip" id="pgChip">待开始</span>
-          <span class="pg-pct" id="pgPct">0%</span>
-          <button class="pg-toggle" id="pgFold" title="折叠/展开进度面板">▾</button>
+      <div class="ed-rtabs" id="edRTabs">
+        <button data-rtab="props" class="on">属性</button>
+        <button data-rtab="progress">进度</button>
+        <button data-rtab="ui">UI设计</button>
+      </div>
+
+      <!-- ── Tab 1【属性】: 选中片段/工程属性(renderProps() 渲染) ── -->
+      <div class="rt-pane on" id="rt-props">
+        <div id="edProps"></div>
+      </div>
+
+      <!-- ── Tab 2【进度】: 半自动智能进度模块(renderProgress() 渲染) ── -->
+      <div class="rt-pane" id="rt-progress">
+        <section class="ed-prog" id="edProg">
+          <div class="pg-head" id="pgHead" title="点击折叠/展开进度面板">
+            <span>📊 项目进度</span>
+            <span class="pg-chip" id="pgChip">待开始</span>
+            <span class="pg-pct" id="pgPct">0%</span>
+            <button class="pg-toggle" id="pgFold" title="折叠/展开进度面板">▾</button>
+          </div>
+          <div class="pg-bar"><i id="pgFill" class="gray"></i></div>
+          <div class="pg-body" id="pgBody"></div>
+        </section>
+      </div>
+
+      <!-- ── Tab 3【UI设计】: 独立画布设计器(一句话生成 / 手动编辑 / 叠加到视频) ── -->
+      <div class="rt-pane" id="rt-ui">
+        <!-- 添加组件 -->
+        <div class="ui-tools" id="uiTools">
+          <button data-add="rect">矩形</button>
+          <button data-add="text">文本</button>
+          <button data-add="image">图片</button>
+          <button data-add="button">按钮</button>
+          <button data-add="card">卡片容器</button>
+          <button data-add="icon">图标</button>
         </div>
-        <div class="pg-bar"><i id="pgFill" class="gray"></i></div>
-        <div class="pg-body" id="pgBody"></div>
-      </section>
-      <!-- ── 选中片段/工程属性 ── -->
-      <div id="edProps"></div>
+
+        <!-- 设计画布(网格吸附 / 参考线 / 对齐 的绘制目标) -->
+        <div class="ui-cv-wrap" id="uiWrap">
+          <canvas id="uiCanvas" width="1080" height="1080"></canvas>
+        </div>
+        <div class="ui-cv-bar">
+          <span>画布</span>
+          <input type="number" id="uiCvW" value="1080" title="画布宽(px)"> ×
+          <input type="number" id="uiCvH" value="1080" title="画布高(px)">
+          <button id="uiCvApply">应用</button>
+          <span class="ed-sep"></span>
+          <button id="uiSnap" title="拖动时吸附到网格">网格吸附</button>
+          <button id="uiGrid" title="显示网格与参考线">网格/参考线</button>
+          <select id="uiGridSize" title="网格大小" style="background:#191c22;border:1px solid #333846;color:#dde1e8;border-radius:5px;padding:3px 5px;font-size:10.5px;outline:none;font-family:inherit">
+            <option value="4">网格 4</option><option value="8" selected>网格 8</option><option value="16">网格 16</option><option value="24">网格 24</option>
+          </select>
+        </div>
+
+        <!-- 图层列表: 显示/隐藏 · 锁定 · 层级排序 -->
+        <div class="ui-sec">
+          <h5>图层<span class="n" id="uiLayerCnt">0 个</span></h5>
+          <div class="ui-layers" id="uiLayers"></div>
+        </div>
+
+        <!-- 选中元素属性 -->
+        <div class="ui-sec">
+          <h5>元素属性<span class="n" id="uiPropName"></span></h5>
+          <div id="uiProps"></div>
+        </div>
+
+        <!-- 一句话生成 UI(本地解析, 不依赖后端) -->
+        <div class="ui-sec">
+          <h5>一句话生成 UI</h5>
+          <textarea class="ui-prompt" id="uiPrompt" placeholder="例：1080x1080 方形，深色底，中间大标题'星界异宠'，下面一行小字'第二幕'，底部金色圆角标签'NEW'"></textarea>
+          <div class="ui-row">
+            <label><input type="radio" name="uiMode" value="replace" checked> 清空重建</label>
+            <label><input type="radio" name="uiMode" value="append"> 追加到现有图层</label>
+          </div>
+          <div class="ui-act">
+            <button id="uiGen" class="primary">✨ 一键生成新UI</button>
+            <button id="uiModify" title="只改指令里提到的属性, 其余保持不变">✏️ 修改选中图层</button>
+          </div>
+          <div class="ui-tpl" id="uiTpl">
+            <button data-tpl="sub">字幕卡片</button>
+            <button data-tpl="cover">封面标题</button>
+            <button data-tpl="end">片尾信息卡</button>
+            <button data-tpl="btn">主按钮</button>
+            <button data-tpl="tag">标签组件</button>
+          </div>
+          <div class="ui-hist" id="uiHist"></div>
+        </div>
+
+        <!-- 输出: 导出 PNG / 叠加到视频画布 -->
+        <div class="ui-act" style="margin-top:10px">
+          <button class="ui-out" id="uiExportPng">导出 PNG</button>
+          <button class="ui-out" id="uiToVideo" title="把当前设计作为贴纸/字幕卡片叠加到时间轴播放头处">叠加到视频画布</button>
+        </div>
+      </div>
     </div>
   </div>
 

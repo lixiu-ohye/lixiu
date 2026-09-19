@@ -158,6 +158,7 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
 .ed-clip.video{background:linear-gradient(180deg,#3d5f9e,#324e83)}
 .ed-clip.image{background:linear-gradient(180deg,#3d7e9e,#2e6583)}
 .ed-clip.subtitle{background:linear-gradient(180deg,#94783d,#7d6532)}
+.ed-clip.ui{background:linear-gradient(180deg,#6b5fa8,#544a86)}
 .ed-clip.audio{background:linear-gradient(180deg,#3d8e63,#327351)}
 .ed-clip.sel{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
 .ed-clip .hL,.ed-clip .hR{position:absolute;top:0;bottom:0;width:7px;cursor:ew-resize}
@@ -253,6 +254,69 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
 .ed-tip.show{display:block}
 .ed-tip b{color:#e8c068}
 .ed-tip .tp-h{color:#8fb6e8;display:block;margin-bottom:2px}
+/* ══════════════ 【右栏三大 Tab】属性 / 进度 / UI设计 ══════════════ */
+.ed-rtabs{display:flex;gap:4px;margin-bottom:9px;background:#191c22;border:1px solid #2e323d;border-radius:8px;padding:3px}
+.ed-rtabs button{flex:1;background:none;border:0;color:#9aa1b0;font-size:11.5px;padding:5px 4px;border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.ed-rtabs button:hover{color:#dfe3ea;background:#22252e}
+.ed-rtabs button.on{background:#7a4d63;color:#fff}
+.rt-pane{display:none}
+.rt-pane.on{display:block}
+/* UI设计 Tab 激活时右栏加宽(画布+图层列表需要空间) */
+.ed-right.wide{width:404px}
+
+/* ── UI设计: 组件工具栏 ── */
+.ui-tools{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}
+.ui-tools button{background:#262a33;border:1px solid #353a46;color:#c6cbd6;border-radius:6px;padding:6px 2px;font-size:11px;cursor:pointer;font-family:inherit}
+.ui-tools button:hover{background:#303542;color:#fff}
+/* ── UI设计: 画布 ── */
+.ui-cv-wrap{position:relative;background:#101216;border:1px solid #2e323d;border-radius:8px;height:246px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:6px}
+#uiCanvas{max-width:100%;max-height:100%;cursor:crosshair;box-shadow:0 2px 14px rgba(0,0,0,.55);background:repeating-conic-gradient(#22252e 0 25%,#1a1d24 0 50%) 0 0/14px 14px}
+.ui-cv-bar{display:flex;align-items:center;gap:5px;font-size:11px;color:#8b93a5;margin-bottom:8px;flex-wrap:wrap}
+.ui-cv-bar input[type=number]{width:56px;background:#191c22;border:1px solid #333846;color:#dde1e8;border-radius:5px;padding:3px 6px;font-size:11px;outline:none;font-family:inherit}
+.ui-cv-bar button{background:#262a33;border:1px solid #353a46;color:#c6cbd6;border-radius:5px;padding:3px 8px;font-size:10.5px;cursor:pointer;font-family:inherit}
+.ui-cv-bar button.on{background:#4a3f52;border-color:#9c6b85;color:#fff}
+/* ── UI设计: 分区 ── */
+.ui-sec{margin-top:10px}
+.ui-sec>h5{font-size:11px;color:#8b93a5;margin:0 0 6px;font-weight:600;letter-spacing:.4px;display:flex;align-items:center;gap:6px}
+.ui-sec>h5 .n{margin-left:auto;font-weight:400;color:#6f7686}
+/* ── UI设计: 图层列表 ── */
+.ui-layers{max-height:190px;overflow-y:auto;border:1px solid #2e323d;border-radius:7px;background:#191c22}
+.ui-layer{display:flex;align-items:center;gap:5px;padding:4px 6px;border-bottom:1px solid #22252e;font-size:11px;color:#b6bcc8;cursor:pointer}
+.ui-layer:last-child{border-bottom:0}
+.ui-layer:hover{background:#22252e}
+.ui-layer.sel{background:#2f2733;box-shadow:inset 2px 0 0 #b07ad0;color:#e6d4f2}
+.ui-layer .ty{width:17px;height:17px;border-radius:4px;background:#2c303a;color:#8fb6e8;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+.ui-layer .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ui-layer .ic{background:none;border:0;color:#6f7686;cursor:pointer;padding:0 2px;font-size:11px;line-height:1}
+.ui-layer .ic:hover{color:#dfe3ea}
+.ui-layer .ic.off{opacity:.35}
+.ui-layer .ic.warn{color:#e8c068}
+.ui-layer .mv{background:#262a33;border:1px solid #333846;color:#9aa1b0;border-radius:4px;cursor:pointer;padding:0 4px;font-size:9px;line-height:14px}
+.ui-layer .mv:hover{color:#fff;background:#303542}
+/* ── UI设计: 一句话生成 ── */
+.ui-prompt{width:100%;height:64px;resize:vertical;background:#191c22;border:1px solid #333846;color:#dde1e8;border-radius:7px;padding:6px 8px;font-size:11.5px;font-family:inherit;outline:none;box-sizing:border-box;line-height:1.5}
+.ui-row{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:11px;color:#9aa1b0;flex-wrap:wrap}
+.ui-row label{display:flex;align-items:center;gap:4px;cursor:pointer}
+.ui-row input[type=radio]{accent-color:#9c6b85;cursor:pointer}
+.ui-act{display:flex;gap:6px;margin-top:7px}
+.ui-act button{flex:1;border-radius:6px;padding:7px 4px;font-size:11.5px;cursor:pointer;font-family:inherit;background:#262a33;border:1px solid #353a46;color:#c6cbd6}
+.ui-act button:hover{background:#303542;color:#fff}
+.ui-act button.primary{background:#7a4d63;border-color:#9c6b85;color:#fff}
+.ui-out{width:100%;border-radius:6px;padding:7px 4px;font-size:11.5px;cursor:pointer;font-family:inherit;background:#262a33;border:1px solid #353a46;color:#c6cbd6}
+.ui-out:hover{background:#303542;color:#fff}
+.ui-out.hot{background:#2f4a3d;border-color:#4f8d6c;color:#bfe8d2}
+.ui-tpl{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.ui-tpl button{background:#22252e;border:1px solid #333846;color:#9aa1b0;border-radius:10px;padding:3px 9px;font-size:10.5px;cursor:pointer;font-family:inherit}
+.ui-tpl button:hover{background:#2c303a;color:#dfe3ea;border-color:#4a5064}
+.ui-hist{max-height:96px;overflow-y:auto;margin-top:7px;background:#191c22;border:1px solid #2e323d;border-radius:6px;padding:5px 6px;font-size:10.5px;color:#98a0b0}
+.ui-hist .hi{padding:2px 0;border-bottom:1px dashed #262a33;line-height:1.5}
+.ui-hist .hi:last-child{border-bottom:0}
+.ui-hist .hi b{color:#8fb6e8;font-weight:600}
+.ui-hist .hi .r{color:#e8c068}
+.ui-hist .empty{color:#6f7686}
+/* UI设计: 空选中提示 */
+.ui-nosel{color:#6f7686;font-size:11px;padding:10px 4px;text-align:center;line-height:1.6}
+
 @media (max-width:768px){.ed-right{display:none}.ed-lib{width:200px}}
 /* ↑↑↑ 编辑器样式结束 ↑↑↑ */
 </style>
@@ -367,21 +431,102 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
         <button class="ed-btn" id="edLibBtn" style="margin-left:auto">📦 素材库</button>
       </div>
     </div>
-    <!-- 右侧属性面板: 顶部【半自动智能进度模块】(可折叠), 下方选中片段属性(动态渲染) -->
+    <!-- 右侧面板: 三大 Tab【属性】【进度】【UI设计】(内容由 editor.js 渲染) -->
     <div class="ed-right" id="edRight">
-      <!-- ── 【半自动智能进度模块】面板壳(内容由 editor.js 的 renderProgress() 渲染) ── -->
-      <section class="ed-prog" id="edProg">
-        <div class="pg-head" id="pgHead" title="点击折叠/展开进度面板">
-          <span>📊 项目进度</span>
-          <span class="pg-chip" id="pgChip">待开始</span>
-          <span class="pg-pct" id="pgPct">0%</span>
-          <button class="pg-toggle" id="pgFold" title="折叠/展开进度面板">▾</button>
+      <div class="ed-rtabs" id="edRTabs">
+        <button data-rtab="props" class="on">属性</button>
+        <button data-rtab="progress">进度</button>
+        <button data-rtab="ui">UI设计</button>
+      </div>
+
+      <!-- ── Tab 1【属性】: 选中片段/工程属性(renderProps() 渲染) ── -->
+      <div class="rt-pane on" id="rt-props">
+        <div id="edProps"></div>
+      </div>
+
+      <!-- ── Tab 2【进度】: 半自动智能进度模块(renderProgress() 渲染) ── -->
+      <div class="rt-pane" id="rt-progress">
+        <section class="ed-prog" id="edProg">
+          <div class="pg-head" id="pgHead" title="点击折叠/展开进度面板">
+            <span>📊 项目进度</span>
+            <span class="pg-chip" id="pgChip">待开始</span>
+            <span class="pg-pct" id="pgPct">0%</span>
+            <button class="pg-toggle" id="pgFold" title="折叠/展开进度面板">▾</button>
+          </div>
+          <div class="pg-bar"><i id="pgFill" class="gray"></i></div>
+          <div class="pg-body" id="pgBody"></div>
+        </section>
+      </div>
+
+      <!-- ── Tab 3【UI设计】: 独立画布设计器(一句话生成 / 手动编辑 / 叠加到视频) ── -->
+      <div class="rt-pane" id="rt-ui">
+        <!-- 添加组件 -->
+        <div class="ui-tools" id="uiTools">
+          <button data-add="rect">矩形</button>
+          <button data-add="text">文本</button>
+          <button data-add="image">图片</button>
+          <button data-add="button">按钮</button>
+          <button data-add="card">卡片容器</button>
+          <button data-add="icon">图标</button>
         </div>
-        <div class="pg-bar"><i id="pgFill" class="gray"></i></div>
-        <div class="pg-body" id="pgBody"></div>
-      </section>
-      <!-- ── 选中片段/工程属性 ── -->
-      <div id="edProps"></div>
+
+        <!-- 设计画布(网格吸附 / 参考线 / 对齐 的绘制目标) -->
+        <div class="ui-cv-wrap" id="uiWrap">
+          <canvas id="uiCanvas" width="1080" height="1080"></canvas>
+        </div>
+        <div class="ui-cv-bar">
+          <span>画布</span>
+          <input type="number" id="uiCvW" value="1080" title="画布宽(px)"> ×
+          <input type="number" id="uiCvH" value="1080" title="画布高(px)">
+          <button id="uiCvApply">应用</button>
+          <span class="ed-sep"></span>
+          <button id="uiSnap" title="拖动时吸附到网格">网格吸附</button>
+          <button id="uiGrid" title="显示网格与参考线">网格/参考线</button>
+          <select id="uiGridSize" title="网格大小" style="background:#191c22;border:1px solid #333846;color:#dde1e8;border-radius:5px;padding:3px 5px;font-size:10.5px;outline:none;font-family:inherit">
+            <option value="4">网格 4</option><option value="8" selected>网格 8</option><option value="16">网格 16</option><option value="24">网格 24</option>
+          </select>
+        </div>
+
+        <!-- 图层列表: 显示/隐藏 · 锁定 · 层级排序 -->
+        <div class="ui-sec">
+          <h5>图层<span class="n" id="uiLayerCnt">0 个</span></h5>
+          <div class="ui-layers" id="uiLayers"></div>
+        </div>
+
+        <!-- 选中元素属性 -->
+        <div class="ui-sec">
+          <h5>元素属性<span class="n" id="uiPropName"></span></h5>
+          <div id="uiProps"></div>
+        </div>
+
+        <!-- 一句话生成 UI(本地解析, 不依赖后端) -->
+        <div class="ui-sec">
+          <h5>一句话生成 UI</h5>
+          <textarea class="ui-prompt" id="uiPrompt" placeholder="例：1080x1080 方形，深色底，中间大标题'星界异宠'，下面一行小字'第二幕'，底部金色圆角标签'NEW'"></textarea>
+          <div class="ui-row">
+            <label><input type="radio" name="uiMode" value="replace" checked> 清空重建</label>
+            <label><input type="radio" name="uiMode" value="append"> 追加到现有图层</label>
+          </div>
+          <div class="ui-act">
+            <button id="uiGen" class="primary">✨ 一键生成新UI</button>
+            <button id="uiModify" title="只改指令里提到的属性, 其余保持不变">✏️ 修改选中图层</button>
+          </div>
+          <div class="ui-tpl" id="uiTpl">
+            <button data-tpl="sub">字幕卡片</button>
+            <button data-tpl="cover">封面标题</button>
+            <button data-tpl="end">片尾信息卡</button>
+            <button data-tpl="btn">主按钮</button>
+            <button data-tpl="tag">标签组件</button>
+          </div>
+          <div class="ui-hist" id="uiHist"></div>
+        </div>
+
+        <!-- 输出: 导出 PNG / 叠加到视频画布 -->
+        <div class="ui-act" style="margin-top:10px">
+          <button class="ui-out" id="uiExportPng">导出 PNG</button>
+          <button class="ui-out" id="uiToVideo" title="把当前设计作为贴纸/字幕卡片叠加到时间轴播放头处">叠加到视频画布</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -869,14 +1014,14 @@ function reset(){
 // 工程: PRJ = {name, canvas:{w,h}, fps, duration, tracks:[], materials:[refs], markers:[],
 //              stats:{cuts,previewed,exported}, progress:{items,notes,milestones,log}}
 // 轨道: {id, kind: video|subtitle|audio, locked, muted, clips:[]}
-// 片段: {id, matId, t0, t1, in/out(素材内), subtitle:{...}, kf:[...], fx:{...}}
+// 片段: {id, matId, t0, t1, in/out(素材内), subtitle:{...}, kf:[...], fx:{...}, ui:{img,w,h}}
 var PRJ = blankProject();
 var MATS = [];                     // 素材池(会话级, ObjectURL 不入工程)
 var sel = { clip: null, track: null };   // 当前选中
+var UI_SEL = null;                 // 【UI设计】当前选中图层 id(会话级, 不入工程)
 var cur = 0;                       // 播放头时间(秒)
 var playing = false;
 var PPS = 60;                      // 每秒像素(时间轴缩放)
-var undoStack = [], redoStack = [];
 var UID = 1; function uid(p) { return (p || 'c') + '_' + Date.now().toString(36) + '_' + (UID++); }
 
 function blankProject() {
@@ -890,11 +1035,36 @@ function blankProject() {
     materials: [], markers: [],
     // 【半自动智能进度模块】工程内持久化数据(随 .lixiu 读写)
     stats: freshStats(),      // 单调累计的行为事实: 分割次数 / 是否预览全片 / 是否导出过工程
-    progress: freshProgress() // 任务勾选明细 + 人工锁定 + 备注 + 里程碑 + 进度日志
+    progress: freshProgress(), // 任务勾选明细 + 人工锁定 + 备注 + 里程碑 + 进度日志
+    // 【UI设计模块】工程内持久化数据(随 .lixiu 读写)
+    ui: freshUI()
   };
 }
 function freshStats() { return { cuts: 0, previewed: false, exported: false }; }
 function freshProgress() { return { items: {}, notes: '', milestones: [], log: [] }; }
+// 【UI设计模块】画布配置 + 图层 + 生成/修改历史
+//  图层类型: rect(矩形) / text(文本) / image(图片) / button(按钮) / card(卡片容器) / icon(图标)
+//  图层字段: id,name,type,x,y,w,h,radius,fill,stroke,strokeW,shadow{on,blur,x,y,color},opacity,visible,locked
+//            text:{content,size,weight,color,align,font,lineHeight}   icon:{shape}
+function freshUI() {
+  return {
+    w: 1080, h: 1080,          // 画布尺寸(自定义)
+    bg: 'transparent',         // 画布底色(导出 PNG 用, 设计态显示棋盘格)
+    grid: 8, snap: true, showGrid: true,   // 网格吸附 / 网格与参考线显示
+    layers: [],                // 图层栈: 数组末位 = 视觉最上层
+    history: []                // 生成/修改历史(随 .lixiu 持久化; 与撤销栈无关)
+  };
+}
+// 兼容旧版 .lixiu(缺 ui 字段)与半截数据: 字段缺失补默认, 不覆盖已有值
+function ensureUI() {
+  if (!PRJ.ui) PRJ.ui = freshUI();
+  var u = PRJ.ui, d = freshUI();
+  Object.keys(d).forEach(function (k) { if (u[k] == null) u[k] = d[k]; });
+  if (!Array.isArray(u.layers)) u.layers = [];
+  if (!Array.isArray(u.history)) u.history = [];
+  return u;
+}
+function uiFind(id) { var u = ensureUI(); return u.layers.find(function (l) { return l.id === id; }) || null; }
 // 兼容旧版 .lixiu(缺 progress/stats 字段) 与半截数据
 function ensureProgress() {
   if (!PRJ.stats) PRJ.stats = freshStats();
@@ -918,13 +1088,65 @@ function toast(msg, ms) {
 }
 function $id(x) { return document.getElementById(x); }
 
-// ── 撤销/重做(快照栈, 简单可靠) ──────────────────────────
+// ═══════════ 【全局统一撤销栈】剪辑时间轴 + UI设计 共用同一套 ═══════════
+// 对齐需求:
+//  · 每次操作只存「操作前后快照 + 操作名」; 栈只在内存里, 绝不写进 .lixiu
+//  · 上限 20 步, 超出丢最旧的
+//  · 新建 / 导入工程时清空
+//  · 撤销/重做按钮 hover 显示即将操作的名称
+var HISTORY = {
+  undo: [], redo: [], MAX: 20,
+  clear: function () { this.undo.length = 0; this.redo.length = 0; updateUndoBtns(); }
+};
+// 入栈时机: 修改数据「之前」调用 → 栈里存的是该操作的「前」快照;
+// 执行撤销时当前状态即该操作的「后」快照, 一并压进重做栈 → 前后快照成对。
+function pushUndo(name) {
+  HISTORY.undo.push({ name: name || '编辑操作', snap: snapshot(), at: Date.now() });
+  if (HISTORY.undo.length > HISTORY.MAX) HISTORY.undo.shift();
+  HISTORY.redo.length = 0;                    // 新操作产生 → 重做链断开
+  updateUndoBtns();
+}
 function snapshot() { return JSON.stringify({ prj: PRJ, mats: PRJ.materials }); }
-function pushUndo() { undoStack.push(snapshot()); if (undoStack.length > 50) undoStack.shift(); redoStack.length = 0; updateUndoBtns(); }
-function restore(s) { var o = JSON.parse(s); PRJ = o.prj; MATS.forEach(function (m) { var hit = PRJ.materials.find(function (x) { return x.id === m.id; }); if (hit) hit._live = m; }); sel.clip = null; renderAll(); }
-function undo() { if (!undoStack.length) return toast('没有可撤销的操作'); redoStack.push(snapshot()); restore(undoStack.pop()); updateUndoBtns(); toast('已撤销'); }
-function redo() { if (!redoStack.length) return toast('没有可重做的操作'); undoStack.push(snapshot()); restore(redoStack.pop()); updateUndoBtns(); toast('已重做'); }
-function updateUndoBtns() { $id('edUndo').disabled = !undoStack.length; $id('edRedo').disabled = !redoStack.length; }
+// 用于「已知操作前快照」的场景(拖拽/连续输入): 手势或聚焦开始时存一份快照, 结束时若真的
+// 有变化才入栈 —— 这样不会产生一堆空操作的撤销记录
+function pushUndoSnap(name, snap) {
+  HISTORY.undo.push({ name: name || '编辑操作', snap: snap, at: Date.now() });
+  if (HISTORY.undo.length > HISTORY.MAX) HISTORY.undo.shift();
+  HISTORY.redo.length = 0;
+  updateUndoBtns();
+}
+function restore(s) {
+  var o = JSON.parse(s);
+  PRJ = o.prj;
+  MATS.forEach(function (m) { var hit = PRJ.materials.find(function (x) { return x.id === m.id; }); if (hit) hit._live = m; });
+  sel.clip = null;
+  ensureUI();                                  // 快照可能来自旧版数据, 兜底补 ui 字段
+  if (UI_SEL && !uiFind(UI_SEL)) UI_SEL = null;
+  renderAll();
+}
+function undo() {
+  if (!HISTORY.undo.length) return toast('没有可撤销的操作');
+  var it = HISTORY.undo.pop();
+  HISTORY.redo.push({ name: it.name, snap: snapshot(), at: Date.now() });   // 当前状态 = 该操作的「后」快照
+  restore(it.snap); updateUndoBtns(); toast('已撤销: ' + it.name);
+}
+function redo() {
+  if (!HISTORY.redo.length) return toast('没有可重做的操作');
+  var it = HISTORY.redo.pop();
+  HISTORY.undo.push({ name: it.name, snap: snapshot(), at: Date.now() });
+  restore(it.snap); updateUndoBtns(); toast('已重做: ' + it.name);
+}
+function updateUndoBtns() {
+  var u = $id('edUndo'), r = $id('edRedo');
+  if (u) {
+    u.disabled = !HISTORY.undo.length;
+    u.title = HISTORY.undo.length ? '撤销「' + HISTORY.undo[HISTORY.undo.length - 1].name + '」(Ctrl+Z) · ' + HISTORY.undo.length + '/' + HISTORY.MAX : '没有可撤销的操作';
+  }
+  if (r) {
+    r.disabled = !HISTORY.redo.length;
+    r.title = HISTORY.redo.length ? '重做「' + HISTORY.redo[HISTORY.redo.length - 1].name + '」(Ctrl+Y) · ' + HISTORY.redo.length + '/' + HISTORY.MAX : '没有可重做的操作';
+  }
+}
 
 // ── 素材库 ───────────────────────────────────────────────
 function addMaterial(file) {
@@ -998,17 +1220,20 @@ function renderTracks() {
 }
 
 function clipKind(c) {
+  if (c.ui) return 'ui';                                   // 【UI设计】叠加的贴纸/字幕卡片
   if (!c.matId) return 'subtitle';
   var m = MATS.find(function (x) { return x.id === c.matId; });
   return m ? m.type : (c._matType || 'video');
 }
 function matAlive(id) { return !!MATS.find(function (m) { return m.id === id; }); }
 function clipTitle(c) {
+  if (c.ui) return 'UI设计叠加 (' + c.t0.toFixed(1) + 's-' + c.t1.toFixed(1) + 's) · ' + c.ui.w + '×' + c.ui.h;
   if (!c.matId) return (c.subtitle && c.subtitle.text ? c.subtitle.text : '字幕') + ' (' + c.t0.toFixed(1) + 's-' + c.t1.toFixed(1) + 's)';
   var m = MATS.find(function (x) { return x.id === c.matId; });
   return (m ? m.name : '缺失素材') + ' (' + c.t0.toFixed(1) + 's-' + c.t1.toFixed(1) + 's)';
 }
 function clipLabel(c) {
+  if (c.ui) return '🎨 UI叠加 ' + c.ui.w + '×' + c.ui.h;
   if (!c.matId) return '💬 ' + ((c.subtitle && c.subtitle.text) || '字幕').slice(0, 14);
   var m = MATS.find(function (x) { return x.id === c.matId; });
   return (m ? m.name : '⚠ 缺失') .slice(0, 16);
@@ -1115,7 +1340,7 @@ function addSubClip() {
   var tr = PRJ.tracks.find(function (t) { return t.kind === 'subtitle'; });
   if (!tr) { tr = { id: uid('sub'), kind: 'subtitle', locked: false, muted: false, clips: [] }; PRJ.tracks.push(tr); }
   if (tr.locked) return toast('字幕轨已锁定');
-  pushUndo();
+  pushUndo('添加字幕片段');
   var c = { id: uid('c'), matId: null, t0: cur, t1: cur + 3, subtitle: defSub() };
   tr.clips.push(c); sel.clip = c.id;
   renderTracks(); renderProps(); toast('已添加字幕片段(3秒)'); touchProgress();
@@ -1189,6 +1414,7 @@ function drawFrame() {
       if (cur < c.t0 || cur >= c.t1) return;
       if (c.matId) drawMediaClip(ctx, c, W, H);
       else if (c.subtitle) drawSubClip(ctx, c, W, H);
+      else if (c.ui) drawUiClip(ctx, c, W, H);
     });
   }
   ctx.restore();
@@ -1271,6 +1497,35 @@ function drawSubClip(ctx, c, W, H) {
 }
 function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
+// 【UI设计模块】把「叠加到时间轴」的 UI 设计图当贴纸/字幕卡片合成进视频画布
+//   clip.ui = { img: dataURL, w, h } —— 光栅化快照随工程保存, 保证与设计时效果一致
+var UI_IMG_CACHE = {};
+function drawUiClip(ctx, c, W, H) {
+  if (!c.ui || !c.ui.img) return;
+  var img = UI_IMG_CACHE[c.id];
+  if (!img) {
+    img = new Image();
+    img.onload = function () { drawFrame(); };          // 解码完成补画一帧
+    img.src = c.ui.img;
+    UI_IMG_CACHE[c.id] = img;
+    return;
+  }
+  if (!img.complete || !img.width) return;
+  var px = kfVal(c, 'px', cur, 0.5), py = kfVal(c, 'py', cur, 0.5);
+  var sc = kfVal(c, 'scale', cur, 1), op = kfVal(c, 'opacity', cur, 1);
+  var rot = kfVal(c, 'rot', cur, 0);
+  var fit = Math.min(W / c.ui.w, H / c.ui.h);
+  var dw = c.ui.w * fit * sc, dh = c.ui.h * fit * sc;
+  ctx.save();
+  ctx.globalAlpha = clamp(op, 0, 1);
+  var f = fxFilter(c, cur);
+  if (f) ctx.filter = f;
+  ctx.translate(px * W, py * H);
+  if (rot) ctx.rotate(rot * Math.PI / 180);
+  try { ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh); } catch (e) {}
+  ctx.restore();
+}
+
 // ── 右侧属性面板(选中片段动态渲染) ────────────────────────
 function renderProps() {
   var R = $id('edProps');
@@ -1288,7 +1543,13 @@ function renderProps() {
   var html = '<h4>片段 · ' + (c.matId ? clipLabel(c) : '字幕') + '</h4>'
     + '<div class="grp"><div class="ed-field"><label>开始</label><input type="number" id="cT0" value="' + (+c.t0.toFixed(2)) + '" step="0.1"></div>'
     + '<div class="ed-field"><label>结束</label><input type="number" id="cT1" value="' + (+c.t1.toFixed(2)) + '" step="0.1"></div></div>';
-  if (!c.matId) {
+  if (c.ui) {
+    // 【UI设计模块】叠加到视频画布的贴纸 / 字幕卡片: 没有字幕参数, 只提示可用关键帧加动效
+    html += '<h4>UI 贴纸 / 卡片</h4><div class="grp">'
+      + '<div class="ed-hint">来自「UI设计」画布的设计图 (' + c.ui.w + '×' + c.ui.h + ')<br>'
+      + '可用下面的关键帧做位移 / 缩放 / 淡入淡出</div>'
+      + '<button class="ed-btn" id="cUiBack" style="width:100%">回到 UI设计画布继续编辑</button></div>';
+  } else if (!c.matId) {
     // 字幕属性
     var s = c.subtitle;
     html += '<h4>字幕 · 基础</h4><div class="grp">'
@@ -1339,7 +1600,11 @@ function bindProjProps() {
 function bindClipProps(c, hit) {
   $id('cT0').onchange = function () { c.t0 = clamp(+this.value || 0, 0, c.t1 - 0.1); renderTracks(); };
   $id('cT1').onchange = function () { c.t1 = Math.max(c.t0 + 0.1, +this.value || 1); PRJ.duration = Math.max(PRJ.duration, c.t1); renderTracks(); };
-  if (!c.matId) {
+  if (c.ui) {
+    // 【UI设计模块】叠加片段: 「回到画布」按钮 + 不做字幕/素材分支
+    var cub = $id('cUiBack');
+    if (cub) cub.onclick = function () { setRTab('ui'); renderUi(); toast('已切到 UI设计画布'); };
+  } else if (!c.matId) {
     var s = c.subtitle;
     $id('sText').oninput = function () { s.text = this.value; renderTracks(); drawFrame(); };
     $id('sFont').onchange = function () { s.font = this.value; drawFrame(); };
@@ -1424,6 +1689,14 @@ function exportProject() {
       total: pg.total,
       savedAt: tsNow()
     },
+    // 【UI设计模块】画布尺寸配置 + 全部图层 + 生成/修改历史
+    //   注意: 全局撤销栈(HISTORY)不在这里 —— 它是会话态, 绝不写进工程文件
+    ui: {
+      w: PRJ.ui.w, h: PRJ.ui.h, bg: PRJ.ui.bg,
+      grid: PRJ.ui.grid, snap: PRJ.ui.snap, showGrid: PRJ.ui.showGrid,
+      layers: PRJ.ui.layers,
+      history: PRJ.ui.history
+    },
     // 素材只存引用(名字+类型), 不嵌素材本体 —— 导入后按名提示重传
     materials: (PRJ.materials || []).map(function (m) { return { name: m.name, type: m.type }; })
   };
@@ -1433,7 +1706,8 @@ function exportProject() {
   a.download = (PRJ.name || '工程') + '.lixiu';
   a.click();
   renderProgress();
-  toast('工程已导出: ' + a.download + ' (含进度 ' + pg.total + '% / 备注 / 里程碑 / ' + PRJ.progress.log.length + ' 条日志)', 3200);
+  toast('工程已导出: ' + a.download + ' (进度 ' + pg.total + '% / UI图层 ' + PRJ.ui.layers.length
+    + ' 个 / 备注 / 里程碑 / ' + PRJ.progress.log.length + ' 条日志)', 3400);
 }
 
 function importProject(file) {
@@ -1442,27 +1716,33 @@ function importProject(file) {
     try {
       var d = JSON.parse(rd.result);
       if (d.magic !== 'lixiu-project') throw new Error('不是 .lixiu 工程文件');
-      pushUndo();
       var impBefore = calcProgress().total;                    // 导入前(旧工程)的百分比
       PRJ = { name: d.name, canvas: d.canvas, fps: d.fps || 30, duration: d.duration, tracks: d.tracks,
         materials: d.materials || [], markers: d.markers || [],
         // 进度配置: 新工程读 progress, 旧工程(无该字段)回退到默认空进度
         stats: d.stats || freshStats(),
         progress: d.progress ? { items: d.progress.items || {}, notes: d.progress.notes || '',
-          milestones: d.progress.milestones || [], log: d.progress.log || [] } : freshProgress() };
+          milestones: d.progress.milestones || [], log: d.progress.log || [] } : freshProgress(),
+        // 【UI设计模块】: 新工程读 ui, 旧工程(无该字段)回退到默认空白设计(只取已知字段, 防脏数据)
+        ui: d.ui ? { w: d.ui.w, h: d.ui.h, bg: d.ui.bg, grid: d.ui.grid,
+          snap: d.ui.snap, showGrid: d.ui.showGrid,
+          layers: d.ui.layers || [], history: d.ui.history || [] } : freshUI() };
       // 素材引用标记缺失, 等用户重传同名素材自动绑定
       PRJ.tracks.forEach(function (tr) { tr.clips.forEach(function (c) { if (c.matId) c._miss = true; }); });
       $id('edName').value = PRJ.name;
       sel.clip = null; cur = 0;
-      ensureProgress();
-      renderAll(); renderMatList();
+      ensureProgress(); ensureUI();
+      UI_SEL = null;
+      HISTORY.clear();                                         // 【全局撤销栈】导入工程自动清空
+      renderAll(); renderMatList(); updateUndoBtns();
       // 导入后不自动覆盖(恢复历史配置优先), 仅提示
       var r = calcProgress();
       pushLog('auto', '导入工程「' + PRJ.name + '」· 恢复进度 ' + r.total + '%', impBefore, r.total);
       renderProgress();
       var missCnt = 0; eachClip(function (c) { if (c.matId && !matAlive(c.matId)) missCnt++; });
-      toast('工程已恢复: ' + PRJ.name + ' · 进度 ' + r.total + '% / 备注 / 里程碑 ' + PRJ.progress.milestones.length
-        + ' 个 / 日志 ' + PRJ.progress.log.length + ' 条' + (missCnt ? ' · ⚠ ' + missCnt + ' 个片段素材缺失, 请重传同名文件' : ''), 4500);
+      toast('工程已恢复: ' + PRJ.name + ' · 进度 ' + r.total + '% / UI图层 ' + PRJ.ui.layers.length
+        + ' 个 / 备注 / 里程碑 ' + PRJ.progress.milestones.length + ' 个 / 日志 ' + PRJ.progress.log.length + ' 条'
+        + (missCnt ? ' · ⚠ ' + missCnt + ' 个片段素材缺失, 请重传同名文件' : ''), 4600);
     } catch (e) { toast('导入失败: ' + e.message, 3500); }
   };
   rd.readAsText(file);
@@ -1864,21 +2144,1036 @@ function markPreviewDone() {
   toast('已完成全片预览 · 进度模块已重算', 2200);
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// 【UI设计模块】独立画布设计器
+//   · 独立画布 + 自定义尺寸, 图层列表(显隐/锁定/层级)
+//   · 六类组件: 矩形 / 文本 / 图片 / 按钮 / 卡片容器 / 图标
+//   · 属性: x/y/w/h/圆角/填充/阴影/边框/透明度 + 文本样式
+//   · 对齐工具 / 网格吸附 / 参考线; 复制删除快捷键; 导出 PNG
+//   · 一句话生成 UI / 修改选中图层(纯本地 JS 解析, 不依赖后端)
+//   · 一键叠加到视频画布 → 作为贴纸/字幕卡片进时间轴
+//   · 全部操作走【全局统一撤销栈】
+// ═══════════════════════════════════════════════════════════════════
+var UI_TYPE_NAME = { rect: '矩形', text: '文本', image: '图片', button: '按钮', card: '卡片容器', icon: '图标', tag: '标签' };
+var UI_SHORT = { rect: '矩', text: '字', image: '图', button: '钮', card: '卡', icon: '标', tag: '签' };
+var UI_CLIP = null;                       // UI 图层剪贴板(会话级)
+var RTAB = 'props';                       // 当前右栏 Tab
+
+// 图层类型默认值(新建元素 / 解析器落值都从这里取)
+var UI_TYPE_DEF = {
+  rect:   { w: 320, h: 180, radius: 16, fill: '#7a4d63' },
+  text:   { w: 520, h: 96, radius: 0, fill: 'transparent', text: { content: '文本', size: 48, weight: 600, color: '#ffffff', align: 'center', font: 'sans-serif', lineHeight: 1.25 } },
+  image:  { w: 320, h: 320, radius: 12, fill: '#2c303a' },
+  button: { w: 300, h: 92, radius: 46, fill: '#d4af37', text: { content: '开始', size: 36, weight: 600, color: '#1a1d24', align: 'center' } },
+  card:   { w: 800, h: 220, radius: 24, fill: 'rgba(0,0,0,.55)', text: { content: '', size: 40, weight: 500, color: '#ffffff', align: 'center' } },
+  icon:   { w: 96, h: 96, radius: 0, fill: '#d4af37', icon: { shape: 'star' } },
+  tag:    { w: 220, h: 72, radius: 36, fill: '#d4af37', text: { content: 'NEW', size: 34, weight: 600, color: '#1a1d24', align: 'center' } }
+};
+var UI_ICON_SHAPES = { star: '五角星', heart: '爱心', play: '播放', check: '对勾', arrow: '箭头', pin: '定位', spark: '闪光', dot: '圆点' };
+
+// 新建一个图层(浅拷贝默认值, text/icon 深拷贝防止串改)
+function uiNewLayer(type, patch) {
+  var d = UI_TYPE_DEF[type] || UI_TYPE_DEF.rect;
+  var L = {
+    id: uid('ui'), name: UI_TYPE_NAME[type] || '元素', type: type,
+    x: 0, y: 0, w: d.w, h: d.h, radius: d.radius || 0,
+    fill: d.fill, stroke: '#ffffff', strokeW: 0,
+    shadow: { on: false, blur: 18, x: 0, y: 8, color: 'rgba(0,0,0,.45)' },
+    opacity: 1, visible: true, locked: false
+  };
+  if (d.text) L.text = JSON.parse(JSON.stringify(d.text));
+  if (d.icon) L.icon = JSON.parse(JSON.stringify(d.icon));
+  if (patch) Object.keys(patch).forEach(function (k) {
+    if (k === 'text' || k === 'icon' || k === 'shadow') {
+      L[k] = L[k] || {};
+      Object.keys(patch[k]).forEach(function (kk) { L[k][kk] = patch[k][kk]; });
+    } else L[k] = patch[k];
+  });
+  return L;
+}
+
+// ── 工具: 颜色/取整/吸附/命中 ─────────────────────────────
+function uiHex(v) {
+  var s = String(v == null ? '' : v).trim();
+  if (/^#[0-9a-f]{6}$/i.test(s)) return s;
+  if (/^#[0-9a-f]{3}$/i.test(s)) return '#' + s[1] + s[1] + s[2] + s[2] + s[3] + s[3];
+  var m = /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/.exec(s);
+  if (m) return '#' + [1, 2, 3].map(function (i) { var h = (+m[i]).toString(16); return h.length < 2 ? '0' + h : h; }).join('');
+  return '#000000';
+}
+function uiQ(v, u) { return u.snap ? Math.round(v / u.grid) * u.grid : Math.round(v); }
+// 吸附到网格, 同时若已靠近画布中线则直接对齐中线(参考线所提示的位置)
+function uiSnapAxis(v, center, u) { return Math.abs(v - center) <= Math.max(3, u.grid * 0.8) ? Math.round(center) : uiQ(v, u); }
+function uiPt(e) {
+  var cv = $id('uiCanvas'); if (!cv) return { x: 0, y: 0 };
+  var r = cv.getBoundingClientRect(), u = ensureUI();
+  return { x: (e.clientX - r.left) * (u.w / (r.width || 1)), y: (e.clientY - r.top) * (u.h / (r.height || 1)) };
+}
+function uiHandleSize(cv) { var u = ensureUI(); return Math.max(6, 10 * (u.w / (cv.clientWidth || 1))); }
+function uiHandlePts(l) {
+  var x1 = l.x, y1 = l.y, x2 = l.x + l.w, y2 = l.y + l.h, mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+  return { nw: { x: x1, y: y1 }, n: { x: mx, y: y1 }, ne: { x: x2, y: y1 }, e: { x: x2, y: my },
+    se: { x: x2, y: y2 }, s: { x: mx, y: y2 }, sw: { x: x1, y: y2 }, w: { x: x1, y: my } };
+}
+function uiHitHandle(l, pt, hs) {
+  var pts = uiHandlePts(l);
+  for (var k in pts) { if (Math.abs(pt.x - pts[k].x) <= hs && Math.abs(pt.y - pts[k].y) <= hs) return k; }
+  return null;
+}
+
+// ── 画布绘制 ─────────────────────────────────────────────
+function uiDrawChecker(ctx, W, H) {
+  var s = Math.max(12, Math.round(Math.min(W, H) / 40));
+  ctx.save();
+  ctx.fillStyle = '#22252e'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#1a1d24';
+  for (var y = 0; y < H; y += s) for (var x = 0; x < W; x += s) if (((x / s) + (y / s)) % 2 < 1) ctx.fillRect(x, y, s, s);
+  ctx.restore();
+}
+function uiDrawGrid(ctx, W, H, g) {
+  if (!g || g < 4) return;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,.06)'; ctx.lineWidth = 1;
+  for (var x = 0; x <= W; x += g) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (var y = 0; y <= H; y += g) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  ctx.restore();
+}
+function uiDrawGuides(ctx, W, H) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(140,200,255,.45)'; ctx.lineWidth = Math.max(1, W / 900);
+  ctx.setLineDash([Math.round(W / 90), Math.round(W / 90)]);
+  ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.14)';
+  [1 / 3, 2 / 3].forEach(function (f) {
+    ctx.beginPath(); ctx.moveTo(W * f, 0); ctx.lineTo(W * f, H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, H * f); ctx.lineTo(W, H * f); ctx.stroke();
+  });
+  ctx.restore();
+}
+function uiDrawText(ctx, l) {
+  var t = l.text || {};
+  var size = t.size || Math.max(12, Math.round(l.h * 0.4));
+  ctx.font = (t.weight || 400) + ' ' + size + 'px ' + (t.font || 'sans-serif');
+  ctx.fillStyle = t.color || '#ffffff';
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = t.align || 'center';
+  var cx = t.align === 'left' ? l.x + size * 0.4 : t.align === 'right' ? l.x + l.w - size * 0.4 : l.x + l.w / 2;
+  var lines = String(t.content == null ? '' : t.content).split('\n');
+  var lh = size * (t.lineHeight || 1.25);
+  var y0 = l.y + l.h / 2 - (lines.length - 1) * lh / 2;
+  lines.forEach(function (ln, i) { ctx.fillText(ln, cx, y0 + i * lh); });
+}
+function uiDrawIcon(ctx, l) {
+  var cx = l.x + l.w / 2, cy = l.y + l.h / 2, s = Math.min(l.w, l.h) / 2;
+  var col = l.fill && l.fill !== 'transparent' ? l.fill : '#d4af37';
+  var sh = (l.icon && l.icon.shape) || 'star', i, ang, rr;
+  ctx.fillStyle = col; ctx.strokeStyle = col;
+  ctx.lineWidth = Math.max(3, s * 0.22); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (sh === 'star' || sh === 'spark') {
+    ctx.beginPath();
+    for (i = 0; i < 10; i++) { ang = -Math.PI / 2 + i * Math.PI / 5; rr = (sh === 'spark' ? (i % 2 ? s * 0.35 : s) : (i % 2 ? s * 0.45 : s)); ctx[i ? 'lineTo' : 'moveTo'](cx + Math.cos(ang) * rr, cy + Math.sin(ang) * rr); }
+    ctx.closePath(); ctx.fill();
+  } else if (sh === 'heart') {
+    var hh = s * 0.9;
+    ctx.beginPath(); ctx.moveTo(cx, cy + hh * 0.75);
+    ctx.bezierCurveTo(cx - hh * 1.6, cy - hh * 0.25, cx - hh * 0.5, cy - hh * 1.2, cx, cy - hh * 0.35);
+    ctx.bezierCurveTo(cx + hh * 0.5, cy - hh * 1.2, cx + hh * 1.6, cy - hh * 0.25, cx, cy + hh * 0.75);
+    ctx.fill();
+  } else if (sh === 'play') {
+    ctx.beginPath(); ctx.moveTo(cx - s * 0.5, cy - s * 0.75); ctx.lineTo(cx + s * 0.85, cy); ctx.lineTo(cx - s * 0.5, cy + s * 0.75); ctx.closePath(); ctx.fill();
+  } else if (sh === 'check') {
+    ctx.beginPath(); ctx.moveTo(cx - s * 0.7, cy); ctx.lineTo(cx - s * 0.15, cy + s * 0.55); ctx.lineTo(cx + s * 0.75, cy - s * 0.6); ctx.stroke();
+  } else if (sh === 'arrow') {
+    ctx.beginPath(); ctx.moveTo(cx - s * 0.7, cy); ctx.lineTo(cx + s * 0.5, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + s * 0.15, cy - s * 0.45); ctx.lineTo(cx + s * 0.72, cy); ctx.lineTo(cx + s * 0.15, cy + s * 0.45); ctx.stroke();
+  } else if (sh === 'pin') {
+    ctx.beginPath(); ctx.arc(cx, cy - s * 0.15, s * 0.55, Math.PI, 0); ctx.lineTo(cx, cy + s * 0.9); ctx.closePath(); ctx.fill();
+  } else {
+    ctx.beginPath(); ctx.arc(cx, cy, s * 0.8, 0, Math.PI * 2); ctx.fill();
+  }
+}
+// 单个图层绘制。opts.clean=true 时用于导出/叠加(不降透明度、不画占位提示)
+function uiDrawLayer(ctx, l, isSel, clean) {
+  if (!l.visible) return;
+  var a = clamp(l.opacity == null ? 1 : l.opacity, 0, 1);
+  // 需求: 非选中图层半透明 —— 仅在「有选中」时降透明度, 未选中任何元素时全部正常显示
+  if (!clean && !isSel && UI_SEL) a *= 0.45;
+  ctx.save();
+  ctx.globalAlpha = a;
+  if (l.shadow && l.shadow.on) {
+    ctx.shadowColor = l.shadow.color || 'rgba(0,0,0,.5)';
+    ctx.shadowBlur = l.shadow.blur || 12;
+    ctx.shadowOffsetX = l.shadow.x || 0;
+    ctx.shadowOffsetY = l.shadow.y || 0;
+  }
+  if (l.type === 'text') { uiDrawText(ctx, l); ctx.restore(); return; }
+  if (l.type === 'icon') { uiDrawIcon(ctx, l); ctx.restore(); return; }
+  var r = Math.min(l.radius || 0, Math.min(l.w, l.h) / 2);
+  if (l.fill && l.fill !== 'transparent') { ctx.fillStyle = l.fill; roundRect(ctx, l.x, l.y, l.w, l.h, r); ctx.fill(); }
+  if (l.strokeW > 0 && l.stroke && l.stroke !== 'none') { ctx.strokeStyle = l.stroke; ctx.lineWidth = l.strokeW; roundRect(ctx, l.x, l.y, l.w, l.h, r); ctx.stroke(); }
+  if (l.type === 'image') {                       // 图片占位: 叉线标记(真实图片后续版本接入)
+    ctx.save(); ctx.shadowBlur = 0; ctx.globalAlpha = a * 0.5;
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(2, Math.min(l.w, l.h) / 40);
+    ctx.beginPath(); ctx.moveTo(l.x, l.y); ctx.lineTo(l.x + l.w, l.y + l.h);
+    ctx.moveTo(l.x + l.w, l.y); ctx.lineTo(l.x, l.y + l.h); ctx.stroke(); ctx.restore();
+  }
+  if (l.type === 'button' || l.type === 'card' || l.type === 'tag') {
+    if (l.text && String(l.text.content || '').length) uiDrawText(ctx, l);
+  }
+  ctx.restore();
+}
+function uiDrawSelBox(ctx, l, hs) {
+  ctx.save();
+  ctx.strokeStyle = '#6fb3ff'; ctx.lineWidth = Math.max(1, hs * 0.16);
+  ctx.setLineDash([hs * 1.4, hs * 0.9]);
+  ctx.strokeRect(l.x, l.y, l.w, l.h);
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#6fb3ff'; ctx.strokeStyle = '#0f1116'; ctx.lineWidth = Math.max(1, hs * 0.12);
+  var pts = uiHandlePts(l);
+  for (var k in pts) {
+    var p = pts[k];
+    ctx.beginPath(); ctx.rect(p.x - hs / 2, p.y - hs / 2, hs, hs); ctx.fill(); ctx.stroke();
+  }
+  ctx.restore();
+}
+function renderUiCanvas() {
+  var cv = $id('uiCanvas'); if (!cv) return;
+  var u = ensureUI();
+  if (cv.width !== u.w) cv.width = u.w;
+  if (cv.height !== u.h) cv.height = u.h;
+  var ctx = cv.getContext('2d'); if (!ctx) return;      // 无 2D 上下文(测试环境)时静默跳过
+  ctx.clearRect(0, 0, u.w, u.h);
+  if (u.bg && u.bg !== 'transparent') { ctx.fillStyle = u.bg; ctx.fillRect(0, 0, u.w, u.h); }
+  else uiDrawChecker(ctx, u.w, u.h);
+  if (u.showGrid) uiDrawGrid(ctx, u.w, u.h, u.grid);
+  var selL = uiFind(UI_SEL);
+  u.layers.forEach(function (l) { uiDrawLayer(ctx, l, l.id === UI_SEL, false); });
+  if (u.showGrid) uiDrawGuides(ctx, u.w, u.h);
+  if (selL && selL.visible) uiDrawSelBox(ctx, selL, uiHandleSize(cv));
+}
+
+// ── 导出用栅格化: 不含网格/参考线/选中框/半透明降级 ──
+function uiRaster() {
+  var u = ensureUI();
+  var cv = document.createElement('canvas');
+  cv.width = u.w; cv.height = u.h;
+  var ctx = cv.getContext('2d');
+  if (!ctx) return null;
+  if (u.bg && u.bg !== 'transparent') { ctx.fillStyle = u.bg; ctx.fillRect(0, 0, u.w, u.h); }
+  u.layers.forEach(function (l) { uiDrawLayer(ctx, l, false, true); });
+  try { return cv.toDataURL('image/png'); } catch (e) { return null; }
+}
+
+// ── 图层列表 ─────────────────────────────────────────────
+function renderUiLayers() {
+  var box = $id('uiLayers'); if (!box) return;
+  var u = ensureUI();
+  var cnt = $id('uiLayerCnt'); if (cnt) cnt.textContent = u.layers.length + ' 个';
+  if (!u.layers.length) { box.innerHTML = '<div class="ui-nosel" style="padding:12px 6px">还没有元素<br>用上方组件按钮添加, 或用一句话生成</div>'; return; }
+  var html = '';
+  for (var i = u.layers.length - 1; i >= 0; i--) {         // 列表自上而下 = 视觉从上到下
+    var l = u.layers[i];
+    html += '<div class="ui-layer' + (l.id === UI_SEL ? ' sel' : '') + '" data-uid="' + l.id + '">'
+      + '<span class="ty">' + (UI_SHORT[l.type] || '?') + '</span>'
+      + '<span class="nm">' + esc(l.name) + '</span>'
+      + '<button class="ic' + (l.visible ? '' : ' off') + '" data-eye="' + l.id + '" title="显示 / 隐藏">' + (l.visible ? '👁' : '🚫') + '</button>'
+      + '<button class="ic' + (l.locked ? ' warn' : ' off') + '" data-lock="' + l.id + '" title="锁定 / 解锁(锁定后画布内不可选中拖动)">' + (l.locked ? '🔒' : '🔓') + '</button>'
+      + '<button class="mv" data-up="' + l.id + '" title="上移一层">▲</button>'
+      + '<button class="mv" data-dn="' + l.id + '" title="下移一层">▼</button>'
+      + '</div>';
+  }
+  box.innerHTML = html;
+  Array.prototype.forEach.call(box.querySelectorAll('.ui-layer'), function (row) {
+    row.onclick = function (e) { if (e.target.closest('button')) return; UI_SEL = this.getAttribute('data-uid'); renderUi(); };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-eye]'), function (b) {
+    b.onclick = function (e) {
+      e.stopPropagation();
+      var l = uiFind(this.getAttribute('data-eye')); if (!l) return;
+      pushUndo((l.visible ? '隐藏' : '显示') + '图层「' + l.name + '」');
+      l.visible = !l.visible; renderUi(); toast(l.visible ? '已显示「' + l.name + '」' : '已隐藏「' + l.name + '」');
+    };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-lock]'), function (b) {
+    b.onclick = function (e) {
+      e.stopPropagation();
+      var l = uiFind(this.getAttribute('data-lock')); if (!l) return;
+      pushUndo((l.locked ? '解锁' : '锁定') + '图层「' + l.name + '」');
+      l.locked = !l.locked; renderUi(); toast(l.locked ? '已锁定「' + l.name + '」(画布内不可拖动)' : '已解锁「' + l.name + '」');
+    };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-up]'), function (b) {
+    b.onclick = function (e) { e.stopPropagation(); uiMoveZ(this.getAttribute('data-up'), 1); };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-dn]'), function (b) {
+    b.onclick = function (e) { e.stopPropagation(); uiMoveZ(this.getAttribute('data-dn'), -1); };
+  });
+}
+function uiMoveZ(id, dir) {
+  var u = ensureUI();
+  var i = u.layers.findIndex(function (l) { return l.id === id; });
+  var j = i + dir;
+  if (i < 0 || j < 0 || j >= u.layers.length) return toast('已经是最' + (dir > 0 ? '上' : '下') + '层');
+  pushUndo('调整图层层级');
+  var tmp = u.layers[i]; u.layers[i] = u.layers[j]; u.layers[j] = tmp;
+  renderUi();
+  toast('已' + (dir > 0 ? '上' : '下') + '移一层');
+}
+
+// ── 元素属性面板 ─────────────────────────────────────────
+function uiSyncPosInputs() {
+  var l = uiFind(UI_SEL); if (!l) return;
+  ['x', 'y', 'w', 'h'].forEach(function (k) {
+    var el = $id('uiP_' + k);
+    if (el && document.activeElement !== el) el.value = Math.round(l[k]);
+  });
+  var r = $id('uiP_radius');
+  if (r && document.activeElement !== r) r.value = Math.round(l.radius || 0);
+}
+function renderUiProps() {
+  var box = $id('uiProps'); if (!box) return;
+  var l = uiFind(UI_SEL);
+  var nm = $id('uiPropName'); if (nm) nm.textContent = l ? l.name : '';
+  if (!l) {
+    box.innerHTML = '<div class="ui-nosel">在画布上点选一个元素, 或从图层列表选择<br><br>选中后可以用「✏️ 修改选中图层」<br>一句话改它的颜色/圆角/位置</div>';
+    return;
+  }
+  var h = '';
+  h += '<div class="grp">'
+    + '<div class="ed-field"><label>名称</label><input type="text" id="uiP_name" value="' + esc(l.name) + '"></div>'
+    + '<div class="ed-field"><label>X</label><input type="number" id="uiP_x" value="' + Math.round(l.x) + '"><label style="width:auto">Y</label><input type="number" id="uiP_y" value="' + Math.round(l.y) + '"></div>'
+    + '<div class="ed-field"><label>宽</label><input type="number" id="uiP_w" value="' + Math.round(l.w) + '" min="4"><label style="width:auto">高</label><input type="number" id="uiP_h" value="' + Math.round(l.h) + '" min="4"></div>'
+    + fnum('圆角', 'uiP_radius', Math.round(l.radius || 0), 0, 600)
+    + '</div>';
+  h += '<div class="grp">'
+    + '<div class="ed-field"><label>填充</label><input type="color" id="uiP_fill" value="' + uiHex(l.fill) + '"><input type="text" id="uiP_fillT" value="' + esc(l.fill) + '" title="也支持 transparent / rgba(...)"></div>'
+    + '<div class="ed-field"><label>边框</label><input type="color" id="uiP_stroke" value="' + uiHex(l.stroke) + '"><input type="number" id="uiP_strokeW" value="' + (l.strokeW || 0) + '" min="0" max="40" style="width:52px" title="边框宽度"></div>'
+    + fsld('不透明度', 'uiP_opacity', Math.round((l.opacity == null ? 1 : l.opacity) * 100), 0, 100)
+    + '<div class="ed-field"><label>阴影</label><input type="checkbox" id="uiP_shadowOn"' + (l.shadow && l.shadow.on ? ' checked' : '') + '></div>'
+    + (l.shadow && l.shadow.on
+      ? fsld('阴影模糊', 'uiP_shadowBlur', l.shadow.blur || 0, 0, 100)
+        + fnum('阴影下移', 'uiP_shadowY', Math.round(l.shadow.y || 0), -100, 100)
+        + '<div class="ed-field"><label>阴影色</label><input type="color" id="uiP_shadowC" value="' + uiHex(l.shadow.color) + '"></div>'
+      : '')
+    + '</div>';
+  if (l.text) {
+    h += '<div class="grp"><div class="ed-field"><label>文字</label><input type="text" id="uiP_text" value="' + esc(l.text.content) + '"></div>'
+      + fnum('字号', 'uiP_size', l.text.size || 40, 8, 500)
+      + '<div class="ed-field"><label>字重</label><select id="uiP_weight">' + [300, 400, 500, 600, 700, 900].map(function (w) { return '<option value="' + w + '"' + ((l.text.weight || 400) === w ? ' selected' : '') + '>' + w + '</option>'; }).join('') + '</select></div>'
+      + '<div class="ed-field"><label>文字色</label><input type="color" id="uiP_tcolor" value="' + uiHex(l.text.color) + '"></div>'
+      + '<div class="ed-field"><label>对齐</label><select id="uiP_align">' + [['center', '居中'], ['left', '左对齐'], ['right', '右对齐']].map(function (a) { return '<option value="' + a[0] + '"' + (l.text.align === a[0] ? ' selected' : '') + '>' + a[1] + '</option>'; }).join('') + '</select></div></div>';
+  }
+  if (l.icon) {
+    h += '<div class="grp"><div class="ed-field"><label>图标形状</label><select id="uiP_shape">' + Object.keys(UI_ICON_SHAPES).map(function (k) { return '<option value="' + k + '"' + ((l.icon.shape || 'star') === k ? ' selected' : '') + '>' + UI_ICON_SHAPES[k] + '</option>'; }).join('') + '</select></div></div>';
+  }
+  h += '<div class="grp"><div style="font-size:11px;color:#8b93a5;margin-bottom:6px">对齐到画布</div>'
+    + '<div class="ui-tools" style="grid-template-columns:repeat(3,1fr);margin-bottom:0">'
+    + '<button data-al="left">左</button><button data-al="hcenter">水平居中</button><button data-al="right">右</button>'
+    + '<button data-al="top">顶</button><button data-al="vcenter">垂直居中</button><button data-al="bottom">底</button>'
+    + '</div></div>';
+  h += '<div class="grp"><div class="ed-field"><label>可见</label><input type="checkbox" id="uiP_visible"' + (l.visible ? ' checked' : '') + '>'
+    + '<label style="width:auto">锁定</label><input type="checkbox" id="uiP_locked"' + (l.locked ? ' checked' : '') + '></div>'
+    + '<button class="ed-btn" id="uiP_dup" style="width:100%;margin-top:4px">复制该元素 (Ctrl+D)</button>'
+    + '<button class="ed-btn" id="uiP_del" style="width:100%;margin-top:4px">删除该元素 (Delete)</button></div>';
+  box.innerHTML = h;
+  bindUiProps(l);
+}
+// 属性输入通用绑定: input 实时预览(重建画布), change 时才落一次撤销记录(用聚焦时的快照)
+function uiBindEditable(el, apply, actName) {
+  if (!el) return;
+  var pre = null;
+  el.addEventListener('focus', function () { pre = snapshot(); });
+  el.addEventListener('input', function () { apply(el); renderUiCanvas(); });
+  el.addEventListener('change', function () {
+    var cur2 = snapshot();
+    if (pre && pre !== cur2) pushUndoSnap(actName || '修改图层属性', pre);
+    pre = cur2;
+    renderUiLayers();
+    var nm = $id('uiPropName'), l = uiFind(UI_SEL); if (nm && l) nm.textContent = l.name;
+  });
+}
+function bindUiProps(l) {
+  var num = function (id, key, min) {
+    var el = $id(id); if (!el) return;
+    uiBindEditable(el, function (e) {
+      var v = +e.value; if (isNaN(v)) return;
+      if (min != null && v < min) v = min;
+      if (key === 'w' || key === 'h') v = Math.max(4, v);
+      l[key] = v;
+    }, '修改「' + l.name + '」' + (key === 'x' || key === 'y' ? '位置' : key === 'w' || key === 'h' ? '尺寸' : key));
+  };
+  num('uiP_x', 'x'); num('uiP_y', 'y'); num('uiP_w', 'w'); num('uiP_h', 'h');
+  var rad = $id('uiP_radius');
+  uiBindEditable(rad, function (e) { l.radius = clamp(+e.value || 0, 0, 600); }, '修改「' + l.name + '」圆角');
+  var op = $id('uiP_opacity');
+  uiBindEditable(op, function (e) { l.opacity = clamp(+e.value / 100, 0, 1); var s = $id('uiP_opacityV'); if (s) s.textContent = e.value; }, '修改「' + l.name + '」不透明度');
+  uiBindEditable($id('uiP_name'), function (e) { l.name = e.value || '元素'; }, '重命名图层');
+  uiBindEditable($id('uiP_fill'), function (e) { l.fill = e.value; var t = $id('uiP_fillT'); if (t) t.value = e.value; }, '修改「' + l.name + '」填充色');
+  uiBindEditable($id('uiP_fillT'), function (e) {
+    var v = e.value.trim(); if (!v) return;
+    l.fill = v;
+    var c = $id('uiP_fill'); if (c) c.value = uiHex(v);
+  }, '修改「' + l.name + '」填充色');
+  uiBindEditable($id('uiP_stroke'), function (e) { l.stroke = e.value; }, '修改「' + l.name + '」边框色');
+  uiBindEditable($id('uiP_strokeW'), function (e) { l.strokeW = clamp(+e.value || 0, 0, 40); }, '修改「' + l.name + '」边框宽度');
+  var sb = $id('uiP_shadowOn');
+  if (sb) {
+    // 阴影开关: 勾选后必须立刻重渲染属性面板, 否则「模糊 / 下移 / 阴影色」三个子项不显形,
+    // 用户会以为开关没生效(实测: 只调 renderUiLayers 不会重建属性面板)
+    sb.addEventListener('focus', function () { sb._pre = snapshot(); });
+    sb.addEventListener('change', function () {
+      var pre = sb._pre || snapshot();
+      l.shadow = l.shadow || {}; l.shadow.on = sb.checked;
+      if (pre !== snapshot()) pushUndoSnap('切换「' + l.name + '」阴影', pre);
+      renderUiProps(); renderUiCanvas();
+    });
+  }
+  uiBindEditable($id('uiP_shadowBlur'), function (e) { l.shadow.blur = +e.value; var s = $id('uiP_shadowBlurV'); if (s) s.textContent = e.value; }, '修改「' + l.name + '」阴影');
+  uiBindEditable($id('uiP_shadowY'), function (e) { l.shadow.y = +e.value; }, '修改「' + l.name + '」阴影');
+  uiBindEditable($id('uiP_shadowC'), function (e) { l.shadow.color = e.value; }, '修改「' + l.name + '」阴影色');
+  if (l.text) {
+    uiBindEditable($id('uiP_text'), function (e) { l.text.content = e.value; }, '修改「' + l.name + '」文字');
+    uiBindEditable($id('uiP_size'), function (e) { l.text.size = clamp(+e.value || 12, 8, 500); }, '修改「' + l.name + '」字号');
+    uiBindEditable($id('uiP_weight'), function (e) { l.text.weight = +e.value; }, '修改「' + l.name + '」字重', true);
+    uiBindEditable($id('uiP_tcolor'), function (e) { l.text.color = e.value; }, '修改「' + l.name + '」文字色');
+    uiBindEditable($id('uiP_align'), function (e) { l.text.align = e.value; }, '修改「' + l.name + '」对齐', true);
+  }
+  uiBindEditable($id('uiP_shape'), function (e) { l.icon = l.icon || {}; l.icon.shape = e.value; }, '修改「' + l.name + '」图标', true);
+  uiBindEditable($id('uiP_visible'), function () { l.visible = $id('uiP_visible').checked; }, '切换「' + l.name + '」可见', true);
+  uiBindEditable($id('uiP_locked'), function () { l.locked = $id('uiP_locked').checked; }, '切换「' + l.name + '」锁定', true);
+  var dup = $id('uiP_dup'); if (dup) dup.onclick = function () { uiDuplicate(l); };
+  var del = $id('uiP_del'); if (del) del.onclick = function () { uiDelLayer(l); };
+  // 对齐工具
+  Array.prototype.forEach.call(document.querySelectorAll('#uiProps [data-al]'), function (b) {
+    b.onclick = function () { uiAlign(l, this.getAttribute('data-al')); };
+  });
+}
+
+// ── 图层增删改 ───────────────────────────────────────────
+function uiAddLayer(type) {
+  var u = ensureUI();
+  if (u.layers.length >= 60) return toast('图层已达上限 60, 请先清理');
+  pushUndo('添加' + (UI_TYPE_NAME[type] || '元素'));
+  var l = uiNewLayer(type);
+  var off = (u.layers.length % 6) * Math.round(Math.min(u.w, u.h) * 0.04);
+  l.x = clamp(Math.round((u.w - l.w) / 2) + off, 0, Math.max(0, u.w - l.w));
+  l.y = clamp(Math.round((u.h - l.h) / 2) + off, 0, Math.max(0, u.h - l.h));
+  u.layers.push(l);
+  UI_SEL = l.id;
+  renderUi();
+  toast('已添加' + (UI_TYPE_NAME[type] || '元素') + ' · 拖动移动 / 角点缩放');
+}
+function uiDuplicate(l) {
+  pushUndo('复制图层「' + l.name + '」');
+  var u = ensureUI();
+  var c = JSON.parse(JSON.stringify(l));
+  c.id = uid('ui'); c.name = l.name + ' 副本';
+  c.x = clamp(l.x + Math.round(u.w * 0.03), 0, u.w - l.w);
+  c.y = clamp(l.y + Math.round(u.h * 0.03), 0, u.h - l.h);
+  u.layers.push(c); UI_SEL = c.id;
+  renderUi(); toast('已复制「' + l.name + '」');
+}
+function uiDelLayer(l) {
+  pushUndo('删除图层「' + l.name + '」');
+  var u = ensureUI();
+  u.layers = u.layers.filter(function (x) { return x.id !== l.id; });
+  if (UI_SEL === l.id) UI_SEL = null;
+  renderUi(); toast('已删除「' + l.name + '」');
+}
+function uiAlign(l, how) {
+  var u = ensureUI();
+  pushUndo('对齐图层「' + l.name + '」');
+  if (how === 'left') l.x = 0;
+  if (how === 'hcenter') l.x = Math.round((u.w - l.w) / 2);
+  if (how === 'right') l.x = u.w - l.w;
+  if (how === 'top') l.y = 0;
+  if (how === 'vcenter') l.y = Math.round((u.h - l.h) / 2);
+  if (how === 'bottom') l.y = u.h - l.h;
+  renderUi();
+}
+
+// ── 画布交互: 选中 / 拖动 / 缩放 ──────────────────────────
+function bindUiCanvas() {
+  var cv = $id('uiCanvas'); if (!cv) return;
+  var drag = null;
+  cv.addEventListener('pointerdown', function (e) {
+    var u = ensureUI();
+    var pt = uiPt(e), hs = uiHandleSize(cv);
+    var sl = uiFind(UI_SEL);
+    // 1) 优先测选中框的 8 个缩放手柄
+    if (sl && sl.visible && !sl.locked) {
+      var hh = uiHitHandle(sl, pt, hs);
+      if (hh) {
+        drag = { mode: 'resize', h: hh, l: sl, pre: snapshot(), p0: pt, o: { x: sl.x, y: sl.y, w: sl.w, h: sl.h } };
+        if (cv.setPointerCapture) cv.setPointerCapture(e.pointerId);
+        e.preventDefault(); return;
+      }
+    }
+    // 2) 从最上层往下测图层(锁定/隐藏的不可选)
+    var hitL = null;
+    for (var i = u.layers.length - 1; i >= 0; i--) {
+      var l = u.layers[i];
+      if (!l.visible || l.locked) continue;
+      if (pt.x >= l.x && pt.x <= l.x + l.w && pt.y >= l.y && pt.y <= l.y + l.h) { hitL = l; break; }
+    }
+    if (hitL) {
+      UI_SEL = hitL.id;
+      drag = { mode: 'move', l: hitL, pre: snapshot(), p0: pt, o: { x: hitL.x, y: hitL.y } };
+      if (cv.setPointerCapture) cv.setPointerCapture(e.pointerId);
+      renderUi();
+    } else if (UI_SEL) { UI_SEL = null; renderUi(); }
+    e.preventDefault();
+  });
+  cv.addEventListener('pointermove', function (e) {
+    if (!drag) return;
+    var u = ensureUI(), pt = uiPt(e);
+    var dx = pt.x - drag.p0.x, dy = pt.y - drag.p0.y;
+    if (drag.mode === 'move') {
+      drag.l.x = uiSnapAxis(drag.o.x + dx, (u.w - drag.l.w) / 2, u);
+      drag.l.y = uiSnapAxis(drag.o.y + dy, (u.h - drag.l.h) / 2, u);
+      drag.l.x = clamp(drag.l.x, -Math.round(drag.l.w * 0.6), u.w - Math.round(drag.l.w * 0.4));
+      drag.l.y = clamp(drag.l.y, -Math.round(drag.l.h * 0.6), u.h - Math.round(drag.l.h * 0.4));
+    } else {
+      var h = drag.h, o = drag.o;
+      var x1 = o.x, y1 = o.y, x2 = o.x + o.w, y2 = o.y + o.h;
+      if (h.indexOf('w') >= 0) x1 = uiQ(pt.x, u);
+      if (h.indexOf('e') >= 0) x2 = uiQ(pt.x, u);
+      if (h.indexOf('n') >= 0) y1 = uiQ(pt.y, u);
+      if (h.indexOf('s') >= 0) y2 = uiQ(pt.y, u);
+      if (x2 - x1 < 12) { if (h.indexOf('w') >= 0) x1 = x2 - 12; else x2 = x1 + 12; }
+      if (y2 - y1 < 12) { if (h.indexOf('n') >= 0) y1 = y2 - 12; else y2 = y1 + 12; }
+      drag.l.x = x1; drag.l.y = y1; drag.l.w = x2 - x1; drag.l.h = y2 - y1;
+    }
+    renderUiCanvas(); uiSyncPosInputs();
+  });
+  var finish = function () {
+    if (!drag) return;
+    var moved = drag.mode === 'move'
+      ? (drag.l.x !== drag.o.x || drag.l.y !== drag.o.y)
+      : (drag.l.w !== drag.o.w || drag.l.h !== drag.o.h);
+    if (moved) pushUndoSnap((drag.mode === 'move' ? '移动图层「' : '缩放图层「') + drag.l.name + '」', drag.pre);
+    drag = null;
+    renderUi();
+  };
+  cv.addEventListener('pointerup', finish);
+  cv.addEventListener('pointercancel', finish);
+}
+
+// ── 一句话生成 UI(纯本地规则解析, 不依赖后端) ─────────────
+// 色名表(长词优先匹配, 避免「白色」被「白」截胡)
+var UI_COLOR_MAP = {
+  '白色': '#ffffff', '白': '#ffffff', '黑色': '#000000', '黑': '#000000',
+  '深色': '#141821', '暗色': '#141821', '浅色': '#f2f4f8',
+  '灰色': '#8b93a5', '灰': '#8b93a5', '红色': '#e2504a', '红': '#e2504a',
+  '橙色': '#ef9f27', '橙': '#ef9f27', '黄色': '#f2c14e', '黄': '#f2c14e',
+  '金色': '#d4af37', '金': '#d4af37', '绿色': '#4caf7d', '绿': '#4caf7d',
+  '青色': '#3fb6b0', '青': '#3fb6b0', '蓝色': '#3f7ad6', '蓝': '#3f7ad6',
+  '紫色': '#8c6fd6', '紫': '#8c6fd6', '粉色': '#e88fb0', '粉': '#e88fb0',
+  '棕色': '#8a6a4f', '棕': '#8a6a4f'
+};
+var UI_TYPE_RULES = [
+  ['tag', /标签|徽章|胶囊|角标|小标/],
+  ['button', /按钮|button|cta|行动按钮|开始键/],
+  ['card', /卡片|容器|面板|字幕条|字幕卡片|信息卡|对话框|底框|蒙版条/],
+  ['icon', /图标|icon|logo|标志|星星|爱心|勋章/],
+  ['image', /图片|配图|照片|头像|插图|封面图|占位图/],
+  ['text', /标题|文案|文字|小字|大字|副标题|正文|说明|标语|slogan|字/],
+  ['rect', /矩形|方块|色块|形状|圆形|椭圆|圆点|线条|分割线/]
+];
+var UI_BG_RE = /背景|底色|底图|渐变底|铺底|打底|全屏底|衬底|铺满|满屏|全屏/;
+function uiColorFromText(t) {
+  var m = t.match(/#[0-9a-fA-F]{3,8}/); if (m) return m[0];
+  var m2 = t.match(/rgba?\([^)]+\)/); if (m2) return m2[0];
+  var keys = Object.keys(UI_COLOR_MAP).sort(function (a, b) { return b.length - a.length; });
+  for (var i = 0; i < keys.length; i++) if (t.indexOf(keys[i]) >= 0) return UI_COLOR_MAP[keys[i]];
+  return null;
+}
+function uiPosFromText(t) {
+  var r = { h: null, v: null, rel: false };
+  if (/左上/.test(t)) { r.h = 'left'; r.v = 'top'; }
+  else if (/右上/.test(t)) { r.h = 'right'; r.v = 'top'; }
+  else if (/左下/.test(t)) { r.h = 'left'; r.v = 'bottom'; }
+  else if (/右下/.test(t)) { r.h = 'right'; r.v = 'bottom'; }
+  if (!r.v) {
+    if (/顶部|上方|上面|最上|顶栏|头部/.test(t)) r.v = 'top';
+    else if (/底部|最下|底栏|画面底|片尾|页脚/.test(t)) r.v = 'bottom';
+    else if (/下面|下方|底下|其下|之后|接下来|第二行/.test(t)) { r.v = 'below'; r.rel = true; }
+    else if (/中间|居中|中央|正中/.test(t)) r.v = 'middle';
+  }
+  if (!r.h) {
+    if (/左侧|左边|靠左|左对齐/.test(t)) r.h = 'left';
+    else if (/右侧|右边|靠右|右对齐/.test(t)) r.h = 'right';
+    else if (/居中|中间|中央|正中/.test(t)) r.h = 'center';
+  }
+  return r;
+}
+function uiIconFromText(t) {
+  if (/五角星|星星|星/.test(t)) return 'star';
+  if (/爱心|心/.test(t)) return 'heart';
+  if (/播放/.test(t)) return 'play';
+  if (/对勾|勾选|完成|check/i.test(t)) return 'check';
+  if (/箭头|指示/.test(t)) return 'arrow';
+  if (/定位|位置|地图|坐标/.test(t)) return 'pin';
+  if (/闪光|闪电|火花|特效/.test(t)) return 'spark';
+  return null;
+}
+function uiContrast(fill) {
+  var m = /^#?([0-9a-f]{6})$/i.exec(String(fill || '').trim());
+  if (!m) return '#ffffff';
+  var n = parseInt(m[1], 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#1a1d24' : '#ffffff';
+}
+// 把引号里的文字抽出来换成占位符, 避免引号内的逗号被当成分句分隔
+function uiSplitClauses(txt) {
+  var quotes = [];
+  var s = String(txt || '').replace(/'([^']*)'|"([^"]*)"|「([^」]*)」|『([^』]*)』|“([^”]*)”|‘([^’]*)’/g, function () {
+    var cap = null;
+    for (var i = 1; i < arguments.length - 2; i++) if (arguments[i] != null) { cap = arguments[i]; break; }
+    quotes.push(cap == null ? '' : cap);
+    return '\u0001' + (quotes.length - 1) + '\u0001';
+  });
+  return { text: s, quotes: quotes, clauses: s.split(/[，,。；;、\n]+/).map(function (x) { return x.trim(); }).filter(Boolean) };
+}
+// 每个组件的默认尺寸(比例跟随画布)
+function uiSizeOf(d, W, H, M) {
+  var base = Math.min(W, H), full = W - M * 2;
+  if (d.type === 'text') {
+    var size = d.size || (d.big ? Math.round(base * 0.12) : d.small ? Math.round(base * 0.042) : Math.round(base * 0.062));
+    d.tsize = size;
+    var n = Math.max(2, String(d.text || (d.big ? '主标题' : '文本')).length);
+    return { w: Math.min(full, Math.round(n * size * 0.66 + size)), h: Math.round(size * 1.5) };
+  }
+  if (d.type === 'tag') {
+    var ts = d.size || Math.round(base * 0.036); d.tsize = ts;
+    var tn = Math.max(2, String(d.text || 'NEW').length);
+    return { w: Math.round(Math.max(ts * 3.4, tn * ts * 0.78 + ts * 1.7)), h: Math.round(ts * 1.95) };
+  }
+  if (d.type === 'button') { var bh = d.size ? Math.round(d.size * 2.2) : Math.round(base * 0.085); d.tsize = Math.round(bh * 0.4); return { w: Math.round(bh * 3.2), h: bh }; }
+  if (d.type === 'card') return { w: full, h: Math.round(base * (d.small ? 0.14 : 0.2)) };
+  if (d.type === 'icon') { var is = d.size || Math.round(base * 0.1); return { w: is, h: is }; }
+  if (d.type === 'image') return { w: Math.round(base * 0.46), h: Math.round(base * 0.46) };
+  return { w: Math.round(base * 0.5), h: Math.round(base * 0.2) };
+}
+function uiBuildLayers(descs, W, H) {
+  var M = Math.round(Math.min(W, H) * 0.06);
+  var gap = Math.round(Math.min(W, H) * 0.03);
+  // 先算尺寸 + 统计「中间组」总高, 以便整体垂直居中
+  var midH = 0;
+  descs.forEach(function (d) {
+    if (d.bg) return;
+    var s = uiSizeOf(d, W, H, M);
+    d.w = s.w; d.h = s.h;
+    if (!d.pos.rel && (d.pos.v === 'middle' || d.pos.v === null)) midH += d.h + gap;
+  });
+  if (midH) midH -= gap;
+  var midY = Math.round((H - midH) / 2);
+  var topY = M, bottomY = H - M, prevBottom = null, out = [];
+  descs.forEach(function (d) {
+    var L = uiNewLayer(d.type, { name: d.name });
+    if (d.bg) {
+      L.x = 0; L.y = 0; L.w = W; L.h = H; L.radius = 0; L.name = '底色';
+      if (d.color) L.fill = d.color;
+      out.push(L); return;
+    }
+    L.w = d.w; L.h = d.h;
+    if (d.pos.h === 'left') L.x = M;
+    else if (d.pos.h === 'right') L.x = W - M - L.w;
+    else L.x = Math.round((W - L.w) / 2);
+    var v = d.pos.v;
+    if (v === 'top') { L.y = topY; topY = L.y + L.h + gap; }
+    else if (v === 'bottom') { bottomY -= L.h; L.y = bottomY; bottomY -= gap; }
+    else if (v === 'below' || d.pos.rel) { L.y = prevBottom == null ? midY : prevBottom + gap; }
+    else { L.y = midY; midY += L.h + gap; }
+    prevBottom = L.y + L.h;
+    if (d.color) {
+      if (L.type === 'text') { L.text = L.text || {}; L.text.color = d.color; }
+      else { L.fill = d.color; if (L.text) L.text.color = uiContrast(d.color); }
+    }
+    if (d.radius != null) L.radius = d.radius;
+    if (d.opacity != null) L.opacity = d.opacity;
+    if (d.strokeW != null) L.strokeW = d.strokeW;
+    if (d.icon) { L.icon = L.icon || {}; L.icon.shape = d.icon; }
+    if (L.text) {
+      if (d.text) L.text.content = d.text;
+      if (d.tsize) L.text.size = d.tsize;
+      if (d.weight) L.text.weight = d.weight;
+    }
+    out.push(L);
+    // 「3 个标签」这类: 同款元素横向排一排
+    if (d.count > 1 && (d.type === 'tag' || d.type === 'icon') && d.count <= 8) {
+      var step = L.w + Math.round(gap * 0.5);
+      var totalW = d.count * step - Math.round(gap * 0.5);
+      var sx = Math.round((W - totalW) / 2);
+      L.x = sx;
+      for (var k = 1; k < d.count; k++) {
+        var c = JSON.parse(JSON.stringify(L));
+        c.id = uid('ui'); c.x = sx + k * step;
+        out.push(c);
+      }
+    }
+  });
+  return out;
+}
+function parseUiPrompt(raw) {
+  var u = ensureUI(), W = u.w, H = u.h, notes = [];
+  var q = uiSplitClauses(raw);
+  // 1) 画布尺寸(全篇扫)
+  var m = q.text.match(/(\d{2,5})\s*[x×*]\s*(\d{2,5})/);
+  if (m) { W = clamp(+m[1], 64, 4096); H = clamp(+m[2], 64, 4096); }
+  else if (/竖版|竖屏|9[:：]16/.test(q.text)) { W = 1080; H = 1920; }
+  else if (/横版|横屏|16[:：]9/.test(q.text)) { W = 1920; H = 1080; }
+  else if (/方形|正方|1[:：]1/.test(q.text)) { W = 1080; H = 1080; }
+  else if (/3[:：]4/.test(q.text)) { W = 1080; H = 1440; }
+  else if (/4[:：]3/.test(q.text)) { W = 1440; H = 1080; }
+  if (W !== u.w || H !== u.h) notes.push('画布 ' + W + '×' + H);
+  // 2) 逐分句解析
+  var descs = [];
+  q.clauses.forEach(function (cl) {
+    var txts = [];
+    cl.replace(/\u0001(\d+)\u0001/g, function (mm, i) { txts.push(q.quotes[+i] || ''); return mm; });
+    var plain = cl.replace(/\u0001\d+\u0001/g, ' ');
+    var col = uiColorFromText(plain);
+    // 底色/背景分句 → 铺满画布的矩形
+    if (UI_BG_RE.test(plain) || (/底$/.test(plain) && col && !/底部/.test(plain))) {
+      descs.push({ type: 'rect', name: '底色', bg: true, color: col || '#141821', pos: { h: null, v: null, rel: false } });
+      return;
+    }
+    var type = null;
+    for (var i = 0; i < UI_TYPE_RULES.length; i++) if (UI_TYPE_RULES[i][1].test(plain)) { type = UI_TYPE_RULES[i][0]; break; }
+    if (!type) return;
+    var opacity = null;
+    if (/透明/.test(plain)) { var pm = plain.match(/(\d{1,3})\s*%/); if (pm) opacity = clamp(+pm[1], 0, 100) / 100; }
+    descs.push({
+      type: type, name: (txts[0] || UI_TYPE_NAME[type] || '元素').slice(0, 12),
+      text: txts[0] || null, color: col, pos: uiPosFromText(plain),
+      size: uiNumOf(plain, /(\d{2,3})\s*号/) || uiNumOf(plain, /字号\s*(\d{1,3})/) || uiNumOf(plain, /(\d{2,3})\s*px/i),
+      radius: uiNumOf(plain, /圆角\s*(\d{1,3})/) || uiNumOf(plain, /(\d{1,3})\s*圆角/),
+      opacity: opacity, icon: uiIconFromText(plain),
+      strokeW: uiNumOf(plain, /边框\s*(\d{1,2})/),
+      weight: /粗体|加粗|bold/i.test(plain) ? 700 : null,
+      big: /大标题|大字|超大|醒目|主标题/.test(plain),
+      small: /小字|小号|细字|说明|副标题/.test(plain),
+      count: uiNumOf(plain, /(\d{1,2})\s*个/)
+    });
+  });
+  if (!descs.length) notes.push('没识别出组件, 已只更新画布尺寸');
+  return { w: W, h: H, layers: uiBuildLayers(descs, W, H), notes: notes };
+}
+function uiNumOf(t, re) { var m = t.match(re); return m ? +m[1] : null; }
+
+// 修改选中图层: 只改指令里提到的属性, 其余原样保留
+function parseUiModify(raw, l) {
+  var t = String(raw || ''), set = {}, text = {}, keys = [];
+  var q = uiSplitClauses(t);
+  var plain = q.text.replace(/\u0001\d+\u0001/g, ' ');
+  var col = uiColorFromText(plain);
+  if (col) {
+    if (/文字|字色|字体颜色/.test(plain) && l.text) { text.color = col; keys.push('文字颜色'); }
+    else set.fill = col, keys.push('填充色');
+  }
+  // 数值型属性: 关键词与数字之间允许夹 0~6 个非数字/非分隔符字符 —— 覆盖「圆角改成 12」「字号调到 60」这类自然语序
+  var rad = uiNumOf(plain, /圆角[^0-9,，;；、]{0,6}(\d{1,3})/) || uiNumOf(plain, /(\d{1,3})\s*圆角/);
+  if (rad != null) { set.radius = clamp(rad, 0, 600); keys.push('圆角 ' + set.radius); }
+  var fs = uiNumOf(plain, /字号[^0-9,，;；、]{0,6}(\d{1,3})/) || uiNumOf(plain, /(\d{2,3})\s*号字?/) || uiNumOf(plain, /(\d{2,3})\s*px/i);
+  if (fs != null) { text.size = clamp(fs, 8, 500); keys.push('字号 ' + text.size); }
+  var pm = plain.match(/(\d{1,3})\s*%/);
+  if (pm && /透明/.test(plain)) { set.opacity = clamp(+pm[1], 0, 100) / 100; keys.push('不透明度 ' + pm[1] + '%'); }
+  var wv = uiNumOf(plain, /宽[^0-9,，;；、]{0,6}(\d{2,4})/), hv = uiNumOf(plain, /高[^0-9,，;；、]{0,6}(\d{2,4})/);
+  if (wv != null) { set.w = Math.max(4, wv); keys.push('宽 ' + set.w); }
+  if (hv != null) { set.h = Math.max(4, hv); keys.push('高 ' + set.h); }
+  var sw = uiNumOf(plain, /边框[^0-9,，;；、]{0,6}(\d{1,2})/);
+  if (sw != null) { set.strokeW = clamp(sw, 0, 40); keys.push('边框 ' + set.strokeW); }
+  if (/加阴影|要阴影|加个阴影/.test(plain)) { set.shadow = { on: true }; keys.push('开启阴影'); }
+  if (/去阴影|不要阴影|去掉阴影|无阴影/.test(plain)) { set.shadow = { on: false }; keys.push('关闭阴影'); }
+  if (/加粗|粗体|bold/i.test(plain)) { text.weight = 700; keys.push('加粗'); }
+  if (/居中/.test(plain) && !/水平居中|垂直居中/.test(plain)) { if (l.text) { text.align = 'center'; keys.push('文字居中'); } }
+  if (/左对齐/.test(plain) && l.text) { text.align = 'left'; keys.push('左对齐'); }
+  if (/右对齐/.test(plain) && l.text) { text.align = 'right'; keys.push('右对齐'); }
+  if (q.quotes.length && /文字|内容|改成|换成|写成/.test(plain) && l.text) { text.content = q.quotes[0]; keys.push('文字「' + q.quotes[0] + '」'); }
+  var ic = uiIconFromText(plain);
+  if (ic && l.icon && /换|改|变成/.test(plain)) { set.icon = { shape: ic }; keys.push('图标形状'); }
+  // 位置: 角位/居中/顶底(按画布锚点)
+  var pos = uiPosFromText(plain);
+  if (pos.h || pos.v) {
+    var u = ensureUI();
+    var nx = null, ny = null;
+    if (pos.h === 'left') nx = 0; else if (pos.h === 'right') nx = u.w - l.w; else if (pos.h === 'center') nx = Math.round((u.w - l.w) / 2);
+    if (pos.v === 'top') ny = 0; else if (pos.v === 'bottom') ny = u.h - l.h; else if (pos.v === 'middle') ny = Math.round((u.h - l.h) / 2);
+    if (nx != null) { set.x = nx; keys.push('水平位置'); }
+    if (ny != null) { set.y = ny; keys.push('垂直位置'); }
+  }
+  // 图标/按钮的颜色也算填充分支(上面已处理)
+  var sh = {};
+  if (set.shadow) { sh = set.shadow; delete set.shadow; }
+  return { set: set, text: text, shadow: sh, keys: keys };
+}
+
+// ── 生成 / 修改 / 模板 ───────────────────────────────────
+function uiLog(kind, prompt, note) {
+  var u = ensureUI();
+  u.history.push({ ts: tsNow(), kind: kind, prompt: prompt || '', note: note || '' });
+  if (u.history.length > 60) u.history.shift();
+}
+function renderUiHist() {
+  var box = $id('uiHist'); if (!box) return;
+  var u = ensureUI();
+  if (!u.history.length) { box.innerHTML = '<div class="empty">还没有生成/修改记录(随工程保存)</div>'; return; }
+  box.innerHTML = u.history.slice(-30).reverse().map(function (h) {
+    var k = h.kind === 'gen' ? '生成' : h.kind === 'tpl' ? '模板' : '修改';
+    return '<div class="hi"><b>' + k + '</b> ' + esc(h.note)
+      + (h.prompt ? '<br><span class="r">' + esc(h.prompt).slice(0, 70) + '</span>' : '')
+      + '<br><span style="color:#6f7686">' + esc(h.ts) + '</span></div>';
+  }).join('');
+}
+function uiGenerate() {
+  var raw = ($id('uiPrompt').value || '').trim();
+  if (!raw) return toast('先写一句你想要的 UI, 例如「1080x1080 深色底, 中间大标题, 底部金色标签」');
+  var modeEl = document.querySelector('input[name=uiMode]:checked');
+  var mode = modeEl ? modeEl.value : 'replace';
+  var res = parseUiPrompt(raw);
+  pushUndo('一键生成 UI');
+  var u = ensureUI();
+  u.w = res.w; u.h = res.h;
+  if (mode === 'replace') u.layers = res.layers;
+  else res.layers.forEach(function (l) { u.layers.push(l); });
+  UI_SEL = u.layers.length ? u.layers[u.layers.length - 1].id : null;
+  uiLog('gen', raw, (mode === 'replace' ? '清空重建' : '追加') + ' ' + res.layers.length + ' 个图层');
+  renderUi(); touchProgress();
+  toast('已生成 ' + res.layers.length + ' 个图层' + (res.notes.length ? ' · ' + res.notes.join(' / ') : '') + ' · Ctrl+Z 可撤销', 3200);
+}
+function uiModifySelected() {
+  var l = uiFind(UI_SEL);
+  if (!l) return toast('先在画布或图层列表里选中一个元素');
+  var raw = ($id('uiPrompt').value || '').trim();
+  if (!raw) return toast('先写一句要改什么, 例如「圆角改成 32, 换成金色」');
+  var p = parseUiModify(raw, l);
+  if (!p.keys.length) return toast('没识别出可改的属性, 试试「颜色改金色 / 圆角 32 / 字号 60 / 放到右下角 / 不透明度 80%」', 3600);
+  pushUndo('修改图层「' + l.name + '」');
+  Object.keys(p.set).forEach(function (k) { l[k] = p.set[k]; });
+  Object.keys(p.text).forEach(function (k) { l.text = l.text || {}; l.text[k] = p.text[k]; });
+  if (p.shadow) { l.shadow = l.shadow || {}; Object.keys(p.shadow).forEach(function (k) { l.shadow[k] = p.shadow[k]; }); }
+  uiLog('mod', raw, '修改「' + l.name + '」: ' + p.keys.join('、'));
+  renderUi(); touchProgress();
+  toast('已修改「' + l.name + '」: ' + p.keys.join('、'), 3000);
+}
+// 模板: 常见成片元素的现成配方
+function uiTemplateLayers(key) {
+  var u = ensureUI(), W = u.w, H = u.h, base = Math.min(W, H), M = Math.round(base * 0.06);
+  if (key === 'sub') {
+    var c = uiNewLayer('card', { name: '字幕卡片', radius: 28, fill: 'rgba(0,0,0,.6)' });
+    c.w = W - M * 2; c.h = Math.round(base * 0.19); c.x = M; c.y = H - M - c.h;
+    c.text = { content: '这里是一句字幕文案', size: Math.round(base * 0.045), weight: 500, color: '#ffffff', align: 'center', lineHeight: 1.3 };
+    return [c];
+  }
+  if (key === 'cover') {
+    var t1 = uiNewLayer('text', { name: '主标题' });
+    t1.w = W - M * 2; t1.h = Math.round(base * 0.18); t1.x = M; t1.y = Math.round(H / 2 - base * 0.2);
+    t1.text = { content: '主标题文字', size: Math.round(base * 0.12), weight: 700, color: '#ffffff', align: 'center' };
+    var t2 = uiNewLayer('text', { name: '副标题' });
+    t2.w = W - M * 2; t2.h = Math.round(base * 0.09); t2.x = M; t2.y = t1.y + t1.h + Math.round(base * 0.02);
+    t2.text = { content: '副标题 / SLOGAN', size: Math.round(base * 0.042), weight: 400, color: '#ffffff', align: 'center' };
+    return [t1, t2];
+  }
+  if (key === 'end') {
+    var cd = uiNewLayer('card', { name: '片尾信息卡', radius: 30, fill: 'rgba(0,0,0,.62)' });
+    cd.w = Math.round(W - M * 2.4); cd.h = Math.round(base * 0.3); cd.x = Math.round((W - cd.w) / 2); cd.y = Math.round((H - cd.h) / 2);
+    cd.text = { content: '感谢观看', size: Math.round(base * 0.07), weight: 700, color: '#ffffff', align: 'center', lineHeight: 1.8 };
+    var hint = uiNewLayer('text', { name: '引导关注' });
+    hint.w = cd.w; hint.h = Math.round(base * 0.05); hint.x = cd.x; hint.y = cd.y + cd.h + Math.round(base * 0.03);
+    hint.text = { content: '点赞 · 关注 · 转发', size: Math.round(base * 0.036), weight: 400, color: '#d4af37', align: 'center' };
+    return [cd, hint];
+  }
+  if (key === 'btn') {
+    var b = uiNewLayer('button', { name: '主按钮', fill: '#d4af37' });
+    b.h = Math.round(base * 0.085); b.w = Math.round(b.h * 3.2);
+    b.x = Math.round((W - b.w) / 2); b.y = Math.round(H - M - b.h - base * 0.08);
+    b.shadow = { on: true, blur: 22, x: 0, y: 8, color: 'rgba(212,175,55,.5)' };
+    b.text = { content: '立即查看', size: Math.round(b.h * 0.38), weight: 600, color: '#1a1d24', align: 'center' };
+    return [b];
+  }
+  if (key === 'tag') {
+    var tg = uiNewLayer('tag', { name: '标签组件', fill: '#d4af37', radius: 999 });
+    tg.h = Math.round(base * 0.06); tg.w = Math.round(tg.h * 3.4);
+    tg.x = M; tg.y = M;
+    tg.text = { content: 'NEW', size: Math.round(tg.h * 0.5), weight: 600, color: '#1a1d24', align: 'center' };
+    return [tg];
+  }
+  return [];
+}
+function uiApplyTemplate(key) {
+  var u = ensureUI();
+  if (u.layers.length >= 60) return toast('图层已达上限 60, 请先清理');
+  var ls = uiTemplateLayers(key);
+  if (!ls.length) return;
+  pushUndo('套用模板');
+  ls.forEach(function (l) { u.layers.push(l); });
+  UI_SEL = ls[ls.length - 1].id;
+  var NAME = { sub: '字幕卡片', cover: '封面标题', end: '片尾信息卡', btn: '主按钮', tag: '标签组件' };
+  uiLog('tpl', '', '套用模板「' + (NAME[key] || key) + '」' + ls.length + ' 个图层');
+  renderUi(); touchProgress();
+  toast('已套用模板「' + (NAME[key] || key) + '」');
+}
+
+// ── 输出: 导出 PNG / 叠加到视频画布 ──────────────────────
+function uiExportPng() {
+  var u = ensureUI();
+  if (!u.layers.length) return toast('画布还是空的, 先添加元素或生成 UI');
+  var url = uiRaster();
+  if (!url) return toast('导出失败: 无法生成图片');
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'UI设计_' + u.w + 'x' + u.h + '.png';
+  a.click();
+  toast('已导出 ' + a.download);
+}
+function uiToVideo() {
+  var u = ensureUI();
+  if (!u.layers.length) return toast('画布还是空的, 先生成或添加元素');
+  var tr = PRJ.tracks.find(function (t) { return t.kind === 'subtitle'; });
+  if (!tr) { tr = { id: uid('sub'), kind: 'subtitle', locked: false, muted: false, clips: [] }; PRJ.tracks.unshift(tr); }
+  if (tr.locked) return toast('字幕/贴纸轨已锁定, 无法叠加');
+  var url = uiRaster();
+  if (!url) return toast('叠加失败: 无法生成图片');
+  pushUndo('UI叠加到视频画布');
+  var dur = Math.max(2, Math.min(5, (PRJ.duration || 10) - cur));
+  var clip = { id: uid('ui'), t0: +cur.toFixed(2), t1: +(cur + dur).toFixed(2), ui: { img: url, w: u.w, h: u.h } };
+  tr.clips.push(clip);
+  PRJ.duration = Math.max(PRJ.duration, clip.t1 + 1);
+  sel.clip = clip.id;
+  renderAll(); touchProgress();
+  var kb = Math.round(url.length / 1024);
+  toast('已叠加到时间轴 @ ' + fmt(cur) + ' (' + dur.toFixed(1) + 's) · 可用关键帧加动效'
+    + (kb > 900 ? ' · ⚠ 图片 ' + kb + 'KB, 工程文件会变大' : ''), 3600);
+}
+
+// ── 右栏 Tab 切换 + UI设计 面板总渲染 ────────────────────
+function setRTab(name) {
+  RTAB = name;
+  var tabs = $id('edRTabs');
+  if (tabs) Array.prototype.forEach.call(tabs.querySelectorAll('[data-rtab]'), function (b) {
+    b.classList.toggle('on', b.getAttribute('data-rtab') === name);
+  });
+  ['props', 'progress', 'ui'].forEach(function (k) {
+    var p = $id('rt-' + k); if (p) p.classList.toggle('on', k === name);
+  });
+  var R = $id('edRight'); if (R) R.classList.toggle('wide', name === 'ui');
+  // 面板从 display:none 变可见后才能量到画布尺寸, 所以切换后再渲染一次
+  if (name === 'ui') renderUi();
+  if (name === 'progress') renderProgress();
+  if (name === 'props') renderProps();
+  drawFrame();
+}
+function uiTabActive() {
+  var p = $id('rt-ui');
+  return RTAB === 'ui' && !!p && p.classList.contains('on');
+}
+function renderUi() {
+  var u = ensureUI();
+  var cw = $id('uiCvW'), ch = $id('uiCvH');
+  if (cw && document.activeElement !== cw) cw.value = u.w;
+  if (ch && document.activeElement !== ch) ch.value = u.h;
+  var sb = $id('uiSnap'), gb = $id('uiGrid'), gs = $id('uiGridSize');
+  if (sb) sb.classList.toggle('on', !!u.snap);
+  if (gb) gb.classList.toggle('on', !!u.showGrid);
+  if (gs && document.activeElement !== gs) gs.value = String(u.grid);
+  renderUiCanvas();
+  renderUiLayers();
+  renderUiProps();
+  renderUiHist();
+}
+
+// ── UI设计 键盘路由(仅 UI设计 Tab 激活时生效) ─────────────
+function uiKey(e) {
+  var l = uiFind(UI_SEL);
+  var ctrl = e.ctrlKey || e.metaKey;
+  // 未选中图层时一律「不拦截」, 把按键交回时间轴, 避免在 UI 面板里按 Delete 却删不掉片段
+  if (ctrl && (e.key === 'd' || e.key === 'D')) { if (!l) return false; e.preventDefault(); uiDuplicate(l); return true; }
+  if (ctrl && (e.key === 'c' || e.key === 'C')) { if (!l) return false; e.preventDefault(); UI_CLIP = JSON.parse(JSON.stringify(l)); toast('已复制「' + l.name + '」'); return true; }
+  if (ctrl && (e.key === 'v' || e.key === 'V')) {
+    e.preventDefault();
+    if (!UI_CLIP) { toast('剪贴板为空(先用 Ctrl+C 复制一个元素)'); return true; }
+    pushUndo('粘贴图层');
+    var u = ensureUI(), c = JSON.parse(JSON.stringify(UI_CLIP));
+    c.id = uid('ui');
+    c.x = clamp(c.x + Math.round(u.w * 0.03), 0, Math.max(0, u.w - c.w));
+    c.y = clamp(c.y + Math.round(u.h * 0.03), 0, Math.max(0, u.h - c.h));
+    u.layers.push(c); UI_SEL = c.id; renderUi(); toast('已粘贴');
+    return true;
+  }
+  if (e.key === 'Delete' || e.key === 'Backspace') { if (!l) return false; e.preventDefault(); uiDelLayer(l); return true; }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    if (!l) return false;                                  // 未选中图层 → 交回时间轴(移动播放头)
+    e.preventDefault();
+    var uu = ensureUI();
+    var step = e.shiftKey ? Math.max(10, uu.grid * 4) : uu.grid;
+    var nx = l.x + (e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0);
+    var ny = l.y + (e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0);
+    if (nx === l.x && ny === l.y) return true;
+    pushUndo('微调「' + l.name + '」位置');
+    l.x = nx; l.y = ny;
+    renderUiCanvas(); uiSyncPosInputs();
+    return true;
+  }
+  return false;
+}
+
+// ── UI设计 面板事件绑定 ──────────────────────────────────
+function bindUi() {
+  var tabs = $id('edRTabs');
+  if (tabs) Array.prototype.forEach.call(tabs.querySelectorAll('[data-rtab]'), function (b) {
+    b.onclick = function () { setRTab(this.getAttribute('data-rtab')); };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#uiTools [data-add]'), function (b) {
+    b.onclick = function () { uiAddLayer(this.getAttribute('data-add')); };
+  });
+  var apply = $id('uiCvApply');
+  if (apply) apply.onclick = function () {
+    var u = ensureUI();
+    var w = clamp(+$id('uiCvW').value || u.w, 64, 4096), h = clamp(+$id('uiCvH').value || u.h, 64, 4096);
+    if (w === u.w && h === u.h) return toast('尺寸未变化');
+    pushUndo('修改画布尺寸');
+    u.w = w; u.h = h;
+    renderUi(); touchProgress();
+    toast('画布已改为 ' + w + '×' + h);
+  };
+  var sb = $id('uiSnap');
+  if (sb) sb.onclick = function () { var u = ensureUI(); u.snap = !u.snap; renderUi(); toast(u.snap ? '网格吸附: 开' : '网格吸附: 关'); };
+  var gb = $id('uiGrid');
+  if (gb) gb.onclick = function () { var u = ensureUI(); u.showGrid = !u.showGrid; renderUi(); toast(u.showGrid ? '网格/参考线: 显示' : '网格/参考线: 隐藏'); };
+  var gs = $id('uiGridSize');
+  if (gs) gs.onchange = function () { var u = ensureUI(); u.grid = clamp(+this.value || 8, 2, 100); renderUi(); };
+  var gen = $id('uiGen'); if (gen) gen.onclick = uiGenerate;
+  var mod = $id('uiModify'); if (mod) mod.onclick = uiModifySelected;
+  Array.prototype.forEach.call(document.querySelectorAll('#uiTpl [data-tpl]'), function (b) {
+    b.onclick = function () { uiApplyTemplate(this.getAttribute('data-tpl')); };
+  });
+  var ep = $id('uiExportPng'); if (ep) ep.onclick = uiExportPng;
+  var tv = $id('uiToVideo'); if (tv) tv.onclick = uiToVideo;
+  bindUiCanvas();
+  // 窗口尺寸变化 → 手柄/选中框按新缩放重画
+  window.addEventListener('resize', function () { if (uiTabActive()) renderUiCanvas(); });
+}
+
 // ── 视图渲染入口 ─────────────────────────────────────────
-function renderAll() { renderTracks(); renderProps(); renderProgress(); updateTime(); drawFrame(); }
+function renderAll() { renderTracks(); renderProps(); renderProgress(); renderUi(); updateTime(); drawFrame(); }
 
 // ── 事件绑定(工具栏/播放/时间轴/快捷键) ───────────────────
 function bind() {
+  // 【UI设计模块】右栏 Tab / 组件按钮 / 画布交互 / 一句话生成 等全部事件
+  bindUi();
   // 【半自动智能进度模块】面板标题栏点击折叠/展开
   var pgHead = $id('pgHead');
   if (pgHead) pgHead.onclick = togglePgPanel;
   $id('edNew').onclick = function () {
-    if (!confirm('新建将清空当前工程(可 Ctrl+Z 撤销), 继续?')) return;
-    pushUndo(); PRJ = blankProject(); MATS.length = 0; sel.clip = null; cur = 0;
+    if (!confirm('新建将清空当前工程(含撤销/重做记录), 继续?')) return;
+    PRJ = blankProject(); MATS.length = 0; sel.clip = null; cur = 0;
+    // 【UI操作撤销栈模块】新建工程 = 全新开始: 清空全局撤销/重做栈(不进工程文件)
+    HISTORY.undo.length = 0; HISTORY.redo.length = 0; updateUndoBtns();
     $id('edName').value = PRJ.name;
     renderAll(); renderMatList();
     applyAuto(true);                                  // 新建: 进度全部重置(空工程 → 全部未勾选)、日志已清空
-    toast('已新建空白工程 · 进度与日志已重置');
+    toast('已新建空白工程 · 进度 / 日志 / 撤销记录已重置');
   };
   $id('edImportMat').onclick = $id('edLibUpload').onclick = function () { $id('edMatFile').click(); };
   $id('edMatFile').onchange = function (e) {
@@ -1904,7 +3199,7 @@ function bind() {
   $id('edToEnd').onclick = function () { cur = PRJ.duration; updateTime(); renderRuler(); drawFrame(); };
   $id('edPrevFrame').onclick = function () { cur = Math.max(0, cur - 1 / (PRJ.fps || 30)); updateTime(); renderRuler(); drawFrame(); };
   $id('edNextFrame').onclick = function () { cur = Math.min(PRJ.duration, cur + 1 / (PRJ.fps || 30)); updateTime(); renderRuler(); drawFrame(); };
-  $id('edMark').onclick = function () { pushUndo(); PRJ.markers.push({ t: cur, note: '标记@' + fmt(cur) }); renderRuler(); toast('已打点 @ ' + fmt(cur)); };
+  $id('edMark').onclick = function () { pushUndo('打点标记'); PRJ.markers.push({ t: cur, note: '标记@' + fmt(cur) }); renderRuler(); toast('已打点 @ ' + fmt(cur)); };
   $id('edSplit').onclick = splitClip;
   $id('edDel').onclick = delClip;
   $id('edCopy').onclick = copyClip;
@@ -1912,8 +3207,8 @@ function bind() {
   $id('edLibBtn').onclick = function () { $id('edLib').classList.toggle('show'); };
   $id('edLibClose').onclick = function () { $id('edLib').classList.remove('show'); };
 
-  $id('edAddVTrack').onclick = function () { pushUndo(); PRJ.tracks.push({ id: uid('v'), kind: 'video', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加视频轨'); };
-  $id('edAddATrack').onclick = function () { pushUndo(); PRJ.tracks.push({ id: uid('a'), kind: 'audio', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加音频轨'); };
+  $id('edAddVTrack').onclick = function () { pushUndo('添加视频轨'); PRJ.tracks.push({ id: uid('v'), kind: 'video', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加视频轨'); };
+  $id('edAddATrack').onclick = function () { pushUndo('添加音频轨'); PRJ.tracks.push({ id: uid('a'), kind: 'audio', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加音频轨'); };
 
   // 轨道图标(锁定/静音/删轨) 事件委托
   $id('edTrackRows').addEventListener('click', function (e) {
@@ -1957,7 +3252,7 @@ function bind() {
     if (tr.kind === 'subtitle' && m.type !== 'image') return toast('字幕轨只放字幕片段(用「＋字幕片段」按钮)');
     if (tr.kind !== 'subtitle' && m.type === 'image' && tr.kind === 'audio') return toast('音频轨只放音频');
     if (tr.kind === 'audio' && m.type !== 'audio') return toast('音频轨只放音频素材');
-    pushUndo();
+    pushUndo('放置素材到轨道');
     var rect = $id('edLanesCol').getBoundingClientRect();
     var t0 = clamp((e.clientX - rect.left + $id('edLanesCol').scrollLeft) / PPS, 0, PRJ.duration);
     var dur = m.dur || 3;
@@ -1989,6 +3284,9 @@ function bind() {
     if (!v || v.style.display === 'none' || v.offsetParent === null) return;
     var tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    // 【UI设计模块】UI设计 Tab 激活时, Delete / Ctrl+D / Ctrl+C / Ctrl+V / 方向键 优先作用于图层
+    // (Ctrl+Z / Ctrl+Y 是全局统一的, 剪辑与 UI设计 共用同一套栈, 不在这里分流)
+    if (uiTabActive() && uiKey(e)) return;
     if (e.code === 'Space') { e.preventDefault(); play(); }
     else if (e.key === 's' || e.key === 'S') { e.preventDefault(); splitClip(); }
     else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); delClip(); }
@@ -2016,10 +3314,26 @@ else init();
 
 // 暴露给壳层(视图切换时重绘, 防止隐藏时 canvas 尺寸为 0)
 window.__ed = {
-  redraw: function () { if (document.getElementById('viewEditor').style.display !== 'none') { drawFrame(); renderProgress(); } },
+  redraw: function () {
+    if (document.getElementById('viewEditor').style.display !== 'none') {
+      drawFrame(); renderProgress();
+      if (uiTabActive()) renderUi();          // UI设计 画布依赖可见宽度, 切回来要重画
+    }
+  },
   // 供壳层/自动化测试读取当前进度快照
   progress: function () { var r = calcProgress(); return { total: r.total, groups: r.groups }; },
-  prj: function () { return PRJ; }
+  prj: function () { return PRJ; },
+  // 【UI设计模块】供壳层/自动化测试读取的设计快照
+  ui: function () {
+    var u = ensureUI();
+    return { w: u.w, h: u.h, bg: u.bg, grid: u.grid, snap: u.snap, showGrid: u.showGrid,
+      layers: u.layers, history: u.history, sel: UI_SEL, tab: RTAB };
+  },
+  // 撤销栈快照(供测试断言: 剪辑与 UI设计 共用同一套栈)
+  history: function () {
+    return { undo: HISTORY.undo.map(function (x) { return x.name; }),
+      redo: HISTORY.redo.map(function (x) { return x.name; }), max: HISTORY.MAX };
+  }
 };
 })();
 </script>

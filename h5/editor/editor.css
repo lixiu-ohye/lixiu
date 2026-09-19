@@ -47,6 +47,7 @@
 .ed-clip.video{background:linear-gradient(180deg,#3d5f9e,#324e83)}
 .ed-clip.image{background:linear-gradient(180deg,#3d7e9e,#2e6583)}
 .ed-clip.subtitle{background:linear-gradient(180deg,#94783d,#7d6532)}
+.ed-clip.ui{background:linear-gradient(180deg,#6b5fa8,#544a86)}
 .ed-clip.audio{background:linear-gradient(180deg,#3d8e63,#327351)}
 .ed-clip.sel{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
 .ed-clip .hL,.ed-clip .hR{position:absolute;top:0;bottom:0;width:7px;cursor:ew-resize}
@@ -142,4 +143,67 @@
 .ed-tip.show{display:block}
 .ed-tip b{color:#e8c068}
 .ed-tip .tp-h{color:#8fb6e8;display:block;margin-bottom:2px}
+/* ══════════════ 【右栏三大 Tab】属性 / 进度 / UI设计 ══════════════ */
+.ed-rtabs{display:flex;gap:4px;margin-bottom:9px;background:#191c22;border:1px solid #2e323d;border-radius:8px;padding:3px}
+.ed-rtabs button{flex:1;background:none;border:0;color:#9aa1b0;font-size:11.5px;padding:5px 4px;border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.ed-rtabs button:hover{color:#dfe3ea;background:#22252e}
+.ed-rtabs button.on{background:#7a4d63;color:#fff}
+.rt-pane{display:none}
+.rt-pane.on{display:block}
+/* UI设计 Tab 激活时右栏加宽(画布+图层列表需要空间) */
+.ed-right.wide{width:404px}
+
+/* ── UI设计: 组件工具栏 ── */
+.ui-tools{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}
+.ui-tools button{background:#262a33;border:1px solid #353a46;color:#c6cbd6;border-radius:6px;padding:6px 2px;font-size:11px;cursor:pointer;font-family:inherit}
+.ui-tools button:hover{background:#303542;color:#fff}
+/* ── UI设计: 画布 ── */
+.ui-cv-wrap{position:relative;background:#101216;border:1px solid #2e323d;border-radius:8px;height:246px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:6px}
+#uiCanvas{max-width:100%;max-height:100%;cursor:crosshair;box-shadow:0 2px 14px rgba(0,0,0,.55);background:repeating-conic-gradient(#22252e 0 25%,#1a1d24 0 50%) 0 0/14px 14px}
+.ui-cv-bar{display:flex;align-items:center;gap:5px;font-size:11px;color:#8b93a5;margin-bottom:8px;flex-wrap:wrap}
+.ui-cv-bar input[type=number]{width:56px;background:#191c22;border:1px solid #333846;color:#dde1e8;border-radius:5px;padding:3px 6px;font-size:11px;outline:none;font-family:inherit}
+.ui-cv-bar button{background:#262a33;border:1px solid #353a46;color:#c6cbd6;border-radius:5px;padding:3px 8px;font-size:10.5px;cursor:pointer;font-family:inherit}
+.ui-cv-bar button.on{background:#4a3f52;border-color:#9c6b85;color:#fff}
+/* ── UI设计: 分区 ── */
+.ui-sec{margin-top:10px}
+.ui-sec>h5{font-size:11px;color:#8b93a5;margin:0 0 6px;font-weight:600;letter-spacing:.4px;display:flex;align-items:center;gap:6px}
+.ui-sec>h5 .n{margin-left:auto;font-weight:400;color:#6f7686}
+/* ── UI设计: 图层列表 ── */
+.ui-layers{max-height:190px;overflow-y:auto;border:1px solid #2e323d;border-radius:7px;background:#191c22}
+.ui-layer{display:flex;align-items:center;gap:5px;padding:4px 6px;border-bottom:1px solid #22252e;font-size:11px;color:#b6bcc8;cursor:pointer}
+.ui-layer:last-child{border-bottom:0}
+.ui-layer:hover{background:#22252e}
+.ui-layer.sel{background:#2f2733;box-shadow:inset 2px 0 0 #b07ad0;color:#e6d4f2}
+.ui-layer .ty{width:17px;height:17px;border-radius:4px;background:#2c303a;color:#8fb6e8;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+.ui-layer .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ui-layer .ic{background:none;border:0;color:#6f7686;cursor:pointer;padding:0 2px;font-size:11px;line-height:1}
+.ui-layer .ic:hover{color:#dfe3ea}
+.ui-layer .ic.off{opacity:.35}
+.ui-layer .ic.warn{color:#e8c068}
+.ui-layer .mv{background:#262a33;border:1px solid #333846;color:#9aa1b0;border-radius:4px;cursor:pointer;padding:0 4px;font-size:9px;line-height:14px}
+.ui-layer .mv:hover{color:#fff;background:#303542}
+/* ── UI设计: 一句话生成 ── */
+.ui-prompt{width:100%;height:64px;resize:vertical;background:#191c22;border:1px solid #333846;color:#dde1e8;border-radius:7px;padding:6px 8px;font-size:11.5px;font-family:inherit;outline:none;box-sizing:border-box;line-height:1.5}
+.ui-row{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:11px;color:#9aa1b0;flex-wrap:wrap}
+.ui-row label{display:flex;align-items:center;gap:4px;cursor:pointer}
+.ui-row input[type=radio]{accent-color:#9c6b85;cursor:pointer}
+.ui-act{display:flex;gap:6px;margin-top:7px}
+.ui-act button{flex:1;border-radius:6px;padding:7px 4px;font-size:11.5px;cursor:pointer;font-family:inherit;background:#262a33;border:1px solid #353a46;color:#c6cbd6}
+.ui-act button:hover{background:#303542;color:#fff}
+.ui-act button.primary{background:#7a4d63;border-color:#9c6b85;color:#fff}
+.ui-out{width:100%;border-radius:6px;padding:7px 4px;font-size:11.5px;cursor:pointer;font-family:inherit;background:#262a33;border:1px solid #353a46;color:#c6cbd6}
+.ui-out:hover{background:#303542;color:#fff}
+.ui-out.hot{background:#2f4a3d;border-color:#4f8d6c;color:#bfe8d2}
+.ui-tpl{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.ui-tpl button{background:#22252e;border:1px solid #333846;color:#9aa1b0;border-radius:10px;padding:3px 9px;font-size:10.5px;cursor:pointer;font-family:inherit}
+.ui-tpl button:hover{background:#2c303a;color:#dfe3ea;border-color:#4a5064}
+.ui-hist{max-height:96px;overflow-y:auto;margin-top:7px;background:#191c22;border:1px solid #2e323d;border-radius:6px;padding:5px 6px;font-size:10.5px;color:#98a0b0}
+.ui-hist .hi{padding:2px 0;border-bottom:1px dashed #262a33;line-height:1.5}
+.ui-hist .hi:last-child{border-bottom:0}
+.ui-hist .hi b{color:#8fb6e8;font-weight:600}
+.ui-hist .hi .r{color:#e8c068}
+.ui-hist .empty{color:#6f7686}
+/* UI设计: 空选中提示 */
+.ui-nosel{color:#6f7686;font-size:11px;padding:10px 4px;text-align:center;line-height:1.6}
+
 @media (max-width:768px){.ed-right{display:none}.ed-lib{width:200px}}
