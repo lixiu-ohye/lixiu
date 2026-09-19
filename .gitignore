@@ -24,3 +24,6 @@ _test_*.png
 *.fixbak
 index_backup_*.html
 index_fixed_*.html
+
+# 审计脚本运行产物(可随时重跑生成, 不入库)
+h5/tests/_out/

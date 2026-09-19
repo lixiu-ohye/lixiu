@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
+# ⚠【已降级为 legacy, 不要用它构建部署产物!】
+#   这是旧版构建脚本: 只产出「智能成片壳层」, 不含剪辑工作台与进度模块。
+#   完整版请看 h5/build_editor.py(权威构建脚本, 输出 h5/workbench.html + 仓库根 workbench.html)。
+#   本脚本输出已改名为 workbench_legacy_shell.html, 仅用于回归对照(不会被部署)。
 # 把 h5/index.html 封装进 PC 工作台骨架(侧边栏+顶栏+主内容区), 原页面字节级嵌入零改动
 # 用法: python build_workbench.py
 import re, io, os
 
 SRC  = os.path.join(os.path.dirname(__file__), 'index.html')
-OUT  = os.path.join(os.path.dirname(__file__), 'workbench.html')
+OUT  = os.path.join(os.path.dirname(__file__), 'workbench_legacy_shell.html')
 MOBILE = os.path.join(os.path.dirname(__file__), '..', 'index_mobile.html')  # 备份原移动版
 
 s = io.open(SRC, encoding='utf-8').read()

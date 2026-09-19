@@ -1,0 +1,93 @@
+<!-- ═══════════════════ 【剪辑工作台】视图(编辑器主体) ═══════════════════ -->
+<div id="viewEditor" class="editor-root">
+  <!-- 顶部工具栏: 工程名/新建/导入/导出/撤销重做 -->
+  <div class="ed-toolbar">
+    <input id="edName" class="pj" value="未命名工程" title="工程名称">
+    <button class="ed-btn" id="edNew">新建工程</button>
+    <span class="ed-sep"></span>
+    <button class="ed-btn" id="edImportMat">导入素材</button>
+    <button class="ed-btn" id="edImportPrj">导入工程(.lixiu)</button>
+    <button class="ed-btn primary" id="edExportPrj">导出工程 Ctrl+S</button>
+    <button class="ed-btn" id="edExportFrame">导出当前帧</button>
+    <span class="ed-sep"></span>
+    <button class="ed-btn" id="edUndo" title="Ctrl+Z">↶ 撤销</button>
+    <button class="ed-btn" id="edRedo" title="Ctrl+Y">↷ 重做</button>
+    <span style="margin-left:auto;color:#6f7686;font-size:11px">空格播放 · S分割 · Del删除 · Ctrl+Z/Y撤销重做 · 滚轮缩放画布</span>
+    <input type="file" id="edMatFile" multiple accept="video/*,image/*,audio/*" style="display:none">
+    <input type="file" id="edPrjFile" accept=".lixiu" style="display:none">
+  </div>
+
+  <div class="ed-middle">
+    <div class="ed-left">
+      <!-- 画布预览区: Canvas 合成渲染, 滚轮缩放/拖拽平移 -->
+      <div class="ed-canvas-wrap" id="edWrap" title="滚轮缩放 · 拖拽平移 · 双击复位">
+        <canvas id="edCanvas" width="1280" height="720"></canvas>
+      </div>
+      <!-- 播放控制条 -->
+      <div class="ed-transport">
+        <button class="ed-btn" id="edToStart" title="到片头">⏮</button>
+        <button class="ed-btn" id="edPrevFrame" title="逐帧后退(←)">◀帧</button>
+        <button class="ed-btn primary" id="edPlay" style="min-width:60px">▶ 播放</button>
+        <button class="ed-btn" id="edNextFrame" title="逐帧前进(→)">帧▶</button>
+        <button class="ed-btn" id="edToEnd" title="到片尾">⏭</button>
+        <span class="ed-time" id="edTime">00:00.0 / 00:00.0</span>
+        <span class="ed-sep"></span>
+        <button class="ed-btn" id="edMark" title="在播放头处打标记">🚩 打点</button>
+        <button class="ed-btn" id="edSplit" title="快捷键S">✂ 分割</button>
+        <button class="ed-btn" id="edCopy">复制片段</button>
+        <button class="ed-btn" id="edDel" title="快捷键Delete">🗑 删除</button>
+        <button class="ed-btn" id="edAddSub">＋字幕片段</button>
+        <button class="ed-btn" id="edLibBtn" style="margin-left:auto">📦 素材库</button>
+      </div>
+    </div>
+    <!-- 右侧属性面板: 顶部【半自动智能进度模块】(可折叠), 下方选中片段属性(动态渲染) -->
+    <div class="ed-right" id="edRight">
+      <!-- ── 【半自动智能进度模块】面板壳(内容由 editor.js 的 renderProgress() 渲染) ── -->
+      <section class="ed-prog" id="edProg">
+        <div class="pg-head" id="pgHead" title="点击折叠/展开进度面板">
+          <span>📊 项目进度</span>
+          <span class="pg-chip" id="pgChip">待开始</span>
+          <span class="pg-pct" id="pgPct">0%</span>
+          <button class="pg-toggle" id="pgFold" title="折叠/展开进度面板">▾</button>
+        </div>
+        <div class="pg-bar"><i id="pgFill" class="gray"></i></div>
+        <div class="pg-body" id="pgBody"></div>
+      </section>
+      <!-- ── 选中片段/工程属性 ── -->
+      <div id="edProps"></div>
+    </div>
+  </div>
+
+  <!-- 底部时间轴: 轨道列 + 刻度标尺 + 轨道泳道 -->
+  <div class="ed-timeline">
+    <div class="ed-tl-headbar">
+      <button class="ed-btn" id="edAddVTrack">＋视频轨</button>
+      <button class="ed-btn" id="edAddATrack">＋音频轨</button>
+      <span style="color:#6f7686;font-size:11px">拖动片段移动 · 两端手柄裁剪 · 点标尺定位 · 🔒锁定 · 🔊静音</span>
+    </div>
+    <div class="ed-tl-main">
+      <div class="ed-tracks-col">
+        <div class="ed-ruler-slot">轨道</div>
+        <div class="ed-tracks-scroll" id="edTrackRows"></div>
+      </div>
+      <div class="ed-lanes-col" id="edLanesCol">
+        <div id="edRuler"></div>
+        <div id="edLanes"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 侧边素材库抽屉(上传/列表/拖入时间轴) -->
+  <div class="ed-lib" id="edLib">
+    <div class="lib-h">📦 素材库
+      <button class="ed-btn" id="edLibClose" style="margin-left:auto">收起</button>
+    </div>
+    <div style="padding:6px">
+      <button class="ed-btn primary" style="width:100%" id="edLibUpload">上传 mp4 / jpg / png / mp3</button>
+    </div>
+    <div class="lib-list" id="edMatList"></div>
+  </div>
+</div>
+
+<!-- 悬浮提示(进度模块检测依据 tooltip, 暗色, 悬浮显示/移开消失) -->
+<div class="ed-tip" id="edTip"></div>
