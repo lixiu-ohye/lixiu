@@ -1264,12 +1264,17 @@ function bindProgress(r) {
   });
 }
 // 【悬浮tooltip】暗色, 悬浮显示 / 移开消失
-function showTip(title, body, locked) {
+// showTipRaw 是通用出口: 进度任务的「检测依据」与四大区的「ⓘ 说明」共用同一个浮层元素
+function showTipRaw(title, bodyHtml) {
   var tip = $id('edTip'); if (!tip) return;
-  tip.innerHTML = '<span class="tp-h">检测依据 · ' + esc(title) + '</span>' + esc(body)
-    + (locked ? '<br><b>该项已人工锁定, 自动检测不再覆盖</b>' : '');
+  tip.innerHTML = '<span class="tp-h">' + esc(title) + '</span>' + bodyHtml;
   tip.classList.add('show');
 }
+function showTip(title, body, locked) {
+  showTipRaw('检测依据 · ' + title, esc(body)
+    + (locked ? '<br><b>该项已人工锁定, 自动检测不再覆盖</b>' : ''));
+}
+
 function moveTip(e) {
   var tip = $id('edTip'); if (!tip || !tip.classList.contains('show')) return;
   var w = 270, h = tip.offsetHeight || 60;
@@ -1279,6 +1284,28 @@ function moveTip(e) {
   tip.style.left = x + 'px'; tip.style.top = y + 'px';
 }
 function hideTip() { var tip = $id('edTip'); if (tip) tip.classList.remove('show'); }
+
+/* 【ⓘ 说明图标】四大区原来的常驻提示文字改成悬浮提示(改造指令: 用 tooltip 替代常驻文字)。
+   说明文案写在元素自身的 data-hint 属性里, hover / focus 时复用同一个 .ed-tip 浮层;
+   ⓘ 本身不响应点击(拦掉冒泡), 避免它在 pg-head 里被误判成「折叠进度面板」。
+   键盘可聚焦(tabindex=0) ⇒ 触屏 / 键盘用户也能读到说明。 */
+function bindHintTips() {
+  Array.prototype.forEach.call(document.querySelectorAll('[data-hint]'), function (el) {
+    var title = el.getAttribute('data-hint-t') || '操作说明';
+    var body = esc(el.getAttribute('data-hint') || '');
+    if (!el.getAttribute('tabindex')) el.setAttribute('tabindex', '0');
+    el.onmouseenter = function (e) { showTipRaw(title, body); moveTip(e); };
+    el.onmousemove = moveTip;
+    el.onmouseleave = hideTip;
+    el.onfocus = function () {
+      showTipRaw(title, body);
+      var r = el.getBoundingClientRect();
+      moveTip({ clientX: r.left + r.width / 2, clientY: r.bottom + 6 });
+    };
+    el.onblur = hideTip;
+    el.onclick = function (e) { if (e && e.stopPropagation) e.stopPropagation(); };
+  });
+}
 
 // 面板折叠(点标题栏)
 function togglePgPanel() { PG_PANEL_FOLD = !PG_PANEL_FOLD; renderProgress(); }
@@ -2568,6 +2595,8 @@ function renderAll() { renderTracks(); renderProps(); renderProgress(); renderUi
 function bind() {
   // 【UI设计模块】右栏 Tab / 组件按钮 / 画布交互 / 一句话生成 等全部事件
   bindUi();
+  // 【ⓘ 说明图标】四大区的常驻提示文字 → 悬浮提示(一次性绑定, DOM 是静态的不会重建)
+  bindHintTips();
   // 【半自动智能进度模块】面板标题栏点击折叠/展开
   var pgHead = $id('pgHead');
   if (pgHead) pgHead.onclick = togglePgPanel;

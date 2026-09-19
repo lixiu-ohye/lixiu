@@ -14,7 +14,7 @@
     <span class="ed-sep"></span>
     <button class="ed-btn" id="edUndo" title="Ctrl+Z">↶ 撤销</button>
     <button class="ed-btn" id="edRedo" title="Ctrl+Y">↷ 重做</button>
-    <span class="ed-tb-hint">空格播放 · S分割 · Del删除 · Ctrl+Z/Y撤销重做 · 滚轮缩放画布</span>
+        <span class="ed-hi ed-hi-fl" data-hint-t="剪辑台快捷键" data-hint="空格 播放 / 暂停　S 分割选中片段　Del 删除选中片段　Ctrl+Z 撤销　Ctrl+Y 重做　Ctrl+S 保存　← / → 逐帧　滚轮 缩放画布"></span>
     <input type="file" id="edMatFile" multiple accept="video/*,image/*,audio/*" style="display:none">
     <input type="file" id="edPrjFile" accept=".lixiu" style="display:none">
   </div>
@@ -24,12 +24,12 @@
          对应设计稿的素材区; 原先是隐藏抽屉(display:none)且绝对定位糊在侧边栏上, 已修正 -->
     <div class="ed-lib" id="edLib">
       <div class="lib-h">📦 素材
+        <span class="ed-hi" data-hint-t="素材栏用法" data-hint="上传的视频 / 图片 / 音频会以缩略图显示在这里。把缩略图直接拖到下方时间轴轨道即可入片，也可先点「＋ 上传素材」。"></span>
         <button class="ed-btn" id="edLibClose" style="margin-left:auto" title="收起素材栏(可点播放条右侧「📦 素材」再展开)">收起</button>
       </div>
       <div style="padding:6px">
         <button class="ed-btn primary" style="width:100%" id="edLibUpload">＋ 上传素材（视频/图片/音频）</button>
       </div>
-      <div class="lib-hint" id="edLibHint">拖缩略图到下方轨道即可入片</div>
       <div class="lib-list" id="edMatList"></div>
     </div>
 
@@ -82,11 +82,11 @@
             <span>📊 项目进度</span>
             <span class="pg-chip" id="pgChip">待开始</span>
             <span class="pg-pct" id="pgPct">0%</span>
+            <span class="ed-hi" data-hint-t="进度模块说明" data-hint="这里只放任务清单。📝 备注 · 🚩 里程碑 · 🧾 进度历史在页面底部「工程档案」区。鼠标悬停任意一条任务可看它的自动检测依据。"></span>
             <button class="pg-toggle" id="pgFold" title="折叠/展开进度面板">▾</button>
           </div>
           <div class="pg-bar"><i id="pgFill" class="gray"></i></div>
           <div class="pg-body" id="pgBody"></div>
-          <div class="pg-foot-hint">📝 备注 · 🚩 里程碑 · 🧾 进度历史在页面底部「工程档案」区</div>
         </section>
       </div>
 
@@ -190,7 +190,7 @@
       <button class="ed-btn" id="edAddVTrack">＋视频轨</button>
       <button class="ed-btn" id="edAddATrack">＋音频轨</button>
       <button class="ed-btn" id="edAddSTrack">＋字幕轨</button>
-      <span class="ed-tl-hint">拖动片段移动 · 两端手柄裁剪 · 点标尺定位播放头 · 🔒锁定 · 🔊静音</span>
+      <span class="ed-hi ed-hi-fl" data-hint-t="时间轴操作" data-hint="拖动片段可移动位置；拖动片段两端的手柄可裁剪入点 / 出点；点击上方标尺可定位播放头；🔒 锁定整轨不可改；🔊 静音整轨；左右滚动可查看更长的时间线。"></span>
     </div>
     <div class="ed-tl-main">
       <div class="ed-tracks-col">
@@ -210,7 +210,7 @@
   <div class="ed-archive" id="edArchive">
     <div class="ar-head" id="arHead">
       <span class="ed-zone">📚 工程档案</span>
-      <span class="ar-hint">随工程一起保存 · 导出 .lixiu 时一并带走</span>
+      <span class="ed-hi" data-hint-t="工程档案说明" data-hint="备注、里程碑、进度历史都随工程一起保存，导出 .lixiu 时一并带走；撤销 / 重做记录只属于本次会话，不会写入工程文件。"></span>
       <span class="ar-cnt" id="arCnt">备注 · 里程碑 0 个 · 日志 0 条</span>
       <button class="ed-btn" id="arFold" title="收起/展开工程档案（收起后画布会变高）">▾ 收起</button>
     </div>

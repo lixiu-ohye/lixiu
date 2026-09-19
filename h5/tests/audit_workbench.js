@@ -1270,6 +1270,86 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   await page.check('input[name=uiEngine][value=local]');
   await page.waitForTimeout(200);
 
+  // ── V: 四大区常驻提示文字 → 「ⓘ」悬浮提示(合并改造指令阶段1 的最后一项) ──
+  await page.click('#edRTabs [data-rtab="props"]');
+  await page.waitForTimeout(150);
+  const v0 = await page.evaluate(() => {
+    const hi = [...document.querySelectorAll('[data-hint]')];
+    const stale = ['.ed-tb-hint', '.ed-tl-hint', '.lib-hint', '.pg-foot-hint', '.ar-hint'].map(s => document.querySelector(s));
+    return {
+      n: hi.length,
+      vis: hi.filter(e => e.getBoundingClientRect().width > 0).length,
+      lens: hi.map(e => (e.getAttribute('data-hint') || '').length),
+      titles: hi.map(e => e.getAttribute('data-hint-t') || ''),
+      staleNodes: stale.filter(Boolean).length
+    };
+  });
+  R.data.hintTips = v0;
+  ok('V1 四大区共有 5 个「ⓘ」说明图标(默认视图 4 个可见, 第 5 个在进度 Tab 内)', v0.n === 5 && v0.vis === 4, JSON.stringify({ n: v0.n, vis: v0.vis }));
+  ok('V2 旧常驻提示节点已彻底移除(不是藏起来)', v0.staleNodes === 0, '残留 ' + v0.staleNodes);
+  ok('V3 ⓘ 说明文案都落在 data-hint 里(信息没丢)',
+    v0.lens.every(t => t >= 20) && v0.titles.every(t => t.length >= 3), JSON.stringify(v0.lens) + ' / ' + v0.titles.join(','));
+
+  // 工具栏 ⓘ: hover 弹出说明浮层
+  await page.hover('.ed-toolbar .ed-hi');
+  await page.waitForTimeout(220);
+  const v1 = await page.evaluate(() => ({
+    show: document.getElementById('edTip').classList.contains('show'),
+    txt: document.getElementById('edTip').innerText
+  }));
+  ok('V4 hover「ⓘ」弹出说明浮层(快捷键一览)',
+    v1.show && /空格/.test(v1.txt) && /Ctrl\+Z/.test(v1.txt), v1.txt.replace(/\s+/g, ' ').slice(0, 90));
+  await page.mouse.move(6, 6);
+  await page.waitForTimeout(220);
+  ok('V5 移开鼠标浮层消失',
+    !(await page.evaluate(() => document.getElementById('edTip').classList.contains('show'))));
+
+  // pg-head 里的 ⓘ 不能被误判成「折叠进度面板」(冒泡拦截是否生效)
+  await page.click('#edRTabs [data-rtab="progress"]');
+  await page.waitForTimeout(150);
+  await page.click('#pgHead');
+  await page.waitForTimeout(220);
+  const vFold0 = await page.evaluate(() => document.getElementById('pgBody').getBoundingClientRect().height);
+  await page.click('#pgHead .ed-hi');
+  await page.waitForTimeout(220);
+  const vFold1 = await page.evaluate(() => ({
+    h: document.getElementById('pgBody').getBoundingClientRect().height,
+    show: document.getElementById('edTip').classList.contains('show'),
+    txt: document.getElementById('edTip').innerText,
+    hiVis: document.querySelector('#pgHead .ed-hi').getBoundingClientRect().width > 0
+  }));
+  ok('V6 点进度面板里的「ⓘ」只弹说明、不折叠面板(不冒泡), 且进度 Tab 内图标可见',
+    Math.abs(vFold1.h - vFold0) < 2 && vFold1.show && /工程档案/.test(vFold1.txt) && vFold1.hiVis,
+    'h ' + vFold0 + ' -> ' + vFold1.h + ' vis=' + vFold1.hiVis + ' | ' + vFold1.txt.replace(/\s+/g, ' ').slice(0, 60));
+  await page.click('#pgHead');
+  await page.waitForTimeout(220);
+
+  // 键盘可访问: Tab 聚焦 ⓘ 也能读到说明
+  await page.evaluate(() => document.querySelector('.ed-toolbar .ed-hi').focus());
+  await page.waitForTimeout(160);
+  const vF = await page.evaluate(() => ({
+    show: document.getElementById('edTip').classList.contains('show'),
+    tabbable: document.querySelector('.ed-toolbar .ed-hi').getAttribute('tabindex')
+  }));
+  ok('V7 「ⓘ」可键盘聚焦并弹出说明(触屏/键盘用户也能读到)',
+    vF.show && vF.tabbable === '0', JSON.stringify(vF));
+  await page.evaluate(() => document.activeElement && document.activeElement.blur());
+  await page.waitForTimeout(160);
+
+  // 时间轴 / 工程档案 的 ⓘ 也在位(覆盖到四大区 + 素材栏)
+  const vZones = await page.evaluate(() => {
+    const zones = {
+      toolbar: !!document.querySelector('.ed-toolbar .ed-hi'),
+      lib: !!document.querySelector('.ed-lib .ed-hi'),
+      progress: !!document.querySelector('#pgHead .ed-hi'),
+      timeline: !!document.querySelector('.ed-tl-headbar .ed-hi'),
+      archive: !!document.querySelector('.ar-head .ed-hi')
+    };
+    return { zones, total: Object.keys(zones).filter(k => zones[k]).length };
+  });
+  ok('V8 五大提示位点全部到位(工具栏/素材栏/进度/时间轴/工程档案)',
+    vZones.total === 5, JSON.stringify(vZones));
+
   // ── 全页截图 + 错误汇总 ──
   await page.screenshot({ path: SHOT + '/full.png', fullPage: false });
 

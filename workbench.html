@@ -296,8 +296,7 @@ input[type=text]{border:1px solid var(--line);border-radius:10px;padding:11px 12
 .ed-lib{width:230px;flex-shrink:0;background:#1b1e25;border-right:1px solid #2c303a;display:flex;flex-direction:column;min-height:0}
 .ed-lib.hide{display:none}
 .ed-lib .lib-h{padding:9px 10px;font-size:12px;color:#9aa1b5;border-bottom:1px solid #2c303a;display:flex;align-items:center;gap:6px}
-/* 素材栏步骤提示条(常显, 告诉用户"下一步干什么") */
-.ed-lib .lib-hint{padding:5px 10px;font-size:10.5px;line-height:1.5;color:#8a7f66;background:#20232b;border-bottom:1px solid #2c303a}
+/* 素材栏步骤提示已改为 .lib-h 行里的「ⓘ」悬浮提示, 不再常驻占行 */
 /* 空状态引导(素材栏/轨道/画布共用) */
 .ed-guide{color:#6f7686;font-size:12px;text-align:center;line-height:1.9;padding:22px 8px}
 .ed-guide b{color:#c9a05f;font-weight:600}
@@ -383,7 +382,14 @@ input[type=text]{border:1px solid var(--line);border-radius:10px;padding:11px 12
 .pg-tag.t-manual{background:#2f2733;color:#c79ae0;border-color:#6a4c80}
 .pg-tag.t-reset{background:#402626;color:#e09595;border-color:#7a4444}
 .pg-empty{color:#6f7686;font-size:10.5px;padding:3px 0}
-/* 悬浮 tooltip(检测依据) */
+/* 【ⓘ 说明图标】四大区原来的常驻提示文字改成的悬浮提示入口(指令: 用 tooltip 替代常驻文字)
+   hover / focus 时用同一个 .ed-tip 浮层显示, 说明文案存在元素自身的 data-hint 属性里。 */
+.ed-hi{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:9px;
+  background:#262a33;border:1px solid #333846;color:#6f7686;font-size:11px;line-height:1;cursor:help;
+  flex-shrink:0;user-select:none;font-family:inherit}
+.ed-hi:hover,.ed-hi:focus{background:#2e323d;color:#e2e6ee;outline:none;border-color:#4a5064}
+.ed-hi-fl{margin-left:auto}   /* 在工具栏/时间轴标题栏里推到最右侧 */
+/* 悬浮 tooltip(检测依据 / ⓘ 说明 共用) */
 .ed-tip{position:fixed;z-index:300;display:none;max-width:270px;background:#0f1116;color:#dfe3ea;border:1px solid #3d4350;border-radius:7px;padding:7px 10px;font-size:11px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.6);pointer-events:none}
 .ed-tip.show{display:block}
 .ed-tip b{color:#e8c068}
@@ -476,22 +482,21 @@ input[type=text]{border:1px solid var(--line);border-radius:10px;padding:11px 12
    四大分区各带一个分区标题, 边界一眼能分清:
    ① 顶部工具栏(.ed-toolbar) ② 右侧面板(.ed-right) ③ 底部时间轴(.ed-timeline) ④ 悬浮层(toast/tooltip) */
 .ed-zone{font-size:11.5px;font-weight:600;color:#a9b0c0;letter-spacing:.5px;flex-shrink:0}
-.ed-tb-hint{margin-left:auto;color:#6f7686;font-size:11px}
-.ed-tl-hint{color:#6f7686;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* .ed-tb-hint / .ed-tl-hint 已移除: 常驻提示文字改为「ⓘ」悬浮提示 */
 .ed-ptitle{display:flex;flex-direction:column;gap:2px;padding:0 2px 8px;border-bottom:1px solid #2c303a;margin-bottom:9px}
 .ed-ptitle>span:first-child{font-size:13px;font-weight:700;color:#e2e6ee;letter-spacing:.5px}
 .ed-ptitle .ed-pt-sub{font-size:10.5px;color:#6f7686}
 .ed-ptitle{position:relative}
 .ed-pt-close{position:absolute;right:-2px;top:-2px;background:#262a33;border:1px solid #353a46;color:#9aa1b0;border-radius:5px;font-size:10px;padding:2px 7px;cursor:pointer;font-family:inherit}
 .ed-pt-close:hover{background:#2e323d;color:#e2e6ee}
-.pg-foot-hint{margin-top:8px;font-size:10.5px;color:#6f7686;line-height:1.6}
+/* 进度面板脚注提示已改为 pg-head 里的「ⓘ」悬浮提示, 不再常驻占行 */
 
 /* ══════════════ 【底部·工程档案】项目备注 / 里程碑 / 进度历史 ══════════════
    位置: 页面最底部(时间轴之下)。收起时只有一行标题(30px) ⇒ 时间轴 236px 空间不受影响;
    展开时高度来自画布收缩, 时间轴依旧不被挤压。 */
 .ed-archive{flex-shrink:0;background:#1b1e25;border-top:1px solid #2c303a}
 .ar-head{display:flex;align-items:center;gap:9px;padding:6px 10px;background:#1f2229;cursor:default}
-.ar-head .ar-hint{font-size:10.5px;color:#6f7686}
+/* .ar-head .ar-hint 已移除: 常驻提示文字改为「ⓘ」悬浮提示 */
 .ar-head .ar-cnt{margin-left:auto;font-size:10.5px;color:#8b93a5;font-variant-numeric:tabular-nums}
 .ar-head .ed-btn{padding:3px 10px;font-size:11px}
 .ar-body{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr);gap:9px;padding:8px 10px;height:128px;border-top:1px solid #262a33}
@@ -601,7 +606,7 @@ input[type=text]{border:1px solid var(--line);border-radius:10px;padding:11px 12
     <span class="ed-sep"></span>
     <button class="ed-btn" id="edUndo" title="Ctrl+Z">↶ 撤销</button>
     <button class="ed-btn" id="edRedo" title="Ctrl+Y">↷ 重做</button>
-    <span class="ed-tb-hint">空格播放 · S分割 · Del删除 · Ctrl+Z/Y撤销重做 · 滚轮缩放画布</span>
+        <span class="ed-hi ed-hi-fl" data-hint-t="剪辑台快捷键" data-hint="空格 播放 / 暂停　S 分割选中片段　Del 删除选中片段　Ctrl+Z 撤销　Ctrl+Y 重做　Ctrl+S 保存　← / → 逐帧　滚轮 缩放画布"></span>
     <input type="file" id="edMatFile" multiple accept="video/*,image/*,audio/*" style="display:none">
     <input type="file" id="edPrjFile" accept=".lixiu" style="display:none">
   </div>
@@ -611,12 +616,12 @@ input[type=text]{border:1px solid var(--line);border-radius:10px;padding:11px 12
          对应设计稿的素材区; 原先是隐藏抽屉(display:none)且绝对定位糊在侧边栏上, 已修正 -->
     <div class="ed-lib" id="edLib">
       <div class="lib-h">📦 素材
+        <span class="ed-hi" data-hint-t="素材栏用法" data-hint="上传的视频 / 图片 / 音频会以缩略图显示在这里。把缩略图直接拖到下方时间轴轨道即可入片，也可先点「＋ 上传素材」。"></span>
         <button class="ed-btn" id="edLibClose" style="margin-left:auto" title="收起素材栏(可点播放条右侧「📦 素材」再展开)">收起</button>
       </div>
       <div style="padding:6px">
         <button class="ed-btn primary" style="width:100%" id="edLibUpload">＋ 上传素材（视频/图片/音频）</button>
       </div>
-      <div class="lib-hint" id="edLibHint">拖缩略图到下方轨道即可入片</div>
       <div class="lib-list" id="edMatList"></div>
     </div>
 
@@ -669,11 +674,11 @@ input[type=text]{border:1px solid var(--line);border-radius:10px;padding:11px 12
             <span>📊 项目进度</span>
             <span class="pg-chip" id="pgChip">待开始</span>
             <span class="pg-pct" id="pgPct">0%</span>
+            <span class="ed-hi" data-hint-t="进度模块说明" data-hint="这里只放任务清单。📝 备注 · 🚩 里程碑 · 🧾 进度历史在页面底部「工程档案」区。鼠标悬停任意一条任务可看它的自动检测依据。"></span>
             <button class="pg-toggle" id="pgFold" title="折叠/展开进度面板">▾</button>
           </div>
           <div class="pg-bar"><i id="pgFill" class="gray"></i></div>
           <div class="pg-body" id="pgBody"></div>
-          <div class="pg-foot-hint">📝 备注 · 🚩 里程碑 · 🧾 进度历史在页面底部「工程档案」区</div>
         </section>
       </div>
 
@@ -777,7 +782,7 @@ input[type=text]{border:1px solid var(--line);border-radius:10px;padding:11px 12
       <button class="ed-btn" id="edAddVTrack">＋视频轨</button>
       <button class="ed-btn" id="edAddATrack">＋音频轨</button>
       <button class="ed-btn" id="edAddSTrack">＋字幕轨</button>
-      <span class="ed-tl-hint">拖动片段移动 · 两端手柄裁剪 · 点标尺定位播放头 · 🔒锁定 · 🔊静音</span>
+      <span class="ed-hi ed-hi-fl" data-hint-t="时间轴操作" data-hint="拖动片段可移动位置；拖动片段两端的手柄可裁剪入点 / 出点；点击上方标尺可定位播放头；🔒 锁定整轨不可改；🔊 静音整轨；左右滚动可查看更长的时间线。"></span>
     </div>
     <div class="ed-tl-main">
       <div class="ed-tracks-col">
@@ -797,7 +802,7 @@ input[type=text]{border:1px solid var(--line);border-radius:10px;padding:11px 12
   <div class="ed-archive" id="edArchive">
     <div class="ar-head" id="arHead">
       <span class="ed-zone">📚 工程档案</span>
-      <span class="ar-hint">随工程一起保存 · 导出 .lixiu 时一并带走</span>
+      <span class="ed-hi" data-hint-t="工程档案说明" data-hint="备注、里程碑、进度历史都随工程一起保存，导出 .lixiu 时一并带走；撤销 / 重做记录只属于本次会话，不会写入工程文件。"></span>
       <span class="ar-cnt" id="arCnt">备注 · 里程碑 0 个 · 日志 0 条</span>
       <button class="ed-btn" id="arFold" title="收起/展开工程档案（收起后画布会变高）">▾ 收起</button>
     </div>
@@ -2896,12 +2901,17 @@ function bindProgress(r) {
   });
 }
 // 【悬浮tooltip】暗色, 悬浮显示 / 移开消失
-function showTip(title, body, locked) {
+// showTipRaw 是通用出口: 进度任务的「检测依据」与四大区的「ⓘ 说明」共用同一个浮层元素
+function showTipRaw(title, bodyHtml) {
   var tip = $id('edTip'); if (!tip) return;
-  tip.innerHTML = '<span class="tp-h">检测依据 · ' + esc(title) + '</span>' + esc(body)
-    + (locked ? '<br><b>该项已人工锁定, 自动检测不再覆盖</b>' : '');
+  tip.innerHTML = '<span class="tp-h">' + esc(title) + '</span>' + bodyHtml;
   tip.classList.add('show');
 }
+function showTip(title, body, locked) {
+  showTipRaw('检测依据 · ' + title, esc(body)
+    + (locked ? '<br><b>该项已人工锁定, 自动检测不再覆盖</b>' : ''));
+}
+
 function moveTip(e) {
   var tip = $id('edTip'); if (!tip || !tip.classList.contains('show')) return;
   var w = 270, h = tip.offsetHeight || 60;
@@ -2911,6 +2921,28 @@ function moveTip(e) {
   tip.style.left = x + 'px'; tip.style.top = y + 'px';
 }
 function hideTip() { var tip = $id('edTip'); if (tip) tip.classList.remove('show'); }
+
+/* 【ⓘ 说明图标】四大区原来的常驻提示文字改成悬浮提示(改造指令: 用 tooltip 替代常驻文字)。
+   说明文案写在元素自身的 data-hint 属性里, hover / focus 时复用同一个 .ed-tip 浮层;
+   ⓘ 本身不响应点击(拦掉冒泡), 避免它在 pg-head 里被误判成「折叠进度面板」。
+   键盘可聚焦(tabindex=0) ⇒ 触屏 / 键盘用户也能读到说明。 */
+function bindHintTips() {
+  Array.prototype.forEach.call(document.querySelectorAll('[data-hint]'), function (el) {
+    var title = el.getAttribute('data-hint-t') || '操作说明';
+    var body = esc(el.getAttribute('data-hint') || '');
+    if (!el.getAttribute('tabindex')) el.setAttribute('tabindex', '0');
+    el.onmouseenter = function (e) { showTipRaw(title, body); moveTip(e); };
+    el.onmousemove = moveTip;
+    el.onmouseleave = hideTip;
+    el.onfocus = function () {
+      showTipRaw(title, body);
+      var r = el.getBoundingClientRect();
+      moveTip({ clientX: r.left + r.width / 2, clientY: r.bottom + 6 });
+    };
+    el.onblur = hideTip;
+    el.onclick = function (e) { if (e && e.stopPropagation) e.stopPropagation(); };
+  });
+}
 
 // 面板折叠(点标题栏)
 function togglePgPanel() { PG_PANEL_FOLD = !PG_PANEL_FOLD; renderProgress(); }
@@ -4200,6 +4232,8 @@ function renderAll() { renderTracks(); renderProps(); renderProgress(); renderUi
 function bind() {
   // 【UI设计模块】右栏 Tab / 组件按钮 / 画布交互 / 一句话生成 等全部事件
   bindUi();
+  // 【ⓘ 说明图标】四大区的常驻提示文字 → 悬浮提示(一次性绑定, DOM 是静态的不会重建)
+  bindHintTips();
   // 【半自动智能进度模块】面板标题栏点击折叠/展开
   var pgHead = $id('pgHead');
   if (pgHead) pgHead.onclick = togglePgPanel;

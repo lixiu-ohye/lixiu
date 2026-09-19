@@ -80,8 +80,7 @@
 .ed-lib{width:230px;flex-shrink:0;background:#1b1e25;border-right:1px solid #2c303a;display:flex;flex-direction:column;min-height:0}
 .ed-lib.hide{display:none}
 .ed-lib .lib-h{padding:9px 10px;font-size:12px;color:#9aa1b5;border-bottom:1px solid #2c303a;display:flex;align-items:center;gap:6px}
-/* 素材栏步骤提示条(常显, 告诉用户"下一步干什么") */
-.ed-lib .lib-hint{padding:5px 10px;font-size:10.5px;line-height:1.5;color:#8a7f66;background:#20232b;border-bottom:1px solid #2c303a}
+/* 素材栏步骤提示已改为 .lib-h 行里的「ⓘ」悬浮提示, 不再常驻占行 */
 /* 空状态引导(素材栏/轨道/画布共用) */
 .ed-guide{color:#6f7686;font-size:12px;text-align:center;line-height:1.9;padding:22px 8px}
 .ed-guide b{color:#c9a05f;font-weight:600}
@@ -167,7 +166,14 @@
 .pg-tag.t-manual{background:#2f2733;color:#c79ae0;border-color:#6a4c80}
 .pg-tag.t-reset{background:#402626;color:#e09595;border-color:#7a4444}
 .pg-empty{color:#6f7686;font-size:10.5px;padding:3px 0}
-/* 悬浮 tooltip(检测依据) */
+/* 【ⓘ 说明图标】四大区原来的常驻提示文字改成的悬浮提示入口(指令: 用 tooltip 替代常驻文字)
+   hover / focus 时用同一个 .ed-tip 浮层显示, 说明文案存在元素自身的 data-hint 属性里。 */
+.ed-hi{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:9px;
+  background:#262a33;border:1px solid #333846;color:#6f7686;font-size:11px;line-height:1;cursor:help;
+  flex-shrink:0;user-select:none;font-family:inherit}
+.ed-hi:hover,.ed-hi:focus{background:#2e323d;color:#e2e6ee;outline:none;border-color:#4a5064}
+.ed-hi-fl{margin-left:auto}   /* 在工具栏/时间轴标题栏里推到最右侧 */
+/* 悬浮 tooltip(检测依据 / ⓘ 说明 共用) */
 .ed-tip{position:fixed;z-index:300;display:none;max-width:270px;background:#0f1116;color:#dfe3ea;border:1px solid #3d4350;border-radius:7px;padding:7px 10px;font-size:11px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.6);pointer-events:none}
 .ed-tip.show{display:block}
 .ed-tip b{color:#e8c068}
@@ -260,22 +266,21 @@
    四大分区各带一个分区标题, 边界一眼能分清:
    ① 顶部工具栏(.ed-toolbar) ② 右侧面板(.ed-right) ③ 底部时间轴(.ed-timeline) ④ 悬浮层(toast/tooltip) */
 .ed-zone{font-size:11.5px;font-weight:600;color:#a9b0c0;letter-spacing:.5px;flex-shrink:0}
-.ed-tb-hint{margin-left:auto;color:#6f7686;font-size:11px}
-.ed-tl-hint{color:#6f7686;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* .ed-tb-hint / .ed-tl-hint 已移除: 常驻提示文字改为「ⓘ」悬浮提示 */
 .ed-ptitle{display:flex;flex-direction:column;gap:2px;padding:0 2px 8px;border-bottom:1px solid #2c303a;margin-bottom:9px}
 .ed-ptitle>span:first-child{font-size:13px;font-weight:700;color:#e2e6ee;letter-spacing:.5px}
 .ed-ptitle .ed-pt-sub{font-size:10.5px;color:#6f7686}
 .ed-ptitle{position:relative}
 .ed-pt-close{position:absolute;right:-2px;top:-2px;background:#262a33;border:1px solid #353a46;color:#9aa1b0;border-radius:5px;font-size:10px;padding:2px 7px;cursor:pointer;font-family:inherit}
 .ed-pt-close:hover{background:#2e323d;color:#e2e6ee}
-.pg-foot-hint{margin-top:8px;font-size:10.5px;color:#6f7686;line-height:1.6}
+/* 进度面板脚注提示已改为 pg-head 里的「ⓘ」悬浮提示, 不再常驻占行 */
 
 /* ══════════════ 【底部·工程档案】项目备注 / 里程碑 / 进度历史 ══════════════
    位置: 页面最底部(时间轴之下)。收起时只有一行标题(30px) ⇒ 时间轴 236px 空间不受影响;
    展开时高度来自画布收缩, 时间轴依旧不被挤压。 */
 .ed-archive{flex-shrink:0;background:#1b1e25;border-top:1px solid #2c303a}
 .ar-head{display:flex;align-items:center;gap:9px;padding:6px 10px;background:#1f2229;cursor:default}
-.ar-head .ar-hint{font-size:10.5px;color:#6f7686}
+/* .ar-head .ar-hint 已移除: 常驻提示文字改为「ⓘ」悬浮提示 */
 .ar-head .ar-cnt{margin-left:auto;font-size:10.5px;color:#8b93a5;font-variant-numeric:tabular-nums}
 .ar-head .ed-btn{padding:3px 10px;font-size:11px}
 .ar-body{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr);gap:9px;padding:8px 10px;height:128px;border-top:1px solid #262a33}
