@@ -165,7 +165,14 @@ function addMaterial(file) {
 
 function renderMatList() {
   var box = $id('edMatList'); if (!box) return;
-  if (!MATS.length) { box.innerHTML = '<div style="color:#6f7686;font-size:12px;text-align:center;padding:20px 6px">还没有素材<br>点上面按钮上传 mp4/jpg/png/mp3</div>'; return; }
+  if (!MATS.length) {
+    box.innerHTML = '<div class="ed-guide">'
+      + '<div class="row"><span class="st">1</span>还没有素材</div>'
+      + '<div style="color:#8a7f66">点上面「＋ 上传素材」选视频/图片/音乐</div>'
+      + '<div style="margin-top:8px;color:#5f6675">上传后把缩略图<b>拖到下方轨道</b>就会变成片段</div>'
+      + '</div>';
+    return;
+  }
   var html = '';
   MATS.forEach(function (m) {
     html += '<div class="mat-item" draggable="true" data-mid="' + m.id + '" title="拖到下方时间轴轨道上">'
@@ -211,6 +218,21 @@ function renderTracks() {
     lanes += '</div>';
   });
   $id('edLanes').innerHTML = lanes;
+  // 【空状态引导】轨道上还没有任何片段 → 浮一层三步上手提示(告诉用户下一步做什么)
+  var _tot = 0; PRJ.tracks.forEach(function (t) { _tot += t.clips.length; });
+  var eg = $id('edLanesEmpty');
+  if (_tot === 0) {
+    if (!eg) {
+      eg = document.createElement('div');
+      eg.className = 'ed-lanes-empty'; eg.id = 'edLanesEmpty';
+      $id('edLanes').appendChild(eg);
+    }
+    eg.innerHTML = '轨道还是空的 —— 按这三步就能出片<br>'
+      + '<b>① 左边素材栏上传素材</b> 　<b>② 把缩略图拖到这条轨道上</b> 　<b>③ 点 ▶ 播放 / ✂ 分割 精修</b><br>'
+      + '快捷键：空格播放 · S 分割 · Del 删除 · Ctrl+Z/Y 撤销重做';
+  } else if (eg) {
+    eg.remove();
+  }
   renderRuler();
   bindClipEvents();
 }
@@ -354,7 +376,7 @@ function play() {
   $id('edPlay').textContent = '⏸ 暂停';
   // 视频素材播放
   eachClip(function (c, tr) {
-    if (c.matId && !tr.muted) { var m = MATS.find(function (x) { return x.id === c.matId; }); if (m && m.el && m.el.play && cur >= c.t0 && cur <= c.t1) { try { m.el.currentTime = (c.in || 0) + (cur - c.t0); m.el.play(); } catch (e) {} } }
+    if (c.matId && !tr.muted) { var m = MATS.find(function (x) { return x.id === c.matId; }); if (m && m.el && m.el.play && cur >= c.t0 && cur <= c.t1) { try { m.el.currentTime = (c.in || 0) + (cur - c.t0); var pr = m.el.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {} } }
   });
   requestAnimationFrame(tick);
 }
@@ -2175,7 +2197,9 @@ function bind() {
   $id('edMatFile').onchange = function (e) {
     var fs = e.target.files; var n = 0;
     Array.prototype.forEach.call(fs, function (f) { addMaterial(f); n++; });
-    toast('已导入 ' + n + ' 个素材' + (n ? ', 拖到时间轴使用' : '')); e.target.value = '';
+    // 上传后必须让素材栏可见, 否则用户看不到缩略图 → 也就无从拖到轨道（原元凶）
+    if (n) { var lib = $id('edLib'); if (lib) lib.classList.remove('hide'); }
+    toast('已导入 ' + n + ' 个素材' + (n ? '，把缩略图拖到下方轨道即可入片' : '')); e.target.value = '';
   };
   $id('edImportPrj').onclick = function () { $id('edPrjFile').click(); };
   $id('edPrjFile').onchange = function (e) { if (e.target.files[0]) importProject(e.target.files[0]); e.target.value = ''; };
@@ -2200,8 +2224,13 @@ function bind() {
   $id('edDel').onclick = delClip;
   $id('edCopy').onclick = copyClip;
   $id('edAddSub').onclick = addSubClip;
-  $id('edLibBtn').onclick = function () { $id('edLib').classList.toggle('show'); };
-  $id('edLibClose').onclick = function () { $id('edLib').classList.remove('show'); };
+  // 【素材栏】常驻左栏: 收起 = 加 .hide, 播放条右侧「📦 素材」再切回来
+  $id('edLibBtn').onclick = function () {
+    var lib = $id('edLib');
+    lib.classList.toggle('hide');
+    toast(lib.classList.contains('hide') ? '素材栏已收起（点「📦 素材」再展开）' : '素材栏已展开');
+  };
+  $id('edLibClose').onclick = function () { $id('edLib').classList.add('hide'); toast('素材栏已收起（点「📦 素材」再展开）'); };
 
   $id('edAddVTrack').onclick = function () { pushUndo('添加视频轨'); PRJ.tracks.push({ id: uid('v'), kind: 'video', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加视频轨'); };
   $id('edAddATrack').onclick = function () { pushUndo('添加音频轨'); PRJ.tracks.push({ id: uid('a'), kind: 'audio', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加音频轨'); };
@@ -2329,6 +2358,40 @@ window.__ed = {
   history: function () {
     return { undo: HISTORY.undo.map(function (x) { return x.name; }),
       redo: HISTORY.redo.map(function (x) { return x.name; }), max: HISTORY.MAX };
+  },
+  // 【素材互通】智能成片那边选/生成的素材, 直接汇进剪辑台素材栏(同一份工程)
+  addFiles: function (fileList) {
+    if (!fileList || !fileList.length) return 0;
+    var n = 0;
+    Array.prototype.forEach.call(fileList, function (f) {
+      // 同名同大小视为同一个素材, 不重复入库
+      if (MATS.some(function (m) { return m.name === f.name && m.size === f.size; })) return;
+      addMaterial(f); n++;
+    });
+    if (n) {
+      var lib = $id('edLib'); if (lib) lib.classList.remove('hide');
+      renderMatList(); touchProgress();
+      toast('已把 ' + n + ' 个素材同步到剪辑台素材栏');
+    }
+    return n;
+  },
+  // 素材/片段计数(供壳层与测试断言)
+  count: function () {
+    var c = 0; eachClip(function () { c++; });
+    return { materials: MATS.length, clips: c };
+  },
+  // 直接在该素材的缩略图上触发一次拖放(供"送进剪辑台"按钮一键入轨)
+  dropFirstMaterial: function (trackId) {
+    var m = MATS[0]; if (!m) return false;
+    var tr = PRJ.tracks.find(function (t) { return t.id === (trackId || 'v1'); }) ||
+             PRJ.tracks.find(function (t) { return t.kind === 'video'; });
+    if (!tr) return false;
+    pushUndo();
+    var dur = m.dur || 3;
+    tr.clips.push({ id: uid('c'), matId: m.id, t0: 0, t1: dur, 'in': 0, out: dur });
+    PRJ.duration = Math.max(PRJ.duration, dur + 2);
+    renderTracks(); touchProgress(); toast('已把「' + m.name + '」放到 ' + tr.id + ' 轨道');
+    return true;
   }
 };
 })();

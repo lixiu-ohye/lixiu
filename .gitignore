@@ -8,6 +8,7 @@ _verify*.py
 _verify_*.png
 _*.png
 _*.py
+_*.js
 _*.log
 _wx_*.html
 _wx_*.json
@@ -30,3 +31,6 @@ h5/tests/_out/
 
 # 审计脚本运行产物(根目录旧路径, 可随时重跑生成, 不入库)
 _audit/
+
+# 临时测试素材(审计用的小样片/截图, 可随时重跑生成)
+_wb_t/

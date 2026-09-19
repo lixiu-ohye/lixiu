@@ -1,5 +1,6 @@
 /* ═══════════ 【剪辑工作台·编辑器模块】样式(常暗色, 与壳层主题无关) ═══════════ */
-.editor-root{display:flex;flex-direction:column;height:calc(100vh - 56px);background:#181a20;color:#d7dae0;font-size:13px}
+/* 高度按"视口 - 外层页头与创作台标签页"算, 变量由壳层提供(独立打开时回退 105px) */
+.editor-root{display:flex;flex-direction:column;height:calc(100vh - var(--wb-chrome,105px));background:#181a20;color:#d7dae0;font-size:13px}
 .ed-toolbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#1f2229;border-bottom:1px solid #2c303a;flex-wrap:wrap}
 .ed-toolbar .pj{background:#262a33;border:1px solid #353a46;color:#e8eaee;border-radius:6px;padding:5px 10px;font-size:13px;width:150px;outline:none}
 .ed-btn{background:#262a33;border:1px solid #353a46;color:#c6cbd6;border-radius:6px;padding:5px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;font-family:inherit}
@@ -59,9 +60,23 @@
 .ed-marker::after{content:'🚩';position:absolute;top:-2px;left:-6px;font-size:9px}
 .ed-toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);background:#2c303a;color:#e8eaee;padding:8px 18px;border-radius:8px;border:1px solid #3d4350;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.4);font-size:13px}
 /* 素材库(编辑器内, 左侧壳层导航切换) */
-.ed-lib{position:absolute;left:0;top:0;bottom:0;width:230px;background:#1b1e25;border-right:1px solid #2c303a;z-index:20;display:none;flex-direction:column}
-.ed-lib.show{display:flex}
+/* 【素材栏】常驻左栏(默认可见): 上传 / 缩略图列表 / 拖入时间轴
+   ⚠ 原实现是 position:absolute 的抽屉且默认 display:none —— 既糊在侧边栏上又看不见,
+     导致"上传完素材却拖不到轨道", 是整个剪辑台看起来"没反应"的元凶。改为在 .ed-middle 内占位。 */
+.ed-lib{width:230px;flex-shrink:0;background:#1b1e25;border-right:1px solid #2c303a;display:flex;flex-direction:column;min-height:0}
+.ed-lib.hide{display:none}
 .ed-lib .lib-h{padding:9px 10px;font-size:12px;color:#9aa1b5;border-bottom:1px solid #2c303a;display:flex;align-items:center;gap:6px}
+/* 素材栏步骤提示条(常显, 告诉用户"下一步干什么") */
+.ed-lib .lib-hint{padding:5px 10px;font-size:10.5px;line-height:1.5;color:#8a7f66;background:#20232b;border-bottom:1px solid #2c303a}
+/* 空状态引导(素材栏/轨道/画布共用) */
+.ed-guide{color:#6f7686;font-size:12px;text-align:center;line-height:1.9;padding:22px 8px}
+.ed-guide b{color:#c9a05f;font-weight:600}
+.ed-guide .st{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:#2f3542;color:#d7dae0;font-size:11px;margin-right:6px;flex-shrink:0}
+.ed-guide .row{display:flex;align-items:center;justify-content:center;margin-bottom:3px}
+/* 轨道区空状态: 绝对定位浮在泳道上方, 不占布局 */
+.ed-lanes-empty{position:absolute;left:0;top:34px;right:0;bottom:0;display:flex;align-items:center;justify-content:center;
+  color:#6f7686;font-size:12.5px;line-height:2;text-align:center;pointer-events:none;padding:0 20px}
+.ed-lanes-empty b{color:#c9a05f}
 .ed-lib .lib-list{flex:1;overflow-y:auto;padding:6px}
 .mat-item{background:#22252e;border:1px solid #2e323d;border-radius:7px;padding:7px 8px;margin-bottom:6px;cursor:grab;font-size:11.5px}
 .mat-item:hover{border-color:#4a5064}

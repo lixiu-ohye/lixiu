@@ -18,6 +18,19 @@
   </div>
 
   <div class="ed-middle">
+    <!-- 【素材栏】常驻左栏(默认可见): 上传 → 缩略图 → 拖进轨道
+         对应设计稿的素材区; 原先是隐藏抽屉(display:none)且绝对定位糊在侧边栏上, 已修正 -->
+    <div class="ed-lib" id="edLib">
+      <div class="lib-h">📦 素材
+        <button class="ed-btn" id="edLibClose" style="margin-left:auto" title="收起素材栏(可点播放条右侧「📦 素材」再展开)">收起</button>
+      </div>
+      <div style="padding:6px">
+        <button class="ed-btn primary" style="width:100%" id="edLibUpload">＋ 上传素材（视频/图片/音频）</button>
+      </div>
+      <div class="lib-hint" id="edLibHint">拖缩略图到下方轨道即可入片</div>
+      <div class="lib-list" id="edMatList"></div>
+    </div>
+
     <div class="ed-left">
       <!-- 画布预览区: Canvas 合成渲染, 滚轮缩放/拖拽平移 -->
       <div class="ed-canvas-wrap" id="edWrap" title="滚轮缩放 · 拖拽平移 · 双击复位">
@@ -158,15 +171,6 @@
     </div>
   </div>
 
-  <!-- 侧边素材库抽屉(上传/列表/拖入时间轴) -->
-  <div class="ed-lib" id="edLib">
-    <div class="lib-h">📦 素材库
-      <button class="ed-btn" id="edLibClose" style="margin-left:auto">收起</button>
-    </div>
-    <div style="padding:6px">
-      <button class="ed-btn primary" style="width:100%" id="edLibUpload">上传 mp4 / jpg / png / mp3</button>
-    </div>
-    <div class="lib-list" id="edMatList"></div>
   </div>
 </div>
 

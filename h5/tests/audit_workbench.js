@@ -17,6 +17,11 @@ const PAGE = 'file:///' + path.join(ROOT, 'workbench.html').replace(/\\/g, '/');
 const SHOT = TMP + '/shots';
 if (!fs.existsSync(SHOT)) fs.mkdirSync(SHOT, { recursive: true });
 
+// 真实可解码的迷你 mp4(1s 黑场 64x36), 供「素材互通 / 送进剪辑台」用例使用。
+// 用真实文件而非随机字节: 否则 <video> 解码失败会把媒体错误算进「未捕获异常」, 造成 L1 假失败。
+const TINY_MP4_B64 = 'AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAM3bW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAA+gAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAmF0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAA+gAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAEAAAAAkAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAPoAAAAAAABAAAAAAHZbWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAAAoAAAAKABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABhG1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAURzdGJsAAAApHN0c2QAAAAAAAAAAQAAAJRhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAEAAJABIAAAASAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGP//AAAALmF2Y0MBQsAK/+EAFmdCwAraEf58BEAAAAMAQAAABQPEiagBAAVozgGXIAAAABBwYXNwAAAAAQAAAAEAAAAYc3R0cwAAAAAAAAABAAAACgAABAAAAAAUc3RzcwAAAAAAAAABAAAAAQAAABxzdHNjAAAAAAAAAAEAAAABAAAACgAAAAEAAAA8c3RzegAAAAAAAAAAAAAACgAAAm4AAAAKAAAACgAAAAoAAAAKAAAACgAAAAoAAAAKAAAACgAAAAoAAAAUc3RjbwAAAAAAAAABAAADZwAAAGJ1ZHRhAAAAWm1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTguMjQuMTAxAAAACGZyZWUAAALQbWRhdAAAAlQGBf//UNxF6b3m2Ui3lizYINkj7u94MjY0IC0gY29yZSAxNTcgcjI5MzUgNTQ1ZGUyZiAtIEguMjY0L01QRUctNCBBVkMgY29kZWMgLSBDb3B5bGVmdCAyMDAzLTIwMTggLSBodHRwOi8vd3d3LnZpZGVvbGFuLm9yZy94MjY0Lmh0bWwgLSBvcHRpb25zOiBjYWJhYz0wIHJlZj0xIGRlYmxvY2s9MDowOjAgYW5hbHlzZT0wOjAgbWU9ZGlhIHN1Ym1lPTAgcHN5PTEgcHN5X3JkPTEuMDA6MC4wMCBtaXhlZF9yZWY9MCBtZV9yYW5nZT0xNiBjaHJvbWFfbWU9MSB0cmVsbGlzPTEgOHg4ZGN0PTAgY3FtPTAgZGVhZHpvbmU9MjEsMTEgZmFzdF9wc2tpcD0xIGNocm9tYV9xcF9vZmZzZXQ9MCB0aHJlYWRzPTEgbG9va2FoZWFkX3RocmVhZHM9MSBzbGljZWRfdGhyZWFkcz0wIG5yPTAgZGVjaW1hdGU9MSBpbnRlcmxhY2VkPTAgYmx1cmF5X2NvbXBhdD0wIGNvbnN0cmFpbmVkX2ludHJhPTAgYmZyYW1lcz0wIHdlaWdodHA9MCBrZXlpbnQ9MjUwIGtleWludF9taW49MTAgc2NlbmVjdXQ9MCBpbnRyYV9yZWZyZXNoPTAgcmM9Y3JmIG1idHJlZT0wIGNyZj01MS4wIHFjb21wPTAuNjAgcXBtaW49MCBxcG1heD02OSBxcHN0ZXA9NCBpcF9yYXRpbz0xLjQwIGFxPTAAgAAAABJliIQ6JigAFZOTk666666668AAAAAGQZogE6GwAAAABkGaQBOhsAAAAAZBmmATobAAAAAGQZqAFKGwAAAABkGaoBShsAAAAAZBmsAUobAAAAAGQZrgFKGwAAAABkGbABShsAAAAAZBmyAUobA=';
+const TINY_MP4 = Buffer.from(TINY_MP4_B64, 'base64');
+
 const R = { pass: [], fail: [], warn: [], data: {} };
 const RUNLOG = TMP + '/run.log';
 fs.writeFileSync(RUNLOG, '[' + new Date().toISOString().slice(11, 19) + '] START\n');
@@ -47,7 +52,19 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   // ── A 加载 ──
   await page.goto(PAGE, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__ed && document.getElementById('pgBody'), null, { timeout: 15000 });
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(700);
+  // 【创作台】顶部标签页: 默认视图是「AI 智能成片」, 剪辑台需点标签切过去
+  const cb0 = await page.evaluate(() => ({
+    hasTabs: !!document.getElementById('cbTabs'),
+    activeTab: (document.querySelector('#cbTabs button.on') || {}).textContent || '',
+    editorVisible: getComputedStyle(document.getElementById('viewEditor')).display !== 'none',
+    studioVisible: getComputedStyle(document.getElementById('viewStudio')).display !== 'none'
+  }));
+  R.data.cb0 = cb0;
+  ok('A1 创作台顶部标签页存在, 默认落在 AI 智能成片',
+    cb0.hasTabs && /智能成片/.test(cb0.activeTab) && cb0.studioVisible && !cb0.editorVisible, JSON.stringify(cb0));
+  await page.click('#cbTabs button[data-v="editor"]');
+  await page.waitForTimeout(800);
   const shells = await page.evaluate(() => ({
     editorVisible: getComputedStyle(document.getElementById('viewEditor')).display !== 'none',
     studioVisible: getComputedStyle(document.getElementById('viewStudio')).display !== 'none',
@@ -55,11 +72,13 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
     hasCanvas: !!document.getElementById('edCanvas'),
     hasTimeline: !!document.getElementById('edLanes'),
     hasLib: !!document.getElementById('edLib'),
-    hasTip: !!document.getElementById('edTip')
+    hasTip: !!document.getElementById('edTip'),
+    tabNow: (document.querySelector('#cbTabs button.on') || {}).textContent || ''
   }));
   R.data.shells = shells;
-  ok('A1 剪辑工作台默认激活', shells.editorVisible && !shells.studioVisible);
-  ok('A2 顶栏标题=剪辑工作台', shells.title === '剪辑工作台', shells.title);
+  ok('A2 点「手动剪辑」后剪辑台激活且标题同步',
+    shells.editorVisible && !shells.studioVisible && /手动剪辑/.test(shells.tabNow) && shells.title === '剪辑工作台',
+    shells.title + ' tab=' + shells.tabNow);
   ok('A3 画布/时间轴/素材库/提示层齐备', shells.hasCanvas && shells.hasTimeline && shells.hasLib && shells.hasTip);
   const tabs0 = await page.evaluate(() => ({
     names: [...document.querySelectorAll('#edRTabs [data-rtab]')].map(b => b.textContent.trim()),
@@ -78,6 +97,26 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
     u: getComputedStyle(document.getElementById('rt-ui')).display,
     hit: !!document.querySelector('#pgBody .pg-task') }));
   ok('A5 切到进度Tab后进度面板可用', tabSw.p !== 'none' && tabSw.u === 'none' && tabSw.hit);
+
+  // ── A6/A7 元凶回归门禁（2026-09-19 修复）──
+  // 原缺陷: 素材栏是 position:absolute 的抽屉且默认 display:none —— 既糊在侧边栏上,
+  //         用户上传完又看不到缩略图, 于是"拖不进轨道", 整个剪辑台看起来完全没反应。
+  const lib0 = await page.evaluate(() => {
+    const l = document.getElementById('edLib'); const r = l.getBoundingClientRect();
+    return { display: getComputedStyle(l).display, x: Math.round(r.x), w: Math.round(r.width),
+      hide: l.classList.contains('hide'), parent: l.parentElement.className };
+  });
+  R.data.lib0 = lib0;
+  ok('A6 素材栏默认可见且落在编辑器内(不再是被隐藏的抽屉)',
+    lib0.display !== 'none' && !lib0.hide && lib0.w > 100 && lib0.x >= 240, JSON.stringify(lib0));
+  const guide0 = await page.evaluate(() => { const g = document.getElementById('edLanesEmpty'); return g ? g.textContent : ''; });
+  ok('A7 轨道空状态有三步上手引导(新用户知道下一步干什么)', /三步/.test(guide0), guide0.slice(0, 60));
+  // 编辑器必须按"视口-页头-标签页"满高, 否则时间轴底部会被挤出屏幕
+  const fit = await page.evaluate(() => {
+    const r = document.querySelector('.ed-timeline').getBoundingClientRect();
+    return { bottom: Math.round(r.bottom), h: Math.round(r.height), vh: window.innerHeight };
+  });
+  ok('A8 时间轴完整落在视口内', fit.h > 100 && fit.bottom <= fit.vh + 2, JSON.stringify(fit));
 
   // ── B 初始进度态 ──
   const base = await page.evaluate(() => {
@@ -228,6 +267,63 @@ function warn(name, extra) { R.warn.push(name + (extra ? ' :: ' + extra : '')); 
   R.data.viewSwitch = { studio: sw1, editor: sw2 };
   ok('J1 切到智能成片: 编辑器隐藏/原页面显示', sw1.ed === 'none' && sw1.st !== 'none' && sw1.t === '智能成片');
   ok('J2 切回剪辑工作台且进度面板重绘', sw2.ed !== 'none' && sw2.st === 'none' && sw2.pg && sw2.t === '剪辑工作台');
+
+  // ── J3~J6 素材互通 + 成片送进剪辑台(2026-09-19 新增能力, 回归门禁) ──
+  // 设计意图: 两个视图共用同一份工程 —— 智能成片里选的素材, 剪辑台立刻能用;
+  //          智能成片出的成片, 一键带进剪辑台继续精修。
+  step('J3: material bridge');
+  const matsBefore = await page.evaluate(() => window.__ed.prj().materials.length);
+  await page.evaluate(() => nav('studio'));
+  await page.waitForTimeout(300);
+  // 等价于用户在智能成片页点「上传素材」选文件(setInputFiles 会真实触发 change)
+  await page.setInputFiles('#file', [
+    { name: 'audit_bridge.mp4', mimeType: 'video/mp4', buffer: TINY_MP4 }
+  ]);
+  await page.waitForTimeout(800);
+  const bridge = await page.evaluate(() => ({
+    mats: window.__ed.prj().materials.length,
+    names: window.__ed.prj().materials.map(m => m.name),
+    cards: document.querySelectorAll('#edMatList .mat-item').length,
+    libHidden: document.getElementById('edLib').classList.contains('hide')
+  }));
+  R.data.bridge = bridge;
+  ok('J3 智能成片上传的素材自动同步进剪辑台素材栏',
+    bridge.mats === matsBefore + 1 && bridge.names.indexOf('audit_bridge.mp4') > -1,
+    'before=' + matsBefore + ' after=' + bridge.mats + ' | ' + bridge.names.slice(-2).join(','));
+  ok('J4 同步来的素材渲染出卡片且素材栏自动可见',
+    bridge.cards >= 1 && !bridge.libHidden, 'cards=' + bridge.cards + ' hidden=' + bridge.libHidden);
+
+  // J5 成片「送进剪辑台精修」: 真实点按钮
+  // 该按钮在 #doneCard 里(生成完成后才显示), 这里先模拟「已出片」状态, 再给结果视频挂一个可取回的 blob 源
+  await page.evaluate((b64) => {
+    window.__TINY_MP4_B64 = b64;
+    const d = document.getElementById('doneCard');
+    if (d) d.classList.remove('hidden');
+    const bin = atob(window.__TINY_MP4_B64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    const b = new Blob([arr], { type: 'video/mp4' });
+    const u = URL.createObjectURL(b);
+    const v = document.getElementById('vid');
+    if (v) v.src = u;
+    window.__auditVidBlob = u;
+  }, TINY_MP4_B64);
+  await page.waitForTimeout(250);
+  await page.locator('button:has-text("送进剪辑台精修")').first().click();
+  await page.waitForTimeout(1500);
+  const sent = await page.evaluate(() => ({
+    view: getComputedStyle(document.getElementById('viewEditor')).display !== 'none' ? 'editor' : 'studio',
+    title: document.getElementById('pageTitle').textContent,
+    mats: window.__ed.prj().materials.length,
+    names: window.__ed.prj().materials.map(m => m.name),
+    clips: document.querySelectorAll('.ed-clip').length
+  }));
+  R.data.sendToEditor = sent;
+  ok('J5 成片一键送进剪辑台: 切到剪辑台且成片已入素材栏',
+    sent.view === 'editor' && sent.title === '剪辑工作台' && sent.names.some(n => /^成片_/.test(n)),
+    JSON.stringify(sent).slice(0, 160));
+  ok('J6 带进来的成片直接落在视频轨上(可直接精修)',
+    sent.clips >= 1, 'clips=' + sent.clips);
 
   // ── K 快捷键(空格播放) ──
   step('K: keyboard');

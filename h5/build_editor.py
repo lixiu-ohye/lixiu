@@ -100,9 +100,24 @@ tailwind.config = {
 .nav-sub a{display:block;padding:6px 12px;border-radius:6px;font-size:13px;color:#8b93a7;cursor:pointer}
 .nav-sub a:hover{color:#fff;background:#2a2f3e}
 .main-scroll{overflow-y:auto;scrollbar-width:thin}
-/* 视图容器: 编辑器与智能成片互斥显示 */
-#viewStudio{height:100%;overflow-y:auto}
-#viewEditor{height:calc(100vh - 56px)}
+/* 视图容器: 编辑器与智能成片互斥显示
+   --wb-chrome = 页头(56) + 创作台标签页(49) 的合计高度, 编辑器按剩余空间满高, 否则时间轴底部会被挤出屏幕 */
+:root{--wb-chrome:105px}
+#viewStudio{height:calc(100vh - var(--wb-chrome,105px));overflow-y:auto}
+#viewEditor{height:calc(100vh - var(--wb-chrome,105px))}
+/* 【创作台】顶部标签页: 同一份工程 · 素材互通(设计稿) */
+.cb-tabs{display:flex;align-items:center;gap:6px;padding:7px 14px;background:#fff;border-bottom:1px solid #e5e7eb;flex-shrink:0}
+.dark .cb-tabs{background:#1f2937;border-bottom-color:#374151}
+.cb-tabs button{background:transparent;border:1px solid transparent;color:#4b5563;border-radius:8px;padding:6px 14px;font-size:13.5px;cursor:pointer;font-family:inherit}
+.cb-tabs button:hover{background:#f3f4f6}
+.cb-tabs button.on{background:#fdf2f6;border-color:#e8a0bf;color:#a35f80;font-weight:600}
+.dark .cb-tabs button{color:#9ca3af}
+.dark .cb-tabs button:hover{background:#374151}
+.dark .cb-tabs button.on{background:#3a2b33;border-color:#9c6b85;color:#f0c6d8}
+.cb-tabs .cb-note{margin-left:auto;font-size:11.5px;color:#9ca3af}
+/* 设置视图: 只露该看的调试项 */
+.orig-page .dbg-only{display:none}
+.orig-page.set-mode .dbg-only{display:block}
 /* 移动端抽屉 */
 @media (max-width:768px){
   #sidebar{position:fixed;z-index:50;transform:translateX(-100%);height:100vh}
@@ -190,6 +205,13 @@ __EDITOR_CSS__
     </div>
   </header>
 
+  <!-- 【创作台】顶部标签页: AI 智能成片 / 手动剪辑 —— 同一份工程, 素材互通 -->
+  <div id="cbTabs" class="cb-tabs">
+    <button data-v="studio" class="on">✨ AI 智能成片</button>
+    <button data-v="editor">✂ 手动剪辑</button>
+    <span class="cb-note" id="cbNote">同一份工程 · 素材互通</span>
+  </div>
+
   <main id="mainArea" class="flex-1 min-h-0 overflow-hidden">
     <!-- 视图一: 【剪辑工作台】(h5/editor/*, 默认激活) -->
 __EDITOR_HTML__
@@ -241,11 +263,22 @@ function nav(where){
   var ve = document.getElementById('viewEditor'), vs = document.getElementById('viewStudio');
   if (ve) ve.style.display = isEditor ? '' : 'none';
   if (vs) vs.style.display = isEditor ? 'none' : '';
+  // 【创作台】顶部标签页与侧边栏联动: 素材库/设置等也归到对应标签
+  var tabKey = isEditor ? 'editor' : 'studio';
+  document.querySelectorAll('#cbTabs button').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-v') === tabKey);
+  });
+  var note = document.getElementById('cbNote');
+  if (note) note.textContent = (tabKey === 'editor')
+    ? '手动剪辑 · 左侧素材栏拖进轨道即可入片'
+    : '同一份工程 · 素材互通';
+  // 设置视图: 才露后端地址等调试项
+  if (vs) vs.classList.toggle('set-mode', where === 'settings');
   // 编辑器被重新显示时重绘 canvas(隐藏期间尺寸为 0, 直接绘制会糊)
   if (isEditor && window.__ed) setTimeout(function(){ window.__ed.redraw(); }, 40);
-  // 素材库: 展开编辑器内的素材库抽屉
+  // 素材库: 素材栏已改为常驻左栏, 导航到"素材库"时确保它是展开状态
   var lib = document.getElementById('edLib');
-  if (lib) { if (where === 'materials') lib.classList.add('show'); else lib.classList.remove('show'); }
+  if (lib && where === 'materials') lib.classList.remove('hide');
 
   // 智能成片视图内锚点跳转(元素不存在时静默跳过)
   if (!isEditor){
@@ -259,9 +292,15 @@ function nav(where){
     document.getElementById('mask').classList.add('hidden');
   }
 }
+// 【创作台】顶部标签页: 点击切换视图(与侧边栏 nav 共用同一套状态)
+document.querySelectorAll('#cbTabs button').forEach(function(b){
+  b.addEventListener('click', function(){ nav(b.getAttribute('data-v')); });
+});
+// 默认落在「AI 智能成片」(与设计稿一致); 待在编辑器 init 之后再切, 保证 canvas 首次绘制尺寸正确
+window.addEventListener('DOMContentLoaded', function(){ nav('studio'); }, { once: true });
+
 // 暗色模式(仅作用于智能成片视图的背景; 编辑器本身常暗)
-function toggleTheme(){
-  var root = document.documentElement;
+function toggleTheme(){  var root = document.documentElement;
   var dark = root.classList.toggle('dark');
   try { localStorage.setItem('wb_theme', dark ? 'dark' : 'light'); } catch(e){}
   var op = document.querySelector('.orig-page');

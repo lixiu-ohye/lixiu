@@ -27,9 +27,24 @@ tailwind.config = {
 .nav-sub a{display:block;padding:6px 12px;border-radius:6px;font-size:13px;color:#8b93a7;cursor:pointer}
 .nav-sub a:hover{color:#fff;background:#2a2f3e}
 .main-scroll{overflow-y:auto;scrollbar-width:thin}
-/* 视图容器: 编辑器与智能成片互斥显示 */
-#viewStudio{height:100%;overflow-y:auto}
-#viewEditor{height:calc(100vh - 56px)}
+/* 视图容器: 编辑器与智能成片互斥显示
+   --wb-chrome = 页头(56) + 创作台标签页(49) 的合计高度, 编辑器按剩余空间满高, 否则时间轴底部会被挤出屏幕 */
+:root{--wb-chrome:105px}
+#viewStudio{height:calc(100vh - var(--wb-chrome,105px));overflow-y:auto}
+#viewEditor{height:calc(100vh - var(--wb-chrome,105px))}
+/* 【创作台】顶部标签页: 同一份工程 · 素材互通(设计稿) */
+.cb-tabs{display:flex;align-items:center;gap:6px;padding:7px 14px;background:#fff;border-bottom:1px solid #e5e7eb;flex-shrink:0}
+.dark .cb-tabs{background:#1f2937;border-bottom-color:#374151}
+.cb-tabs button{background:transparent;border:1px solid transparent;color:#4b5563;border-radius:8px;padding:6px 14px;font-size:13.5px;cursor:pointer;font-family:inherit}
+.cb-tabs button:hover{background:#f3f4f6}
+.cb-tabs button.on{background:#fdf2f6;border-color:#e8a0bf;color:#a35f80;font-weight:600}
+.dark .cb-tabs button{color:#9ca3af}
+.dark .cb-tabs button:hover{background:#374151}
+.dark .cb-tabs button.on{background:#3a2b33;border-color:#9c6b85;color:#f0c6d8}
+.cb-tabs .cb-note{margin-left:auto;font-size:11.5px;color:#9ca3af}
+/* 设置视图: 只露该看的调试项 */
+.orig-page .dbg-only{display:none}
+.orig-page.set-mode .dbg-only{display:block}
 /* 移动端抽屉 */
 @media (max-width:768px){
   #sidebar{position:fixed;z-index:50;transform:translateX(-100%);height:100vh}
@@ -110,7 +125,8 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
 
 /* ↓↓↓ 【剪辑工作台】编辑器样式(h5/editor/editor.css) ↓↓↓ */
 /* ═══════════ 【剪辑工作台·编辑器模块】样式(常暗色, 与壳层主题无关) ═══════════ */
-.editor-root{display:flex;flex-direction:column;height:calc(100vh - 56px);background:#181a20;color:#d7dae0;font-size:13px}
+/* 高度按"视口 - 外层页头与创作台标签页"算, 变量由壳层提供(独立打开时回退 105px) */
+.editor-root{display:flex;flex-direction:column;height:calc(100vh - var(--wb-chrome,105px));background:#181a20;color:#d7dae0;font-size:13px}
 .ed-toolbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#1f2229;border-bottom:1px solid #2c303a;flex-wrap:wrap}
 .ed-toolbar .pj{background:#262a33;border:1px solid #353a46;color:#e8eaee;border-radius:6px;padding:5px 10px;font-size:13px;width:150px;outline:none}
 .ed-btn{background:#262a33;border:1px solid #353a46;color:#c6cbd6;border-radius:6px;padding:5px 11px;font-size:12.5px;cursor:pointer;white-space:nowrap;font-family:inherit}
@@ -170,9 +186,23 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
 .ed-marker::after{content:'🚩';position:absolute;top:-2px;left:-6px;font-size:9px}
 .ed-toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);background:#2c303a;color:#e8eaee;padding:8px 18px;border-radius:8px;border:1px solid #3d4350;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.4);font-size:13px}
 /* 素材库(编辑器内, 左侧壳层导航切换) */
-.ed-lib{position:absolute;left:0;top:0;bottom:0;width:230px;background:#1b1e25;border-right:1px solid #2c303a;z-index:20;display:none;flex-direction:column}
-.ed-lib.show{display:flex}
+/* 【素材栏】常驻左栏(默认可见): 上传 / 缩略图列表 / 拖入时间轴
+   ⚠ 原实现是 position:absolute 的抽屉且默认 display:none —— 既糊在侧边栏上又看不见,
+     导致"上传完素材却拖不到轨道", 是整个剪辑台看起来"没反应"的元凶。改为在 .ed-middle 内占位。 */
+.ed-lib{width:230px;flex-shrink:0;background:#1b1e25;border-right:1px solid #2c303a;display:flex;flex-direction:column;min-height:0}
+.ed-lib.hide{display:none}
 .ed-lib .lib-h{padding:9px 10px;font-size:12px;color:#9aa1b5;border-bottom:1px solid #2c303a;display:flex;align-items:center;gap:6px}
+/* 素材栏步骤提示条(常显, 告诉用户"下一步干什么") */
+.ed-lib .lib-hint{padding:5px 10px;font-size:10.5px;line-height:1.5;color:#8a7f66;background:#20232b;border-bottom:1px solid #2c303a}
+/* 空状态引导(素材栏/轨道/画布共用) */
+.ed-guide{color:#6f7686;font-size:12px;text-align:center;line-height:1.9;padding:22px 8px}
+.ed-guide b{color:#c9a05f;font-weight:600}
+.ed-guide .st{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:#2f3542;color:#d7dae0;font-size:11px;margin-right:6px;flex-shrink:0}
+.ed-guide .row{display:flex;align-items:center;justify-content:center;margin-bottom:3px}
+/* 轨道区空状态: 绝对定位浮在泳道上方, 不占布局 */
+.ed-lanes-empty{position:absolute;left:0;top:34px;right:0;bottom:0;display:flex;align-items:center;justify-content:center;
+  color:#6f7686;font-size:12.5px;line-height:2;text-align:center;pointer-events:none;padding:0 20px}
+.ed-lanes-empty b{color:#c9a05f}
 .ed-lib .lib-list{flex:1;overflow-y:auto;padding:6px}
 .mat-item{background:#22252e;border:1px solid #2e323d;border-radius:7px;padding:7px 8px;margin-bottom:6px;cursor:grab;font-size:11.5px}
 .mat-item:hover{border-color:#4a5064}
@@ -387,6 +417,13 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
     </div>
   </header>
 
+  <!-- 【创作台】顶部标签页: AI 智能成片 / 手动剪辑 —— 同一份工程, 素材互通 -->
+  <div id="cbTabs" class="cb-tabs">
+    <button data-v="studio" class="on">✨ AI 智能成片</button>
+    <button data-v="editor">✂ 手动剪辑</button>
+    <span class="cb-note" id="cbNote">同一份工程 · 素材互通</span>
+  </div>
+
   <main id="mainArea" class="flex-1 min-h-0 overflow-hidden">
     <!-- 视图一: 【剪辑工作台】(h5/editor/*, 默认激活) -->
 <!-- ═══════════════════ 【剪辑工作台】视图(编辑器主体) ═══════════════════ -->
@@ -409,6 +446,19 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
   </div>
 
   <div class="ed-middle">
+    <!-- 【素材栏】常驻左栏(默认可见): 上传 → 缩略图 → 拖进轨道
+         对应设计稿的素材区; 原先是隐藏抽屉(display:none)且绝对定位糊在侧边栏上, 已修正 -->
+    <div class="ed-lib" id="edLib">
+      <div class="lib-h">📦 素材
+        <button class="ed-btn" id="edLibClose" style="margin-left:auto" title="收起素材栏(可点播放条右侧「📦 素材」再展开)">收起</button>
+      </div>
+      <div style="padding:6px">
+        <button class="ed-btn primary" style="width:100%" id="edLibUpload">＋ 上传素材（视频/图片/音频）</button>
+      </div>
+      <div class="lib-hint" id="edLibHint">拖缩略图到下方轨道即可入片</div>
+      <div class="lib-list" id="edMatList"></div>
+    </div>
+
     <div class="ed-left">
       <!-- 画布预览区: Canvas 合成渲染, 滚轮缩放/拖拽平移 -->
       <div class="ed-canvas-wrap" id="edWrap" title="滚轮缩放 · 拖拽平移 · 双击复位">
@@ -549,15 +599,6 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
     </div>
   </div>
 
-  <!-- 侧边素材库抽屉(上传/列表/拖入时间轴) -->
-  <div class="ed-lib" id="edLib">
-    <div class="lib-h">📦 素材库
-      <button class="ed-btn" id="edLibClose" style="margin-left:auto">收起</button>
-    </div>
-    <div style="padding:6px">
-      <button class="ed-btn primary" style="width:100%" id="edLibUpload">上传 mp4 / jpg / png / mp3</button>
-    </div>
-    <div class="lib-list" id="edMatList"></div>
   </div>
 </div>
 
@@ -597,6 +638,7 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
     <video id="vid" controls playsinline></video>
     <div class="row" style="margin-top:10px">
       <button class="btn small ghost" onclick="reset()">再做一条</button>
+      <button class="btn small ghost" onclick="toEditor()" title="把成片带进手动剪辑台, 继续精修">✂ 送进剪辑台精修</button>
       <a id="dl" class="btn small" style="text-align:center;text-decoration:none;line-height:1.2;padding-top:13px" download>下载</a>
     </div>
   </div>
@@ -609,8 +651,8 @@ textarea,input[type=text]{width:100%;border:1px solid var(--line);border-radius:
     <div id="jobsList"><div class="note">暂无任务。生成过的成片会留在这里，退出页面再进来也能继续看进度/重新下载。</div></div>
   </div>
 
-  <div class="card" style="margin-top:16px">
-    <div class="card-t"><i class="dot"></i>后端地址</div>
+  <div class="card dbg-only" style="margin-top:16px">
+    <div class="card-t"><i class="dot"></i>后端地址（调试项）</div>
     <input type="text" id="base" placeholder="https://你的后端域名">
     <div class="note">
       · 手机访问必须填 <b>https</b> 的公网地址，http 会被浏览器拦截<br>
@@ -779,8 +821,36 @@ function saveBase(){
 function toast(t){ var m=document.getElementById('msg'); if(m) m.textContent=t; }
 
 function onPick(e){
-  for (var i=0;i<e.target.files.length;i++) files.push(e.target.files[i]);
+  var picked = [];
+  for (var i=0;i<e.target.files.length;i++){ files.push(e.target.files[i]); picked.push(e.target.files[i]); }
   renderThumbs(); updateGo();
+  // 【素材互通】同一份工程: 这里选的素材, 同步进「手动剪辑」的素材栏
+  if (picked.length && window.__ed && window.__ed.addFiles) {
+    try { window.__ed.addFiles(picked); } catch (err){}
+  }
+}
+
+// 【送进剪辑台】成片 → 手动剪辑台素材栏(并自动放到视频轨), 同一份工程继续精修
+function toEditor(){
+  var vid = document.getElementById('vid');
+  var url = (vid && (vid.src || vid.currentSrc)) || (document.getElementById('dl') || {}).href;
+  if (!url) return toast('还没有可送出的成片');
+  var name = '成片_' + new Date().toISOString().slice(11, 19).replace(/:/g, '') + '.mp4';
+  toast('正在把成片带进剪辑台…');
+  fetch(url).then(function(r){ if (!r.ok) throw 0; return r.blob(); }).then(function(b){
+    var f = new File([b], name, { type: b.type || 'video/mp4' });
+    var n = (window.__ed && window.__ed.addFiles) ? window.__ed.addFiles([f]) : 0;
+    if (n) {
+      nav('editor');
+      if (window.__ed.dropFirstMaterial) setTimeout(function(){ window.__ed.dropFirstMaterial('v1'); }, 300);
+      toast('成片已带进剪辑台, 拖缩略图或直接剪辑即可');
+    } else {
+      toast('这条成片已经在剪辑台素材栏里了');
+    }
+  }).catch(function(){
+    // 跨域取不回(后端 CORS 限制)是常态, 给用户一条能走通的路
+    toast('成片存在后端, 浏览器直接取不回来 —— 请先点「下载」, 再到剪辑台用「＋ 上传素材」选它');
+  });
 }
 function renderThumbs(){
   var box = document.getElementById('thumbs'); box.innerHTML='';
@@ -1169,7 +1239,14 @@ function addMaterial(file) {
 
 function renderMatList() {
   var box = $id('edMatList'); if (!box) return;
-  if (!MATS.length) { box.innerHTML = '<div style="color:#6f7686;font-size:12px;text-align:center;padding:20px 6px">还没有素材<br>点上面按钮上传 mp4/jpg/png/mp3</div>'; return; }
+  if (!MATS.length) {
+    box.innerHTML = '<div class="ed-guide">'
+      + '<div class="row"><span class="st">1</span>还没有素材</div>'
+      + '<div style="color:#8a7f66">点上面「＋ 上传素材」选视频/图片/音乐</div>'
+      + '<div style="margin-top:8px;color:#5f6675">上传后把缩略图<b>拖到下方轨道</b>就会变成片段</div>'
+      + '</div>';
+    return;
+  }
   var html = '';
   MATS.forEach(function (m) {
     html += '<div class="mat-item" draggable="true" data-mid="' + m.id + '" title="拖到下方时间轴轨道上">'
@@ -1215,6 +1292,21 @@ function renderTracks() {
     lanes += '</div>';
   });
   $id('edLanes').innerHTML = lanes;
+  // 【空状态引导】轨道上还没有任何片段 → 浮一层三步上手提示(告诉用户下一步做什么)
+  var _tot = 0; PRJ.tracks.forEach(function (t) { _tot += t.clips.length; });
+  var eg = $id('edLanesEmpty');
+  if (_tot === 0) {
+    if (!eg) {
+      eg = document.createElement('div');
+      eg.className = 'ed-lanes-empty'; eg.id = 'edLanesEmpty';
+      $id('edLanes').appendChild(eg);
+    }
+    eg.innerHTML = '轨道还是空的 —— 按这三步就能出片<br>'
+      + '<b>① 左边素材栏上传素材</b> 　<b>② 把缩略图拖到这条轨道上</b> 　<b>③ 点 ▶ 播放 / ✂ 分割 精修</b><br>'
+      + '快捷键：空格播放 · S 分割 · Del 删除 · Ctrl+Z/Y 撤销重做';
+  } else if (eg) {
+    eg.remove();
+  }
   renderRuler();
   bindClipEvents();
 }
@@ -1358,7 +1450,7 @@ function play() {
   $id('edPlay').textContent = '⏸ 暂停';
   // 视频素材播放
   eachClip(function (c, tr) {
-    if (c.matId && !tr.muted) { var m = MATS.find(function (x) { return x.id === c.matId; }); if (m && m.el && m.el.play && cur >= c.t0 && cur <= c.t1) { try { m.el.currentTime = (c.in || 0) + (cur - c.t0); m.el.play(); } catch (e) {} } }
+    if (c.matId && !tr.muted) { var m = MATS.find(function (x) { return x.id === c.matId; }); if (m && m.el && m.el.play && cur >= c.t0 && cur <= c.t1) { try { m.el.currentTime = (c.in || 0) + (cur - c.t0); var pr = m.el.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {} } }
   });
   requestAnimationFrame(tick);
 }
@@ -3179,7 +3271,9 @@ function bind() {
   $id('edMatFile').onchange = function (e) {
     var fs = e.target.files; var n = 0;
     Array.prototype.forEach.call(fs, function (f) { addMaterial(f); n++; });
-    toast('已导入 ' + n + ' 个素材' + (n ? ', 拖到时间轴使用' : '')); e.target.value = '';
+    // 上传后必须让素材栏可见, 否则用户看不到缩略图 → 也就无从拖到轨道（原元凶）
+    if (n) { var lib = $id('edLib'); if (lib) lib.classList.remove('hide'); }
+    toast('已导入 ' + n + ' 个素材' + (n ? '，把缩略图拖到下方轨道即可入片' : '')); e.target.value = '';
   };
   $id('edImportPrj').onclick = function () { $id('edPrjFile').click(); };
   $id('edPrjFile').onchange = function (e) { if (e.target.files[0]) importProject(e.target.files[0]); e.target.value = ''; };
@@ -3204,8 +3298,13 @@ function bind() {
   $id('edDel').onclick = delClip;
   $id('edCopy').onclick = copyClip;
   $id('edAddSub').onclick = addSubClip;
-  $id('edLibBtn').onclick = function () { $id('edLib').classList.toggle('show'); };
-  $id('edLibClose').onclick = function () { $id('edLib').classList.remove('show'); };
+  // 【素材栏】常驻左栏: 收起 = 加 .hide, 播放条右侧「📦 素材」再切回来
+  $id('edLibBtn').onclick = function () {
+    var lib = $id('edLib');
+    lib.classList.toggle('hide');
+    toast(lib.classList.contains('hide') ? '素材栏已收起（点「📦 素材」再展开）' : '素材栏已展开');
+  };
+  $id('edLibClose').onclick = function () { $id('edLib').classList.add('hide'); toast('素材栏已收起（点「📦 素材」再展开）'); };
 
   $id('edAddVTrack').onclick = function () { pushUndo('添加视频轨'); PRJ.tracks.push({ id: uid('v'), kind: 'video', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加视频轨'); };
   $id('edAddATrack').onclick = function () { pushUndo('添加音频轨'); PRJ.tracks.push({ id: uid('a'), kind: 'audio', locked: false, muted: false, clips: [] }); renderTracks(); toast('已加音频轨'); };
@@ -3333,6 +3432,40 @@ window.__ed = {
   history: function () {
     return { undo: HISTORY.undo.map(function (x) { return x.name; }),
       redo: HISTORY.redo.map(function (x) { return x.name; }), max: HISTORY.MAX };
+  },
+  // 【素材互通】智能成片那边选/生成的素材, 直接汇进剪辑台素材栏(同一份工程)
+  addFiles: function (fileList) {
+    if (!fileList || !fileList.length) return 0;
+    var n = 0;
+    Array.prototype.forEach.call(fileList, function (f) {
+      // 同名同大小视为同一个素材, 不重复入库
+      if (MATS.some(function (m) { return m.name === f.name && m.size === f.size; })) return;
+      addMaterial(f); n++;
+    });
+    if (n) {
+      var lib = $id('edLib'); if (lib) lib.classList.remove('hide');
+      renderMatList(); touchProgress();
+      toast('已把 ' + n + ' 个素材同步到剪辑台素材栏');
+    }
+    return n;
+  },
+  // 素材/片段计数(供壳层与测试断言)
+  count: function () {
+    var c = 0; eachClip(function () { c++; });
+    return { materials: MATS.length, clips: c };
+  },
+  // 直接在该素材的缩略图上触发一次拖放(供"送进剪辑台"按钮一键入轨)
+  dropFirstMaterial: function (trackId) {
+    var m = MATS[0]; if (!m) return false;
+    var tr = PRJ.tracks.find(function (t) { return t.id === (trackId || 'v1'); }) ||
+             PRJ.tracks.find(function (t) { return t.kind === 'video'; });
+    if (!tr) return false;
+    pushUndo();
+    var dur = m.dur || 3;
+    tr.clips.push({ id: uid('c'), matId: m.id, t0: 0, t1: dur, 'in': 0, out: dur });
+    PRJ.duration = Math.max(PRJ.duration, dur + 2);
+    renderTracks(); touchProgress(); toast('已把「' + m.name + '」放到 ' + tr.id + ' 轨道');
+    return true;
   }
 };
 })();
@@ -3369,11 +3502,22 @@ function nav(where){
   var ve = document.getElementById('viewEditor'), vs = document.getElementById('viewStudio');
   if (ve) ve.style.display = isEditor ? '' : 'none';
   if (vs) vs.style.display = isEditor ? 'none' : '';
+  // 【创作台】顶部标签页与侧边栏联动: 素材库/设置等也归到对应标签
+  var tabKey = isEditor ? 'editor' : 'studio';
+  document.querySelectorAll('#cbTabs button').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-v') === tabKey);
+  });
+  var note = document.getElementById('cbNote');
+  if (note) note.textContent = (tabKey === 'editor')
+    ? '手动剪辑 · 左侧素材栏拖进轨道即可入片'
+    : '同一份工程 · 素材互通';
+  // 设置视图: 才露后端地址等调试项
+  if (vs) vs.classList.toggle('set-mode', where === 'settings');
   // 编辑器被重新显示时重绘 canvas(隐藏期间尺寸为 0, 直接绘制会糊)
   if (isEditor && window.__ed) setTimeout(function(){ window.__ed.redraw(); }, 40);
-  // 素材库: 展开编辑器内的素材库抽屉
+  // 素材库: 素材栏已改为常驻左栏, 导航到"素材库"时确保它是展开状态
   var lib = document.getElementById('edLib');
-  if (lib) { if (where === 'materials') lib.classList.add('show'); else lib.classList.remove('show'); }
+  if (lib && where === 'materials') lib.classList.remove('hide');
 
   // 智能成片视图内锚点跳转(元素不存在时静默跳过)
   if (!isEditor){
@@ -3387,9 +3531,15 @@ function nav(where){
     document.getElementById('mask').classList.add('hidden');
   }
 }
+// 【创作台】顶部标签页: 点击切换视图(与侧边栏 nav 共用同一套状态)
+document.querySelectorAll('#cbTabs button').forEach(function(b){
+  b.addEventListener('click', function(){ nav(b.getAttribute('data-v')); });
+});
+// 默认落在「AI 智能成片」(与设计稿一致); 待在编辑器 init 之后再切, 保证 canvas 首次绘制尺寸正确
+window.addEventListener('DOMContentLoaded', function(){ nav('studio'); }, { once: true });
+
 // 暗色模式(仅作用于智能成片视图的背景; 编辑器本身常暗)
-function toggleTheme(){
-  var root = document.documentElement;
+function toggleTheme(){  var root = document.documentElement;
   var dark = root.classList.toggle('dark');
   try { localStorage.setItem('wb_theme', dark ? 'dark' : 'light'); } catch(e){}
   var op = document.querySelector('.orig-page');
