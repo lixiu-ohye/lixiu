@@ -1173,7 +1173,7 @@ function generateJianYingDraft(){
 
 // 模拟视频教程列表
 // ===== 爬虫视频系统：从后端 API 拉取真实数据 =====
-// 后端地址：网址 ?api= 参数 > 本地保存 > 默认本机 8700
+// 后端地址：网址 ?api= 参数 > 本地保存 > 自动发现公网地址 > 默认本机 8700
 (function(){
   var q = new URLSearchParams(location.search).get('api');
   if(q){ try{ localStorage.setItem('lixiu_api', q); }catch(e){} }
@@ -1181,9 +1181,47 @@ function generateJianYingDraft(){
   window.__API_BASE__ = (q && q.trim()) ? q.trim().replace(/\/+$/,'') + '/api' : 'http://localhost:8700/api';
 })();
 var API_BASE = window.__API_BASE__;
+
+// ── 后端地址自动发现（与 h5 页同一套逻辑）────────────────────────────────
+// 免费隧道的域名会周期性变化(serveo 约 10 分钟就过期重建)，所以「把地址写死在
+// 链接里」必然失效。根治办法：守护进程每次拿到新地址就写进仓库里的 backend.json
+// 并 push，页面启动时从下面几个固定入口把最新地址取回来 —— 用户永远只需要记住
+// 一个链接，地址换了页面自己会跟上。
+// 注意：只在「用户没有手动指定」时才自动接管(?api= 与 localStorage 优先级更高)。
+var _apiAutoFound = false;      // 是否已通过自动发现接管后端地址
+var DISCOVER = [
+  'https://raw.githubusercontent.com/lixiu-ohye/lixiu/main/backend.json',
+  'https://ghproxy.net/https://raw.githubusercontent.com/lixiu-ohye/lixiu/main/backend.json',
+  'https://fastly.jsdelivr.net/gh/lixiu-ohye/lixiu@main/backend.json',
+  'https://cdn.jsdelivr.net/gh/lixiu-ohye/lixiu@main/backend.json'
+];
+// 探测某个后端地址是否真的活着（超时 5s，绝不吊死）
+function pingBackend(base){
+  return new Promise(function(resolve){
+    var ctl = (typeof AbortController === 'function') ? new AbortController() : null;
+    var timer = setTimeout(function(){ if(ctl) ctl.abort(); resolve(false); }, 5000);
+    fetch(String(base).replace(/\/+$/,'') + '/health', {signal: ctl && ctl.signal, cache:'no-store'})
+      .then(function(r){ clearTimeout(timer); resolve(!!r.ok); })
+      .catch(function(){ clearTimeout(timer); resolve(false); });
+  });
+}
+// 逐个试固定入口，拿到地址后必须真的 ping 通才采用（拒绝不可达的僵尸地址）
+async function discoverBackend(){
+  for(var i=0;i<DISCOVER.length;i++){
+    try{
+      var r = await fetch(DISCOVER[i] + '?t=' + Date.now(), {cache:'no-store'});
+      if(!r.ok) continue;
+      var j = await r.json();
+      var b = String(j.base || j.url || '').replace(/\/+$/,'');
+      if(!b) continue;
+      if(await pingBackend(b)) return b + '/api';
+    }catch(e){ /* 换下一个入口 */ }
+  }
+  return null;
+}
 // 是否已配置自定义(公网)后端 —— 决定静态托管页(github.io / 本地文件)能否用后端功能
 function _hasCustomBackend(){
-  try{ return !!localStorage.getItem('lixiu_api') || new URLSearchParams(location.search).has('api'); }catch(e){ return new URLSearchParams(location.search).has('api'); }
+  try{ return _apiAutoFound || !!localStorage.getItem('lixiu_api') || new URLSearchParams(location.search).has('api'); }catch(e){ return _apiAutoFound || new URLSearchParams(location.search).has('api'); }
 }
 // 静态托管页 + 没配后端 = 真的连不上；有自定义后端则放行
 function _blockedStaticHost(){
@@ -1227,17 +1265,29 @@ function showBackendSetter(msg, force){
   if(msg){ var t = document.getElementById('beMsg'); if(t) t.textContent = msg; }
   bar.style.display = 'block';
 }
-// 加载时探一下后端通不通；不通且是静态托管页，就弹出引导条
-function probeBackend(){
-  if(_hasCustomBackend() || location.hostname.indexOf('github.io')>-1 || location.protocol==='file:'){
-    fetch(API_BASE + '/advanced/glm/config', {cache:'no-store'}).then(function(r){
-      if(!r.ok) throw 0;
-      var b = document.getElementById('beSetter'); if(b) b.remove();
-    }).catch(function(){
-      if(location.protocol==='file:' || location.hostname.indexOf('github.io')>-1){
-        showBackendSetter('填一下后端地址，「哩秀」就能正常出片了 👇');
-      }
-    });
+// 加载时探一下后端通不通；不通就尝试自动发现公网地址，仍不通才弹引导条
+// 这样访客打开静态托管页(github.io)时，后端功能是开箱可用的，不用自己找地址
+async function probeBackend(){
+  // 1) 当前地址(用户手动指定的 / 本机 8700)通就直接用
+  if(await pingBackend(API_BASE)){
+    var b0 = document.getElementById('beSetter'); if(b0) b0.remove();
+    return;
+  }
+  // 2) 不通, 且用户没手动指定过 -> 从固定入口把守护进程发布的最新地址取回来
+  if(!_hasCustomBackend()){
+    var found = await discoverBackend();
+    if(found){
+      window.__API_BASE__ = found;
+      API_BASE = found;
+      _apiAutoFound = true;                    // 让 _hasCustomBackend() 也认它
+      var b1 = document.getElementById('beSetter'); if(b1) b1.remove();
+      console.log('[哩秀] 已自动发现后端地址:', found);
+      return;
+    }
+  }
+  // 3) 还是不通 -> 静态托管页才提示手填(本机 http 页面不打扰)
+  if(location.protocol==='file:' || location.hostname.indexOf('github.io')>-1){
+    showBackendSetter('填一下后端地址，「哩秀」就能正常出片了 👇');
   }
 }
 setTimeout(probeBackend, 1200);
